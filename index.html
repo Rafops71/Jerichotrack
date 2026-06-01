@@ -168,8 +168,177 @@ document.getElementById('currentDate').textContent = new Date().toLocaleDateStri
 function showSection(section) {
 document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
 event.target.classList.add('active');
+
+const sections = ['leads-section'];
+sections.forEach(s => {
+document.getElementById(s).style.display = 'none';
+});
+
+if(section === 'leads') {
+document.getElementById('leads-section').style.display = 'block';
+document.getElementById('mainContent').style.display = 'none';
+} else {
+document.getElementById('mainContent').style.display = 'block';
 }
+}
+
+let leads = JSON.parse(localStorage.getItem('jericho_leads')) || [];
+
+function showAddLead() {
+document.getElementById('addLeadForm').style.display = 'block';
+}
+
+function hideAddLead() {
+document.getElementById('addLeadForm').style.display = 'none';
+}
+
+function saveLead() {
+const name = document.getElementById('leadName').value;
+if(!name) { alert('Please enter a name'); return; }
+const lead = {
+id: Date.now(),
+name: name,
+company: document.getElementById('leadCompany').value,
+type: document.getElementById('leadType').value,
+country: document.getElementById('leadCountry').value,
+phone: document.getElementById('leadPhone').value,
+email: document.getElementById('leadEmail').value,
+status: document.getElementById('leadStatus').value,
+followup: document.getElementById('leadFollowup').value,
+notes: document.getElementById('leadNotes').value,
+date: new Date().toLocaleDateString('en-GB')
+};
+leads.push(lead);
+localStorage.setItem('jericho_leads', JSON.stringify(leads));
+renderLeads();
+hideAddLead();
+}
+
+function renderLeads() {
+const tbody = document.getElementById('leadsBody');
+if(leads.length === 0) {
+tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet. Add your first lead above.</td></tr>';
+return;
+}
+const statusColors = {
+'New': '#3498db',
+'Contacted': '#e8a020',
+'Qualified': '#9b59b6',
+'Opportunity': '#27ae60',
+'Dead': '#999'
+};
+tbody.innerHTML = leads.map((l,i) => `
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 15px;font-weight:bold;">${l.name}</td>
+<td style="padding:12px 15px;">${l.company}</td>
+<td style="padding:12px 15px;">${l.type}</td>
+<td style="padding:12px 15px;">${l.country}</td>
+<td style="padding:12px 15px;"><span style="background:${statusColors[l.status]};color:white;padding:3px 10px;border-radius:12px;font-size:12px;">${l.status}</span></td>
+<td style="padding:12px 15px;">${l.followup || '-'}</td>
+<td style="padding:12px 15px;"><button onclick="deleteLead(${i})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Delete</button></td>
+</tr>
+`).join('');
+}
+
+function deleteLead(index) {
+if(confirm('Delete this lead?')) {
+leads.splice(index, 1);
+localStorage.setItem('jericho_leads', JSON.stringify(leads));
+renderLeads();
+}
+}
+
 </script>
 
+<div id="leads-section" style="display:none;">
+<div class="section-title">Lead Management</div>
+
+<button onclick="showAddLead()" style="background:#1a2e4a;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;margin-bottom:20px;">+ Add New Lead</button>
+
+<div id="addLeadForm" style="display:none;background:white;padding:25px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);margin-bottom:25px;">
+<h3 style="color:#1a2e4a;margin-top:0;">New Lead</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Full Name *</label><br>
+<input id="leadName" type="text" placeholder="Name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Company</label><br>
+<input id="leadCompany" type="text" placeholder="Company name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Type *</label><br>
+<select id="leadType" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<option value="">Select type...</option>
+<option>Broker</option>
+<option>Buyer</option>
+<option>Seller</option>
+<option>Financier</option>
+<option>Logistics Provider</option>
+<option>Mining Company</option>
+<option>Refinery</option>
+<option>Smelter</option>
+<option>Trading Company</option>
+<option>Other</option>
+</select>
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Country</label><br>
+<input id="leadCountry" type="text" placeholder="Country" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Phone / WhatsApp</label><br>
+<input id="leadPhone" type="text" placeholder="+1 234 567 890" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Email</label><br>
+<input id="leadEmail" type="text" placeholder="email@example.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Status</label><br>
+<select id="leadStatus" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<option>New</option>
+<option>Contacted</option>
+<option>Qualified</option>
+<option>Opportunity</option>
+<option>Dead</option>
+</select>
+</div>
+<div>
+<label style="font-size:13px;font-weight:bold;color:#555;">Follow-up Date</label><br>
+<input id="leadFollowup" type="date" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+</div>
+</div>
+<div style="margin-top:15px;">
+<label style="font-size:13px;font-weight:bold;color:#555;">Notes</label><br>
+<textarea id="leadNotes" placeholder="How did you meet? What commodity? What opportunity?" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;height:80px;box-sizing:border-box;"></textarea>
+</div>
+<div style="margin-top:15px;display:flex;gap:10px;">
+<button onclick="saveLead()" style="background:#27ae60;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Save Lead</button>
+<button onclick="hideAddLead()" style="background:#999;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+</div>
+</div>
+
+<div id="leadsTable" style="background:white;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);overflow:hidden;">
+<table style="width:100%;border-collapse:collapse;">
+<thead>
+<tr style="background:#1a2e4a;color:white;">
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Name</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Company</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Type</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Country</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Status</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Follow-up</th>
+<th style="padding:12px 15px;text-align:left;font-size:13px;">Actions</th>
+</tr>
+</thead>
+<tbody id="leadsBody">
+<tr>
+<td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet. Add your first lead above.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </body>
 </html>
