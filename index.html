@@ -92,6 +92,111 @@ margin: 30px 0 15px 0;
 border-bottom: 2px solid #e8a020;
 padding-bottom: 8px;
 }
+.btn-primary {
+background: #1a2e4a;
+color: white;
+border: none;
+padding: 12px 24px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 14px;
+margin-bottom: 20px;
+}
+.btn-success {
+background: #27ae60;
+color: white;
+border: none;
+padding: 12px 24px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 14px;
+}
+.btn-cancel {
+background: #999;
+color: white;
+border: none;
+padding: 12px 24px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 14px;
+}
+.btn-danger {
+background: #e74c3c;
+color: white;
+border: none;
+padding: 5px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 12px;
+}
+.form-box {
+display: none;
+background: white;
+padding: 25px;
+border-radius: 8px;
+box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+margin-bottom: 25px;
+}
+.form-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 15px;
+}
+.form-group label {
+font-size: 13px;
+font-weight: bold;
+color: #555;
+}
+.form-group input, .form-group select, .form-group textarea {
+width: 100%;
+padding: 10px;
+border: 1px solid #ddd;
+border-radius: 4px;
+margin-top: 5px;
+box-sizing: border-box;
+font-size: 14px;
+}
+.form-group textarea {
+height: 80px;
+}
+.table-box {
+background: white;
+border-radius: 8px;
+box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+overflow: hidden;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+}
+thead tr {
+background: #1a2e4a;
+color: white;
+}
+th {
+padding: 12px 15px;
+text-align: left;
+font-size: 13px;
+}
+td {
+padding: 12px 15px;
+border-bottom: 1px solid #f0f0f0;
+font-size: 14px;
+}
+.badge {
+padding: 3px 10px;
+border-radius: 12px;
+font-size: 12px;
+color: white;
+display: inline-block;
+}
+.trust-green { background: #27ae60; }
+.trust-yellow { background: #e8a020; }
+.trust-red { background: #e74c3c; }
+.trust-grey { background: #999; }
+.kyc-yes { background: #27ae60; }
+.kyc-partial { background: #e8a020; }
+.kyc-no { background: #e74c3c; }
 </style>
 </head>
 <body>
@@ -110,6 +215,7 @@ padding-bottom: 8px;
 <button onclick="showSection('documents', this)">Documents</button>
 </div>
 
+<!-- DASHBOARD -->
 <div class="content" id="mainContent">
 <div class="section-title">Today's Overview</div>
 <div class="dashboard-grid">
@@ -157,26 +263,49 @@ padding-bottom: 8px;
 <div class="label">deals</div>
 </div>
 </div>
+<div class="section-title">Contacts Summary</div>
+<div class="dashboard-grid">
+<div class="card">
+<h3>Total Contacts</h3>
+<div class="number" id="contactCount">0</div>
+<div class="label">In database</div>
+</div>
+<div class="card urgent">
+<h3>KYC Missing</h3>
+<div class="number" id="kycMissing">0</div>
+<div class="label">No KYC on file</div>
+</div>
+<div class="card warning">
+<h3>KYC Partial</h3>
+<div class="number" id="kycPartial">0</div>
+<div class="label">Incomplete KYC</div>
+</div>
+<div class="card urgent">
+<h3>Red Flag Contacts</h3>
+<div class="number" id="redContacts">0</div>
+<div class="label">Trust level: Red</div>
+</div>
+</div>
 </div>
 
 <!-- LEADS SECTION -->
 <div id="leads-section" style="display:none;" class="content">
 <div class="section-title">Lead Management</div>
-<button onclick="showAddLead()" style="background:#1a2e4a;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;margin-bottom:20px;">+ Add New Lead</button>
-<div id="addLeadForm" style="display:none;background:white;padding:25px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);margin-bottom:25px;">
+<button class="btn-primary" onclick="showAddLead()">+ Add New Lead</button>
+<div id="addLeadForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Lead</h3>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Full Name *</label><br>
-<input id="leadName" type="text" placeholder="Name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-grid">
+<div class="form-group">
+<label>Full Name *</label>
+<input id="leadName" type="text" placeholder="Name">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Company</label><br>
-<input id="leadCompany" type="text" placeholder="Company name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Company</label>
+<input id="leadCompany" type="text" placeholder="Company name">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Type *</label><br>
-<select id="leadType" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Type *</label>
+<select id="leadType">
 <option value="">Select type...</option>
 <option>Broker</option>
 <option>Buyer</option>
@@ -190,21 +319,21 @@ padding-bottom: 8px;
 <option>Other</option>
 </select>
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Country</label><br>
-<input id="leadCountry" type="text" placeholder="Country" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Country</label>
+<input id="leadCountry" type="text" placeholder="Country">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Phone / WhatsApp</label><br>
-<input id="leadPhone" type="text" placeholder="+1 234 567 890" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Phone / WhatsApp</label>
+<input id="leadPhone" type="text" placeholder="+1 234 567 890">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Email</label><br>
-<input id="leadEmail" type="text" placeholder="email@example.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Email</label>
+<input id="leadEmail" type="text" placeholder="email@example.com">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Status</label><br>
-<select id="leadStatus" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Status</label>
+<select id="leadStatus">
 <option>New</option>
 <option>Contacted</option>
 <option>Qualified</option>
@@ -212,35 +341,35 @@ padding-bottom: 8px;
 <option>Dead</option>
 </select>
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Follow-up Date</label><br>
-<input id="leadFollowup" type="date" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Follow-up Date</label>
+<input id="leadFollowup" type="date">
 </div>
 </div>
-<div style="margin-top:15px;">
-<label style="font-size:13px;font-weight:bold;color:#555;">Notes</label><br>
-<textarea id="leadNotes" placeholder="How did you meet? What commodity? What opportunity?" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;height:80px;box-sizing:border-box;"></textarea>
+<div class="form-group" style="margin-top:15px;">
+<label>Notes</label>
+<textarea id="leadNotes" placeholder="How did you meet? What commodity? What opportunity?"></textarea>
 </div>
 <div style="margin-top:15px;display:flex;gap:10px;">
-<button onclick="saveLead()" style="background:#27ae60;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Save Lead</button>
-<button onclick="hideAddLead()" style="background:#999;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+<button class="btn-success" onclick="saveLead()">Save Lead</button>
+<button class="btn-cancel" onclick="hideAddLead()">Cancel</button>
 </div>
 </div>
-<div style="background:white;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);overflow:hidden;">
-<table style="width:100%;border-collapse:collapse;">
+<div class="table-box">
+<table>
 <thead>
-<tr style="background:#1a2e4a;color:white;">
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Name</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Company</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Type</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Country</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Status</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Follow-up</th>
-<th style="padding:12px 15px;text-align:left;font-size:13px;">Actions</th>
+<tr>
+<th>Name</th>
+<th>Company</th>
+<th>Type</th>
+<th>Country</th>
+<th>Status</th>
+<th>Follow-up</th>
+<th>Actions</th>
 </tr>
 </thead>
 <tbody id="leadsBody">
-<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet. Add your first lead above.</td></tr>
+<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>
 </tbody>
 </table>
 </div>
@@ -249,37 +378,37 @@ padding-bottom: 8px;
 <!-- PIPELINE SECTION -->
 <div id="pipeline-section" style="display:none;" class="content">
 <div class="section-title">Deal Pipeline</div>
-<button onclick="showAddDeal()" style="background:#1a2e4a;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;margin-bottom:20px;">+ Add New Deal</button>
-<div id="addDealForm" style="display:none;background:white;padding:25px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);margin-bottom:25px;">
+<button class="btn-primary" onclick="showAddDeal()">+ Add New Deal</button>
+<div id="addDealForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Deal</h3>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Commodity *</label><br>
-<input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore, Manganese" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-grid">
+<div class="form-group">
+<label>Commodity *</label>
+<input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore, Manganese">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Broker</label><br>
-<input id="dealBroker" type="text" placeholder="Broker name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Broker</label>
+<input id="dealBroker" type="text" placeholder="Broker name">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Buyer</label><br>
-<input id="dealBuyer" type="text" placeholder="Buyer name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Buyer</label>
+<input id="dealBuyer" type="text" placeholder="Buyer name">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Seller</label><br>
-<input id="dealSeller" type="text" placeholder="Seller name" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Seller</label>
+<input id="dealSeller" type="text" placeholder="Seller name">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Quantity</label><br>
-<input id="dealQuantity" type="text" placeholder="e.g. 5000" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Quantity</label>
+<input id="dealQuantity" type="text" placeholder="e.g. 5000">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Unit</label><br>
-<input id="dealUnit" type="text" placeholder="e.g. MT, DMT" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Unit</label>
+<input id="dealUnit" type="text" placeholder="e.g. MT, DMT">
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Stage</label><br>
-<select id="dealStage" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Stage</label>
+<select id="dealStage">
 <option>New</option>
 <option>Waiting Documents</option>
 <option>Waiting Financials</option>
@@ -290,27 +419,158 @@ padding-bottom: 8px;
 <option>Lost</option>
 </select>
 </div>
-<div>
-<label style="font-size:13px;font-weight:bold;color:#555;">Trust Level</label><br>
-<select id="dealTrust" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;box-sizing:border-box;">
+<div class="form-group">
+<label>Trust Level</label>
+<select id="dealTrust">
 <option>Green</option>
 <option>Yellow</option>
 <option>Red</option>
 </select>
 </div>
 </div>
-<div style="margin-top:15px;">
-<label style="font-size:13px;font-weight:bold;color:#555;">Notes</label><br>
-<textarea id="dealNotes" placeholder="Key details, terms, observations..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-top:5px;height:80px;box-sizing:border-box;"></textarea>
+<div class="form-group" style="margin-top:15px;">
+<label>Notes</label>
+<textarea id="dealNotes" placeholder="Key details, terms, observations..."></textarea>
 </div>
 <div style="margin-top:15px;display:flex;gap:10px;">
-<button onclick="saveDeal()" style="background:#27ae60;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Save Deal</button>
-<button onclick="hideAddDeal()" style="background:#999;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+<button class="btn-success" onclick="saveDeal()">Save Deal</button>
+<button class="btn-cancel" onclick="hideAddDeal()">Cancel</button>
 </div>
 </div>
 <div style="overflow-x:auto;">
 <div id="pipelineBoard" style="display:flex;gap:15px;padding-bottom:20px;">
 </div>
+</div>
+</div>
+
+<!-- CONTACTS SECTION -->
+<div id="contacts-section" style="display:none;" class="content">
+<div class="section-title">Contacts & Broker Management</div>
+<button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
+<div id="addContactForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Contact</h3>
+<div class="form-grid">
+<div class="form-group">
+<label>Full Name *</label>
+<input id="contactName" type="text" placeholder="Full name">
+</div>
+<div class="form-group">
+<label>Company</label>
+<input id="contactCompany" type="text" placeholder="Company name">
+</div>
+<div class="form-group">
+<label>Role / Type *</label>
+<select id="contactType">
+<option value="">Select role...</option>
+<option>Broker</option>
+<option>Buyer</option>
+<option>Seller</option>
+<option>Principal</option>
+<option>Agent</option>
+<option>Financier</option>
+<option>Logistics Provider</option>
+<option>Mining Company</option>
+<option>Refinery</option>
+<option>Smelter</option>
+<option>Trading House</option>
+<option>End User</option>
+<option>Other</option>
+</select>
+</div>
+<div class="form-group">
+<label>Country</label>
+<input id="contactCountry" type="text" placeholder="Country">
+</div>
+<div class="form-group">
+<label>Phone / WhatsApp</label>
+<input id="contactPhone" type="text" placeholder="+1 234 567 890">
+</div>
+<div class="form-group">
+<label>Email</label>
+<input id="contactEmail" type="text" placeholder="email@example.com">
+</div>
+<div class="form-group">
+<label>Commodity Focus</label>
+<input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese, Fuel">
+</div>
+<div class="form-group">
+<label>Trust Level</label>
+<select id="contactTrust">
+<option>Green</option>
+<option>Yellow</option>
+<option>Red</option>
+<option>Unknown</option>
+</select>
+</div>
+<div class="form-group">
+<label>KYC Status</label>
+<select id="contactKyc">
+<option>No KYC</option>
+<option>Partial KYC</option>
+<option>Full KYC</option>
+</select>
+</div>
+<div class="form-group">
+<label>Follow-up Date</label>
+<input id="contactFollowup" type="date">
+</div>
+</div>
+<div class="form-group" style="margin-top:15px;">
+<label>Notes</label>
+<textarea id="contactNotes" placeholder="How did you meet? What do they trade? Any observations?"></textarea>
+</div>
+<div style="margin-top:15px;display:flex;gap:10px;">
+<button class="btn-success" onclick="saveContact()">Save Contact</button>
+<button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
+</div>
+</div>
+
+<div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
+<select id="filterType" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="">All Types</option>
+<option>Broker</option>
+<option>Buyer</option>
+<option>Seller</option>
+<option>Principal</option>
+<option>Agent</option>
+<option>Financier</option>
+<option>Trading House</option>
+<option>Other</option>
+</select>
+<select id="filterTrust" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="">All Trust Levels</option>
+<option>Green</option>
+<option>Yellow</option>
+<option>Red</option>
+<option>Unknown</option>
+</select>
+<select id="filterKyc" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="">All KYC Status</option>
+<option>No KYC</option>
+<option>Partial KYC</option>
+<option>Full KYC</option>
+</select>
+</div>
+
+<div class="table-box">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Company</th>
+<th>Role</th>
+<th>Country</th>
+<th>Commodity</th>
+<th>Trust</th>
+<th>KYC</th>
+<th>Follow-up</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="contactsBody">
+<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -323,6 +583,7 @@ btn.classList.add('active');
 document.getElementById('mainContent').style.display = 'none';
 document.getElementById('leads-section').style.display = 'none';
 document.getElementById('pipeline-section').style.display = 'none';
+document.getElementById('contacts-section').style.display = 'none';
 if(section === 'dashboard') {
 document.getElementById('mainContent').style.display = 'block';
 updateDashboard();
@@ -332,22 +593,22 @@ renderLeads();
 } else if(section === 'pipeline') {
 document.getElementById('pipeline-section').style.display = 'block';
 renderPipeline();
+} else if(section === 'contacts') {
+document.getElementById('contacts-section').style.display = 'block';
+renderContacts();
 }
 }
 
 // LEADS
 let leads = JSON.parse(localStorage.getItem('jericho_leads')) || [];
-
 function showAddLead() { document.getElementById('addLeadForm').style.display = 'block'; }
 function hideAddLead() { document.getElementById('addLeadForm').style.display = 'none'; }
-
 function saveLead() {
 const name = document.getElementById('leadName').value;
 if(!name) { alert('Please enter a name'); return; }
 leads.push({
 id: Date.now(),
-name: name,
-company: document.getElementById('leadCompany').value,
+name, company: document.getElementById('leadCompany').value,
 type: document.getElementById('leadType').value,
 country: document.getElementById('leadCountry').value,
 phone: document.getElementById('leadPhone').value,
@@ -360,30 +621,23 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_leads', JSON.stringify(leads));
 renderLeads();
 hideAddLead();
-document.getElementById('leadName').value = '';
-document.getElementById('leadCompany').value = '';
-document.getElementById('leadNotes').value = '';
+['leadName','leadCompany','leadNotes'].forEach(id => document.getElementById(id).value = '');
 }
-
 function renderLeads() {
 const tbody = document.getElementById('leadsBody');
-if(leads.length === 0) {
-tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>';
-return;
-}
+if(!leads.length) { tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>'; return; }
 const colors = {'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
 tbody.innerHTML = leads.map((l,i) => `
-<tr style="border-bottom:1px solid #f0f0f0;">
-<td style="padding:12px 15px;font-weight:bold;">${l.name}</td>
-<td style="padding:12px 15px;">${l.company}</td>
-<td style="padding:12px 15px;">${l.type}</td>
-<td style="padding:12px 15px;">${l.country}</td>
-<td style="padding:12px 15px;"><span style="background:${colors[l.status]||'#999'};color:white;padding:3px 10px;border-radius:12px;font-size:12px;">${l.status}</span></td>
-<td style="padding:12px 15px;">${l.followup||'-'}</td>
-<td style="padding:12px 15px;"><button onclick="deleteLead(${i})" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Delete</button></td>
+<tr>
+<td><strong>${l.name}</strong></td>
+<td>${l.company}</td>
+<td>${l.type}</td>
+<td>${l.country}</td>
+<td><span class="badge" style="background:${colors[l.status]||'#999'}">${l.status}</span></td>
+<td>${l.followup||'-'}</td>
+<td><button class="btn-danger" onclick="deleteLead(${i})">Delete</button></td>
 </tr>`).join('');
 }
-
 function deleteLead(i) {
 if(confirm('Delete this lead?')) {
 leads.splice(i,1);
@@ -395,16 +649,14 @@ renderLeads();
 // PIPELINE
 let pipeline = JSON.parse(localStorage.getItem('jericho_pipeline')) || [];
 const stages = ['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
-
 function showAddDeal() { document.getElementById('addDealForm').style.display = 'block'; }
 function hideAddDeal() { document.getElementById('addDealForm').style.display = 'none'; }
-
 function saveDeal() {
 const commodity = document.getElementById('dealCommodity').value;
 if(!commodity) { alert('Please enter a commodity'); return; }
 pipeline.push({
 id: Date.now(),
-commodity: commodity,
+commodity,
 broker: document.getElementById('dealBroker').value,
 buyer: document.getElementById('dealBuyer').value,
 seller: document.getElementById('dealSeller').value,
@@ -418,24 +670,17 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 hideAddDeal();
-document.getElementById('dealCommodity').value = '';
-document.getElementById('dealNotes').value = '';
+['dealCommodity','dealNotes'].forEach(id => document.getElementById(id).value = '');
 }
-
 function getTrustColor(t) {
-if(t==='Green') return '#27ae60';
-if(t==='Yellow') return '#e8a020';
-if(t==='Red') return '#e74c3c';
-return '#ccc';
+return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';
 }
-
 function moveDeal(id, newStage) {
 const deal = pipeline.find(d => d.id === id);
 if(deal) deal.stage = newStage;
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 }
-
 function deleteDeal(id) {
 if(confirm('Delete this deal?')) {
 pipeline = pipeline.filter(d => d.id !== id);
@@ -443,7 +688,6 @@ localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 }
 }
-
 function renderPipeline() {
 const board = document.getElementById('pipelineBoard');
 if(!board) return;
@@ -454,8 +698,8 @@ return `
 <div style="font-weight:bold;color:#1a2e4a;font-size:12px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #e8a020;">
 ${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 7px;font-size:11px;">${deals.length}</span>
 </div>
-${deals.length===0 ? '<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0;">Empty</div>' : ''}
-${deals.map(d => `
+${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0;">Empty</div>':''}
+${deals.map(d=>`
 <div style="background:white;border-radius:6px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
 <div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
 <div style="font-size:12px;color:#666;margin-top:3px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
@@ -472,6 +716,70 @@ ${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}
 }).join('');
 }
 
+// CONTACTS
+let contacts = JSON.parse(localStorage.getItem('jericho_contacts')) || [];
+function showAddContact() { document.getElementById('addContactForm').style.display = 'block'; }
+function hideAddContact() { document.getElementById('addContactForm').style.display = 'none'; }
+function saveContact() {
+const name = document.getElementById('contactName').value;
+if(!name) { alert('Please enter a name'); return; }
+contacts.push({
+id: Date.now(),
+name,
+company: document.getElementById('contactCompany').value,
+type: document.getElementById('contactType').value,
+country: document.getElementById('contactCountry').value,
+phone: document.getElementById('contactPhone').value,
+email: document.getElementById('contactEmail').value,
+commodity: document.getElementById('contactCommodity').value,
+trust: document.getElementById('contactTrust').value,
+kyc: document.getElementById('contactKyc').value,
+followup: document.getElementById('contactFollowup').value,
+notes: document.getElementById('contactNotes').value,
+date: new Date().toLocaleDateString('en-GB')
+});
+localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
+renderContacts();
+hideAddContact();
+['contactName','contactCompany','contactCommodity','contactNotes'].forEach(id => document.getElementById(id).value = '');
+}
+function renderContacts() {
+const tbody = document.getElementById('contactsBody');
+const typeFilter = document.getElementById('filterType').value;
+const trustFilter = document.getElementById('filterTrust').value;
+const kycFilter = document.getElementById('filterKyc').value;
+let filtered = contacts.filter(c => {
+return (!typeFilter || c.type === typeFilter) &&
+(!trustFilter || c.trust === trustFilter) &&
+(!kycFilter || c.kyc === kycFilter);
+});
+if(!filtered.length) {
+tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>';
+return;
+}
+const trustClass = {'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
+const kycClass = {'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
+tbody.innerHTML = filtered.map((c,i) => `
+<tr>
+<td><strong>${c.name}</strong></td>
+<td>${c.company||'-'}</td>
+<td>${c.type||'-'}</td>
+<td>${c.country||'-'}</td>
+<td>${c.commodity||'-'}</td>
+<td><span class="badge ${trustClass[c.trust]||'trust-grey'}">${c.trust}</span></td>
+<td><span class="badge ${kycClass[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
+<td>${c.followup||'-'}</td>
+<td><button class="btn-danger" onclick="deleteContact(${contacts.indexOf(c)})">Delete</button></td>
+</tr>`).join('');
+}
+function deleteContact(i) {
+if(confirm('Delete this contact?')) {
+contacts.splice(i,1);
+localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
+renderContacts();
+}
+}
+
 function updateDashboard() {
 document.getElementById('leadCount').textContent = leads.length;
 document.getElementById('proposalCount').textContent = pipeline.length;
@@ -479,6 +787,10 @@ document.getElementById('stageNew').textContent = pipeline.filter(d=>d.stage==='
 document.getElementById('stageNeg').textContent = pipeline.filter(d=>d.stage==='Negotiation').length;
 document.getElementById('stageDoc').textContent = pipeline.filter(d=>d.stage==='Waiting Documents').length;
 document.getElementById('stageClosed').textContent = pipeline.filter(d=>d.stage==='Closed Won').length;
+document.getElementById('contactCount').textContent = contacts.length;
+document.getElementById('kycMissing').textContent = contacts.filter(c=>c.kyc==='No KYC').length;
+document.getElementById('kycPartial').textContent = contacts.filter(c=>c.kyc==='Partial KYC').length;
+document.getElementById('redContacts').textContent = contacts.filter(c=>c.trust==='Red').length;
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('followupCount').textContent = leads.filter(l=>l.followup===today).length;
 }
