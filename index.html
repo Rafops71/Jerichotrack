@@ -129,6 +129,15 @@ border-radius: 4px;
 cursor: pointer;
 font-size: 12px;
 }
+.btn-complete {
+background: #27ae60;
+color: white;
+border: none;
+padding: 5px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 12px;
+}
 .form-box {
 display: none;
 background: white;
@@ -164,6 +173,7 @@ background: white;
 border-radius: 8px;
 box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 overflow: hidden;
+margin-bottom: 25px;
 }
 table {
 width: 100%;
@@ -197,6 +207,30 @@ display: inline-block;
 .kyc-yes { background: #27ae60; }
 .kyc-partial { background: #e8a020; }
 .kyc-no { background: #e74c3c; }
+.priority-high { background: #e74c3c; }
+.priority-medium { background: #e8a020; }
+.priority-low { background: #3498db; }
+.task-overdue { background: #fff5f5; border-left: 3px solid #e74c3c; }
+.task-today { background: #fffbf0; border-left: 3px solid #e8a020; }
+.task-upcoming { background: #f0fff4; border-left: 3px solid #27ae60; }
+.task-completed { background: #f8f8f8; opacity: 0.6; }
+.followup-box {
+background: white;
+border-radius: 8px;
+padding: 20px;
+box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+margin-bottom: 20px;
+}
+.followup-item {
+padding: 12px 15px;
+border-bottom: 1px solid #f0f0f0;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.followup-item:last-child {
+border-bottom: none;
+}
 </style>
 </head>
 <body>
@@ -225,66 +259,63 @@ display: inline-block;
 <div class="label">Requires immediate attention</div>
 </div>
 <div class="card warning">
-<h3>Follow-ups Due</h3>
+<h3>Follow-ups Due Today</h3>
 <div class="number" id="followupCount">0</div>
 <div class="label">Due today</div>
 </div>
-<div class="card">
-<h3>Active Proposals</h3>
-<div class="number" id="proposalCount">0</div>
-<div class="label">In pipeline</div>
+<div class="card warning">
+<h3>Tasks Due Today</h3>
+<div class="number" id="tasksTodayCount">0</div>
+<div class="label">On today's agenda</div>
 </div>
 <div class="card good">
-<h3>Active Leads</h3>
-<div class="number" id="leadCount">0</div>
-<div class="label">Being tracked</div>
+<h3>Completed Tasks</h3>
+<div class="number" id="completedCount">0</div>
+<div class="label">This week</div>
 </div>
 </div>
 <div class="section-title">Pipeline Summary</div>
 <div class="dashboard-grid">
 <div class="card">
-<h3>New</h3>
-<div class="number" id="stageNew">0</div>
-<div class="label">opportunities</div>
-</div>
-<div class="card warning">
-<h3>Negotiation</h3>
-<div class="number" id="stageNeg">0</div>
-<div class="label">opportunities</div>
+<h3>Active Leads</h3>
+<div class="number" id="leadCount">0</div>
+<div class="label">Being tracked</div>
 </div>
 <div class="card">
-<h3>Documentation</h3>
-<div class="number" id="stageDoc">0</div>
-<div class="label">opportunities</div>
+<h3>Active Deals</h3>
+<div class="number" id="proposalCount">0</div>
+<div class="label">In pipeline</div>
 </div>
-<div class="card good">
-<h3>Closed Won</h3>
-<div class="number" id="stageClosed">0</div>
-<div class="label">deals</div>
-</div>
-</div>
-<div class="section-title">Contacts Summary</div>
-<div class="dashboard-grid">
 <div class="card">
 <h3>Total Contacts</h3>
 <div class="number" id="contactCount">0</div>
 <div class="label">In database</div>
 </div>
 <div class="card urgent">
-<h3>KYC Missing</h3>
-<div class="number" id="kycMissing">0</div>
-<div class="label">No KYC on file</div>
-</div>
-<div class="card warning">
-<h3>KYC Partial</h3>
-<div class="number" id="kycPartial">0</div>
-<div class="label">Incomplete KYC</div>
-</div>
-<div class="card urgent">
 <h3>Red Flag Contacts</h3>
 <div class="number" id="redContacts">0</div>
 <div class="label">Trust level: Red</div>
 </div>
+</div>
+
+<div class="section-title">⚠️ Overdue Tasks</div>
+<div id="dashOverdue" class="table-box">
+<table>
+<thead><tr><th>Task</th><th>Priority</th><th>Due Date</th><th>Linked To</th><th>Action</th></tr></thead>
+<tbody id="dashOverdueBody">
+<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section-title">📅 Due Today</div>
+<div id="dashToday" class="table-box">
+<table>
+<thead><tr><th>Task</th><th>Priority</th><th>Linked To</th><th>Action</th></tr></thead>
+<tbody id="dashTodayBody">
+<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -359,13 +390,8 @@ display: inline-block;
 <table>
 <thead>
 <tr>
-<th>Name</th>
-<th>Company</th>
-<th>Type</th>
-<th>Country</th>
-<th>Status</th>
-<th>Follow-up</th>
-<th>Actions</th>
+<th>Name</th><th>Company</th><th>Type</th><th>Country</th>
+<th>Status</th><th>Follow-up</th><th>Actions</th>
 </tr>
 </thead>
 <tbody id="leadsBody">
@@ -438,8 +464,7 @@ display: inline-block;
 </div>
 </div>
 <div style="overflow-x:auto;">
-<div id="pipelineBoard" style="display:flex;gap:15px;padding-bottom:20px;">
-</div>
+<div id="pipelineBoard" style="display:flex;gap:15px;padding-bottom:20px;"></div>
 </div>
 </div>
 
@@ -524,47 +549,28 @@ display: inline-block;
 <button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
 </div>
 </div>
-
 <div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
 <select id="filterType" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
 <option value="">All Types</option>
-<option>Broker</option>
-<option>Buyer</option>
-<option>Seller</option>
-<option>Principal</option>
-<option>Agent</option>
-<option>Financier</option>
-<option>Trading House</option>
-<option>Other</option>
+<option>Broker</option><option>Buyer</option><option>Seller</option>
+<option>Principal</option><option>Agent</option><option>Financier</option>
+<option>Trading House</option><option>Other</option>
 </select>
 <select id="filterTrust" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
 <option value="">All Trust Levels</option>
-<option>Green</option>
-<option>Yellow</option>
-<option>Red</option>
-<option>Unknown</option>
+<option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option>
 </select>
 <select id="filterKyc" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
 <option value="">All KYC Status</option>
-<option>No KYC</option>
-<option>Partial KYC</option>
-<option>Full KYC</option>
+<option>No KYC</option><option>Partial KYC</option><option>Full KYC</option>
 </select>
 </div>
-
 <div class="table-box">
 <table>
 <thead>
 <tr>
-<th>Name</th>
-<th>Company</th>
-<th>Role</th>
-<th>Country</th>
-<th>Commodity</th>
-<th>Trust</th>
-<th>KYC</th>
-<th>Follow-up</th>
-<th>Actions</th>
+<th>Name</th><th>Company</th><th>Role</th><th>Country</th>
+<th>Commodity</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Actions</th>
 </tr>
 </thead>
 <tbody id="contactsBody">
@@ -574,41 +580,136 @@ display: inline-block;
 </div>
 </div>
 
+<!-- TASKS SECTION -->
+<div id="tasks-section" style="display:none;" class="content">
+<div class="section-title">Tasks & Follow-up Center</div>
+<button class="btn-primary" onclick="showAddTask()">+ Add New Task</button>
+<div id="addTaskForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Task</h3>
+<div class="form-grid">
+<div class="form-group">
+<label>Task Description *</label>
+<input id="taskTitle" type="text" placeholder="e.g. Call broker about pricing">
+</div>
+<div class="form-group">
+<label>Priority</label>
+<select id="taskPriority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+</div>
+<div class="form-group">
+<label>Due Date</label>
+<input id="taskDue" type="date">
+</div>
+<div class="form-group">
+<label>Assigned To</label>
+<select id="taskAssigned">
+<option>Rafael</option>
+<option>Rodrigo</option>
+<option>Both</option>
+</select>
+</div>
+<div class="form-group">
+<label>Category</label>
+<select id="taskCategory">
+<option>Call</option>
+<option>Email</option>
+<option>Document</option>
+<option>Follow-up</option>
+<option>Review</option>
+<option>Meeting</option>
+<option>KYC</option>
+<option>Contract</option>
+<option>Logistics</option>
+<option>Other</option>
+</select>
+</div>
+<div class="form-group">
+<label>Linked To (Deal/Lead/Contact)</label>
+<input id="taskLinked" type="text" placeholder="e.g. Chrome Ore Deal, John Broker">
+</div>
+</div>
+<div class="form-group" style="margin-top:15px;">
+<label>Notes</label>
+<textarea id="taskNotes" placeholder="Additional details..."></textarea>
+</div>
+<div style="margin-top:15px;display:flex;gap:10px;">
+<button class="btn-success" onclick="saveTask()">Save Task</button>
+<button class="btn-cancel" onclick="hideAddTask()">Cancel</button>
+</div>
+</div>
+
+<div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
+<select id="filterTaskStatus" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="active">Active Tasks</option>
+<option value="completed">Completed Tasks</option>
+<option value="all">All Tasks</option>
+</select>
+<select id="filterTaskPriority" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="">All Priorities</option>
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+<select id="filterTaskCategory" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<option value="">All Categories</option>
+<option>Call</option><option>Email</option><option>Document</option>
+<option>Follow-up</option><option>Review</option><option>Meeting</option>
+<option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option>
+</select>
+</div>
+
+<div id="overdueTasksBox" style="margin-bottom:25px;">
+<div style="font-size:15px;font-weight:bold;color:#e74c3c;margin-bottom:10px;">🔴 Overdue</div>
+<div id="overdueTasksList"></div>
+</div>
+
+<div id="todayTasksBox" style="margin-bottom:25px;">
+<div style="font-size:15px;font-weight:bold;color:#e8a020;margin-bottom:10px;">🟡 Due Today</div>
+<div id="todayTasksList"></div>
+</div>
+
+<div id="upcomingTasksBox" style="margin-bottom:25px;">
+<div style="font-size:15px;font-weight:bold;color:#27ae60;margin-bottom:10px;">🟢 Upcoming</div>
+<div id="upcomingTasksList"></div>
+</div>
+
+<div id="completedTasksBox" style="display:none;margin-bottom:25px;">
+<div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:10px;">✅ Completed</div>
+<div id="completedTasksList"></div>
+</div>
+</div>
+
 <script>
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+const today = new Date().toISOString().split('T')[0];
 
 function showSection(section, btn) {
 document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
 btn.classList.add('active');
-document.getElementById('mainContent').style.display = 'none';
-document.getElementById('leads-section').style.display = 'none';
-document.getElementById('pipeline-section').style.display = 'none';
-document.getElementById('contacts-section').style.display = 'none';
-if(section === 'dashboard') {
-document.getElementById('mainContent').style.display = 'block';
-updateDashboard();
-} else if(section === 'leads') {
-document.getElementById('leads-section').style.display = 'block';
-renderLeads();
-} else if(section === 'pipeline') {
-document.getElementById('pipeline-section').style.display = 'block';
-renderPipeline();
-} else if(section === 'contacts') {
-document.getElementById('contacts-section').style.display = 'block';
-renderContacts();
-}
+['mainContent','leads-section','pipeline-section','contacts-section','tasks-section'].forEach(id => {
+document.getElementById(id).style.display = 'none';
+});
+if(section==='dashboard') { document.getElementById('mainContent').style.display='block'; updateDashboard(); }
+else if(section==='leads') { document.getElementById('leads-section').style.display='block'; renderLeads(); }
+else if(section==='pipeline') { document.getElementById('pipeline-section').style.display='block'; renderPipeline(); }
+else if(section==='contacts') { document.getElementById('contacts-section').style.display='block'; renderContacts(); }
+else if(section==='tasks') { document.getElementById('tasks-section').style.display='block'; renderTasks(); }
 }
 
 // LEADS
 let leads = JSON.parse(localStorage.getItem('jericho_leads')) || [];
-function showAddLead() { document.getElementById('addLeadForm').style.display = 'block'; }
-function hideAddLead() { document.getElementById('addLeadForm').style.display = 'none'; }
+function showAddLead() { document.getElementById('addLeadForm').style.display='block'; }
+function hideAddLead() { document.getElementById('addLeadForm').style.display='none'; }
 function saveLead() {
 const name = document.getElementById('leadName').value;
 if(!name) { alert('Please enter a name'); return; }
 leads.push({
-id: Date.now(),
-name, company: document.getElementById('leadCompany').value,
+id: Date.now(), name,
+company: document.getElementById('leadCompany').value,
 type: document.getElementById('leadType').value,
 country: document.getElementById('leadCountry').value,
 phone: document.getElementById('leadPhone').value,
@@ -621,18 +722,16 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_leads', JSON.stringify(leads));
 renderLeads();
 hideAddLead();
-['leadName','leadCompany','leadNotes'].forEach(id => document.getElementById(id).value = '');
+['leadName','leadCompany','leadNotes'].forEach(id => document.getElementById(id).value='');
 }
 function renderLeads() {
 const tbody = document.getElementById('leadsBody');
-if(!leads.length) { tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>'; return; }
+if(!leads.length) { tbody.innerHTML='<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>'; return; }
 const colors = {'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
 tbody.innerHTML = leads.map((l,i) => `
 <tr>
 <td><strong>${l.name}</strong></td>
-<td>${l.company}</td>
-<td>${l.type}</td>
-<td>${l.country}</td>
+<td>${l.company}</td><td>${l.type}</td><td>${l.country}</td>
 <td><span class="badge" style="background:${colors[l.status]||'#999'}">${l.status}</span></td>
 <td>${l.followup||'-'}</td>
 <td><button class="btn-danger" onclick="deleteLead(${i})">Delete</button></td>
@@ -649,14 +748,13 @@ renderLeads();
 // PIPELINE
 let pipeline = JSON.parse(localStorage.getItem('jericho_pipeline')) || [];
 const stages = ['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
-function showAddDeal() { document.getElementById('addDealForm').style.display = 'block'; }
-function hideAddDeal() { document.getElementById('addDealForm').style.display = 'none'; }
+function showAddDeal() { document.getElementById('addDealForm').style.display='block'; }
+function hideAddDeal() { document.getElementById('addDealForm').style.display='none'; }
 function saveDeal() {
 const commodity = document.getElementById('dealCommodity').value;
 if(!commodity) { alert('Please enter a commodity'); return; }
 pipeline.push({
-id: Date.now(),
-commodity,
+id: Date.now(), commodity,
 broker: document.getElementById('dealBroker').value,
 buyer: document.getElementById('dealBuyer').value,
 seller: document.getElementById('dealSeller').value,
@@ -670,20 +768,20 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 hideAddDeal();
-['dealCommodity','dealNotes'].forEach(id => document.getElementById(id).value = '');
+['dealCommodity','dealNotes'].forEach(id => document.getElementById(id).value='');
 }
 function getTrustColor(t) {
 return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';
 }
 function moveDeal(id, newStage) {
-const deal = pipeline.find(d => d.id === id);
+const deal = pipeline.find(d => d.id===id);
 if(deal) deal.stage = newStage;
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 }
 function deleteDeal(id) {
 if(confirm('Delete this deal?')) {
-pipeline = pipeline.filter(d => d.id !== id);
+pipeline = pipeline.filter(d => d.id!==id);
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline();
 }
@@ -692,7 +790,7 @@ function renderPipeline() {
 const board = document.getElementById('pipelineBoard');
 if(!board) return;
 board.innerHTML = stages.map(stage => {
-const deals = pipeline.filter(d => d.stage === stage);
+const deals = pipeline.filter(d => d.stage===stage);
 return `
 <div style="min-width:200px;max-width:220px;background:#f8f9fa;border-radius:8px;padding:15px;flex-shrink:0;">
 <div style="font-weight:bold;color:#1a2e4a;font-size:12px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #e8a020;">
@@ -718,14 +816,13 @@ ${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}
 
 // CONTACTS
 let contacts = JSON.parse(localStorage.getItem('jericho_contacts')) || [];
-function showAddContact() { document.getElementById('addContactForm').style.display = 'block'; }
-function hideAddContact() { document.getElementById('addContactForm').style.display = 'none'; }
+function showAddContact() { document.getElementById('addContactForm').style.display='block'; }
+function hideAddContact() { document.getElementById('addContactForm').style.display='none'; }
 function saveContact() {
 const name = document.getElementById('contactName').value;
 if(!name) { alert('Please enter a name'); return; }
 contacts.push({
-id: Date.now(),
-name,
+id: Date.now(), name,
 company: document.getElementById('contactCompany').value,
 type: document.getElementById('contactType').value,
 country: document.getElementById('contactCountry').value,
@@ -741,30 +838,25 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
 renderContacts();
 hideAddContact();
-['contactName','contactCompany','contactCommodity','contactNotes'].forEach(id => document.getElementById(id).value = '');
+['contactName','contactCompany','contactCommodity','contactNotes'].forEach(id => document.getElementById(id).value='');
 }
 function renderContacts() {
 const tbody = document.getElementById('contactsBody');
 const typeFilter = document.getElementById('filterType').value;
 const trustFilter = document.getElementById('filterTrust').value;
 const kycFilter = document.getElementById('filterKyc').value;
-let filtered = contacts.filter(c => {
-return (!typeFilter || c.type === typeFilter) &&
-(!trustFilter || c.trust === trustFilter) &&
-(!kycFilter || c.kyc === kycFilter);
-});
-if(!filtered.length) {
-tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>';
-return;
-}
+let filtered = contacts.filter(c =>
+(!typeFilter||c.type===typeFilter) &&
+(!trustFilter||c.trust===trustFilter) &&
+(!kycFilter||c.kyc===kycFilter)
+);
+if(!filtered.length) { tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
 const trustClass = {'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
 const kycClass = {'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
 tbody.innerHTML = filtered.map((c,i) => `
 <tr>
 <td><strong>${c.name}</strong></td>
-<td>${c.company||'-'}</td>
-<td>${c.type||'-'}</td>
-<td>${c.country||'-'}</td>
+<td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td>
 <td>${c.commodity||'-'}</td>
 <td><span class="badge ${trustClass[c.trust]||'trust-grey'}">${c.trust}</span></td>
 <td><span class="badge ${kycClass[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
@@ -780,19 +872,130 @@ renderContacts();
 }
 }
 
+// TASKS
+let tasks = JSON.parse(localStorage.getItem('jericho_tasks')) || [];
+function showAddTask() { document.getElementById('addTaskForm').style.display='block'; }
+function hideAddTask() { document.getElementById('addTaskForm').style.display='none'; }
+function saveTask() {
+const title = document.getElementById('taskTitle').value;
+if(!title) { alert('Please enter a task description'); return; }
+tasks.push({
+id: Date.now(), title,
+priority: document.getElementById('taskPriority').value,
+due: document.getElementById('taskDue').value,
+assigned: document.getElementById('taskAssigned').value,
+category: document.getElementById('taskCategory').value,
+linked: document.getElementById('taskLinked').value,
+notes: document.getElementById('taskNotes').value,
+completed: false,
+date: new Date().toLocaleDateString('en-GB')
+});
+localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
+renderTasks();
+hideAddTask();
+['taskTitle','taskLinked','taskNotes'].forEach(id => document.getElementById(id).value='');
+}
+function completeTask(id) {
+const task = tasks.find(t => t.id===id);
+if(task) { task.completed = true; task.completedDate = new Date().toLocaleDateString('en-GB'); }
+localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
+renderTasks();
+updateDashboard();
+}
+function deleteTask(id) {
+if(confirm('Delete this task?')) {
+tasks = tasks.filter(t => t.id!==id);
+localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
+renderTasks();
+updateDashboard();
+}
+}
+function taskCard(t) {
+const priorityClass = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+return `
+<div style="background:white;border-radius:6px;padding:15px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+<div style="flex:1;min-width:200px;">
+<div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.6':''}">${t.title}</div>
+<div style="font-size:12px;color:#666;margin-top:4px;">
+<span class="badge ${priorityClass[t.priority]||'priority-low'}" style="margin-right:6px;">${t.priority}</span>
+<span style="background:#e8f4fd;color:#1a2e4a;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:6px;">${t.category}</span>
+${t.assigned ? `<span style="color:#999;">→ ${t.assigned}</span>` : ''}
+</div>
+${t.linked ? `<div style="font-size:12px;color:#999;margin-top:4px;">📎 ${t.linked}</div>` : ''}
+${t.notes ? `<div style="font-size:12px;color:#888;margin-top:4px;">${t.notes}</div>` : ''}
+${t.due ? `<div style="font-size:12px;color:#666;margin-top:4px;">📅 Due: ${t.due}</div>` : ''}
+</div>
+<div style="display:flex;gap:6px;flex-shrink:0;">
+${!t.completed ? `<button class="btn-complete" onclick="completeTask(${t.id})">✓ Done</button>` : ''}
+<button class="btn-danger" onclick="deleteTask(${t.id})">Delete</button>
+</div>
+</div>`;
+}
+function renderTasks() {
+const statusFilter = document.getElementById('filterTaskStatus').value;
+const priorityFilter = document.getElementById('filterTaskPriority').value;
+const categoryFilter = document.getElementById('filterTaskCategory').value;
+
+let filtered = tasks.filter(t =>
+(!priorityFilter || t.priority===priorityFilter) &&
+(!categoryFilter || t.category===categoryFilter)
+);
+
+const overdue = filtered.filter(t => !t.completed && t.due && t.due < today);
+const dueToday = filtered.filter(t => !t.completed && t.due===today);
+const upcoming = filtered.filter(t => !t.completed && (!t.due || t.due > today));
+const completed = filtered.filter(t => t.completed);
+
+document.getElementById('overdueTasksList').innerHTML = overdue.length ? overdue.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No overdue tasks.</div>';
+document.getElementById('todayTasksList').innerHTML = dueToday.length ? dueToday.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No tasks due today.</div>';
+document.getElementById('upcomingTasksList').innerHTML = upcoming.length ? upcoming.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No upcoming tasks.</div>';
+document.getElementById('completedTasksList').innerHTML = completed.length ? completed.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No completed tasks.</div>';
+
+if(statusFilter==='completed') {
+document.getElementById('overdueTasksBox').style.display='none';
+document.getElementById('todayTasksBox').style.display='none';
+document.getElementById('upcomingTasksBox').style.display='none';
+document.getElementById('completedTasksBox').style.display='block';
+} else if(statusFilter==='all') {
+['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id => document.getElementById(id).style.display='block');
+} else {
+['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id => document.getElementById(id).style.display='block');
+document.getElementById('completedTasksBox').style.display='none';
+}
+}
+
 function updateDashboard() {
 document.getElementById('leadCount').textContent = leads.length;
 document.getElementById('proposalCount').textContent = pipeline.length;
-document.getElementById('stageNew').textContent = pipeline.filter(d=>d.stage==='New').length;
-document.getElementById('stageNeg').textContent = pipeline.filter(d=>d.stage==='Negotiation').length;
-document.getElementById('stageDoc').textContent = pipeline.filter(d=>d.stage==='Waiting Documents').length;
-document.getElementById('stageClosed').textContent = pipeline.filter(d=>d.stage==='Closed Won').length;
 document.getElementById('contactCount').textContent = contacts.length;
-document.getElementById('kycMissing').textContent = contacts.filter(c=>c.kyc==='No KYC').length;
-document.getElementById('kycPartial').textContent = contacts.filter(c=>c.kyc==='Partial KYC').length;
 document.getElementById('redContacts').textContent = contacts.filter(c=>c.trust==='Red').length;
-const today = new Date().toISOString().split('T')[0];
+const overdueTasks = tasks.filter(t => !t.completed && t.due && t.due < today);
+const todayTasks = tasks.filter(t => !t.completed && t.due===today);
+const completedTasks = tasks.filter(t => t.completed);
+document.getElementById('overdueCount').textContent = overdueTasks.length;
+document.getElementById('tasksTodayCount').textContent = todayTasks.length;
+document.getElementById('completedCount').textContent = completedTasks.length;
 document.getElementById('followupCount').textContent = leads.filter(l=>l.followup===today).length;
+
+const priorityClass = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+document.getElementById('dashOverdueBody').innerHTML = overdueTasks.length ?
+overdueTasks.map(t=>`<tr class="task-overdue">
+<td><strong>${t.title}</strong></td>
+<td><span class="badge ${priorityClass[t.priority]||'priority-low'}">${t.priority}</span></td>
+<td style="color:#e74c3c;">${t.due}</td>
+<td>${t.linked||'-'}</td>
+<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td>
+</tr>`).join('') :
+'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
+
+document.getElementById('dashTodayBody').innerHTML = todayTasks.length ?
+todayTasks.map(t=>`<tr class="task-today">
+<td><strong>${t.title}</strong></td>
+<td><span class="badge ${priorityClass[t.priority]||'priority-low'}">${t.priority}</span></td>
+<td>${t.linked||'-'}</td>
+<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td>
+</tr>`).join('') :
+'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
 updateDashboard();
