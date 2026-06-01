@@ -5,40 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jericho Operations Center</title>
 <style>
+* { box-sizing: border-box; }
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #333; }
-.header { background: #1a2e4a; color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
-.header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
-.header span { font-size: 13px; opacity: 0.7; }
-.nav { background: #22395e; padding: 0 30px; display: flex; gap: 5px; flex-wrap: wrap; }
-.nav button { background: none; border: none; color: #aac4e0; padding: 14px 18px; cursor: pointer; font-size: 14px; border-bottom: 3px solid transparent; }
+.header { background: #1a2e4a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+.header span { font-size: 12px; opacity: 0.7; }
+.nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
+.nav button { background: none; border: none; color: #aac4e0; padding: 12px 14px; cursor: pointer; font-size: 13px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .nav button.active, .nav button:hover { color: white; border-bottom: 3px solid #e8a020; }
-.content { padding: 30px; }
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-.card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #1a2e4a; }
+.content { padding: 20px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #1a2e4a; }
 .card.urgent { border-left-color: #e74c3c; }
 .card.warning { border-left-color: #e8a020; }
 .card.good { border-left-color: #27ae60; }
-.card h3 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; opacity: 0.6; }
-.card .number { font-size: 36px; font-weight: bold; color: #1a2e4a; }
-.card .number.small { font-size: 22px; }
-.card .label { font-size: 12px; opacity: 0.6; margin-top: 4px; }
-.section-title { font-size: 18px; font-weight: bold; color: #1a2e4a; margin: 30px 0 15px 0; border-bottom: 2px solid #e8a020; padding-bottom: 8px; }
-.btn-primary { background: #1a2e4a; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
-.btn-success { background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.btn-cancel { background: #999; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-.btn-complete { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-.form-box { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 25px; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.form-group label { font-size: 13px; font-weight: bold; color: #555; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; box-sizing: border-box; font-size: 14px; }
-.form-group textarea { height: 80px; }
-.table-box { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 25px; }
-table { width: 100%; border-collapse: collapse; }
+.card h3 { margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; opacity: 0.6; }
+.card .number { font-size: 30px; font-weight: bold; color: #1a2e4a; }
+.card .number.small { font-size: 18px; }
+.card .label { font-size: 11px; opacity: 0.6; margin-top: 3px; }
+.section-title { font-size: 17px; font-weight: bold; color: #1a2e4a; margin: 20px 0 12px 0; border-bottom: 2px solid #e8a020; padding-bottom: 7px; }
+.btn-primary { background: #1a2e4a; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-bottom: 15px; }
+.btn-success { background: #27ae60; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.btn-cancel { background: #999; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.btn-complete { background: #27ae60; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.btn-warning { background: #e8a020; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.form-box { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+.form-group label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 4px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+.form-group textarea { height: 75px; resize: vertical; }
+.table-box { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; min-width: 500px; }
 thead tr { background: #1a2e4a; color: white; }
-th { padding: 12px 15px; text-align: left; font-size: 13px; }
-td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-.badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; color: white; display: inline-block; }
+th { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
+td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; color: white; display: inline-block; white-space: nowrap; }
 .trust-green { background: #27ae60; }
 .trust-yellow { background: #e8a020; }
 .trust-red { background: #e74c3c; }
@@ -52,6 +55,14 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 .pay-received { background: #27ae60; }
 .pay-partial { background: #e8a020; }
 .pay-pending { background: #999; }
+.search-bar { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
+.backup-box { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+.backup-box h3 { color: #1a2e4a; margin-top: 0; }
+.backup-box p { color: #666; font-size: 14px; line-height: 1.6; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-item { background: white; border-radius: 6px; padding: 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.stat-item .stat-num { font-size: 24px; font-weight: bold; color: #1a2e4a; }
+.stat-item .stat-label { font-size: 11px; color: #999; margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -68,6 +79,7 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <button onclick="showSection('contacts', this)">Contacts</button>
 <button onclick="showSection('tasks', this)">Tasks</button>
 <button onclick="showSection('commissions', this)">Commissions</button>
+<button onclick="showSection('backup', this)">Backup</button>
 </div>
 
 <!-- DASHBOARD -->
@@ -77,10 +89,10 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="card urgent">
 <h3>Overdue Tasks</h3>
 <div class="number" id="overdueCount">0</div>
-<div class="label">Requires immediate attention</div>
+<div class="label">Immediate attention</div>
 </div>
 <div class="card warning">
-<h3>Tasks Due Today</h3>
+<h3>Due Today</h3>
 <div class="number" id="tasksTodayCount">0</div>
 <div class="label">On today's agenda</div>
 </div>
@@ -95,7 +107,6 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="label">Being tracked</div>
 </div>
 </div>
-
 <div class="section-title">Commission Overview</div>
 <div class="dashboard-grid">
 <div class="card good">
@@ -111,32 +122,35 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="card warning">
 <h3>Received</h3>
 <div class="number small" id="totalReceived">$0</div>
-<div class="label">Payments confirmed</div>
+<div class="label">Confirmed</div>
 </div>
 <div class="card urgent">
 <h3>Outstanding</h3>
 <div class="number small" id="totalOutstanding">$0</div>
-<div class="label">Still pending</div>
+<div class="label">Pending</div>
 </div>
 </div>
-
+<div class="section-title">System Summary</div>
+<div class="stats-grid">
+<div class="stat-item"><div class="stat-num" id="statLeads">0</div><div class="stat-label">Leads</div></div>
+<div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
+<div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
+<div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
+<div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Commission Records</div></div>
+<div class="stat-item"><div class="stat-num" id="statDone">0</div><div class="stat-label">Completed Tasks</div></div>
+</div>
 <div class="section-title">⚠️ Overdue Tasks</div>
 <div class="table-box">
 <table>
 <thead><tr><th>Task</th><th>Priority</th><th>Due Date</th><th>Linked To</th><th>Action</th></tr></thead>
-<tbody id="dashOverdueBody">
-<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>
-</tbody>
+<tbody id="dashOverdueBody"><tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr></tbody>
 </table>
 </div>
-
 <div class="section-title">📅 Due Today</div>
 <div class="table-box">
 <table>
 <thead><tr><th>Task</th><th>Priority</th><th>Linked To</th><th>Action</th></tr></thead>
-<tbody id="dashTodayBody">
-<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>
-</tbody>
+<tbody id="dashTodayBody"><tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr></tbody>
 </table>
 </div>
 </div>
@@ -150,13 +164,8 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="form-grid">
 <div class="form-group"><label>Full Name *</label><input id="leadName" type="text" placeholder="Name"></div>
 <div class="form-group"><label>Company</label><input id="leadCompany" type="text" placeholder="Company name"></div>
-<div class="form-group"><label>Type *</label>
-<select id="leadType">
-<option value="">Select type...</option>
-<option>Broker</option><option>Buyer</option><option>Seller</option>
-<option>Financier</option><option>Logistics Provider</option><option>Mining Company</option>
-<option>Refinery</option><option>Smelter</option><option>Trading Company</option><option>Other</option>
-</select></div>
+<div class="form-group"><label>Type</label>
+<select id="leadType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading Company</option><option>Other</option></select></div>
 <div class="form-group"><label>Country</label><input id="leadCountry" type="text" placeholder="Country"></div>
 <div class="form-group"><label>Phone / WhatsApp</label><input id="leadPhone" type="text" placeholder="+1 234 567 890"></div>
 <div class="form-group"><label>Email</label><input id="leadEmail" type="text" placeholder="email@example.com"></div>
@@ -164,15 +173,16 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <select id="leadStatus"><option>New</option><option>Contacted</option><option>Qualified</option><option>Opportunity</option><option>Dead</option></select></div>
 <div class="form-group"><label>Follow-up Date</label><input id="leadFollowup" type="date"></div>
 </div>
-<div class="form-group" style="margin-top:15px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What commodity?"></textarea></div>
-<div style="margin-top:15px;display:flex;gap:10px;">
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What commodity?"></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveLead()">Save Lead</button>
 <button class="btn-cancel" onclick="hideAddLead()">Cancel</button>
 </div>
 </div>
+<input type="text" class="search-bar" placeholder="🔍 Search leads by name, company, country..." oninput="renderLeads(this.value)">
 <div class="table-box">
 <table>
-<thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Status</th><th>Follow-up</th><th>Actions</th></tr></thead>
+<thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
 <tbody id="leadsBody"><tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
 </table>
 </div>
@@ -192,22 +202,18 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="form-group"><label>Quantity</label><input id="dealQuantity" type="text" placeholder="e.g. 5000"></div>
 <div class="form-group"><label>Unit</label><input id="dealUnit" type="text" placeholder="e.g. MT, DMT"></div>
 <div class="form-group"><label>Stage</label>
-<select id="dealStage">
-<option>New</option><option>Waiting Documents</option><option>Waiting Financials</option>
-<option>Negotiation</option><option>Final SPA</option><option>Closed Won</option>
-<option>Closed Not Monetized</option><option>Lost</option>
-</select></div>
+<select id="dealStage"><option>New</option><option>Waiting Documents</option><option>Waiting Financials</option><option>Negotiation</option><option>Final SPA</option><option>Closed Won</option><option>Closed Not Monetized</option><option>Lost</option></select></div>
 <div class="form-group"><label>Trust Level</label>
 <select id="dealTrust"><option>Green</option><option>Yellow</option><option>Red</option></select></div>
 </div>
-<div class="form-group" style="margin-top:15px;"><label>Notes</label><textarea id="dealNotes" placeholder="Key details..."></textarea></div>
-<div style="margin-top:15px;display:flex;gap:10px;">
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="dealNotes" placeholder="Key details..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveDeal()">Save Deal</button>
 <button class="btn-cancel" onclick="hideAddDeal()">Cancel</button>
 </div>
 </div>
 <div style="overflow-x:auto;">
-<div id="pipelineBoard" style="display:flex;gap:15px;padding-bottom:20px;"></div>
+<div id="pipelineBoard" style="display:flex;gap:12px;padding-bottom:20px;"></div>
 </div>
 </div>
 
@@ -220,14 +226,8 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="form-grid">
 <div class="form-group"><label>Full Name *</label><input id="contactName" type="text" placeholder="Full name"></div>
 <div class="form-group"><label>Company</label><input id="contactCompany" type="text" placeholder="Company name"></div>
-<div class="form-group"><label>Role / Type *</label>
-<select id="contactType">
-<option value="">Select role...</option>
-<option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option>
-<option>Agent</option><option>Financier</option><option>Logistics Provider</option>
-<option>Mining Company</option><option>Refinery</option><option>Smelter</option>
-<option>Trading House</option><option>End User</option><option>Other</option>
-</select></div>
+<div class="form-group"><label>Role / Type</label>
+<select id="contactType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading House</option><option>End User</option><option>Other</option></select></div>
 <div class="form-group"><label>Country</label><input id="contactCountry" type="text" placeholder="Country"></div>
 <div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
 <div class="form-group"><label>Email</label><input id="contactEmail" type="text" placeholder="email@example.com"></div>
@@ -238,30 +238,27 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <select id="contactKyc"><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select></div>
 <div class="form-group"><label>Follow-up Date</label><input id="contactFollowup" type="date"></div>
 </div>
-<div class="form-group" style="margin-top:15px;"><label>Notes</label><textarea id="contactNotes" placeholder="How did you meet? What do they trade?"></textarea></div>
-<div style="margin-top:15px;display:flex;gap:10px;">
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="contactNotes" placeholder="How did you meet? What do they trade?"></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveContact()">Save Contact</button>
 <button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
 </div>
 </div>
-<div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
-<select id="filterType" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-<option value="">All Types</option>
-<option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option>
-<option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option>
+<input type="text" class="search-bar" placeholder="🔍 Search contacts by name, company, country, commodity..." oninput="renderContacts('',this.value)">
+<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+<select id="filterType" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All Types</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option>
 </select>
-<select id="filterTrust" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-<option value="">All Trust Levels</option>
-<option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option>
+<select id="filterTrust" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All Trust</option><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option>
 </select>
-<select id="filterKyc" onchange="renderContacts()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-<option value="">All KYC Status</option>
-<option>No KYC</option><option>Partial KYC</option><option>Full KYC</option>
+<select id="filterKyc" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All KYC</option><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option>
 </select>
 </div>
 <div class="table-box">
 <table>
-<thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Actions</th></tr></thead>
+<thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
 <tbody id="contactsBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
 </table>
 </div>
@@ -281,47 +278,40 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="form-group"><label>Assigned To</label>
 <select id="taskAssigned"><option>Rafael</option><option>Rodrigo</option><option>Both</option></select></div>
 <div class="form-group"><label>Category</label>
-<select id="taskCategory">
-<option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option>
-<option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option>
-<option>Logistics</option><option>Other</option>
-</select></div>
+<select id="taskCategory"><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option></select></div>
 <div class="form-group"><label>Linked To</label><input id="taskLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
 </div>
-<div class="form-group" style="margin-top:15px;"><label>Notes</label><textarea id="taskNotes" placeholder="Additional details..."></textarea></div>
-<div style="margin-top:15px;display:flex;gap:10px;">
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="taskNotes" placeholder="Additional details..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveTask()">Save Task</button>
 <button class="btn-cancel" onclick="hideAddTask()">Cancel</button>
 </div>
 </div>
-<div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;">
-<select id="filterTaskStatus" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+<select id="filterTaskStatus" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
 <option value="active">Active Tasks</option><option value="completed">Completed</option><option value="all">All Tasks</option>
 </select>
-<select id="filterTaskPriority" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+<select id="filterTaskPriority" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
 <option value="">All Priorities</option><option>High</option><option>Medium</option><option>Low</option>
 </select>
-<select id="filterTaskCategory" onchange="renderTasks()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-<option value="">All Categories</option>
-<option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option>
-<option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option>
-<option>Logistics</option><option>Other</option>
+<select id="filterTaskCategory" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All Categories</option><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option>
 </select>
 </div>
-<div id="overdueTasksBox" style="margin-bottom:25px;">
-<div style="font-size:15px;font-weight:bold;color:#e74c3c;margin-bottom:10px;">🔴 Overdue</div>
+<div id="overdueTasksBox" style="margin-bottom:20px;">
+<div style="font-size:15px;font-weight:bold;color:#e74c3c;margin-bottom:8px;">🔴 Overdue</div>
 <div id="overdueTasksList"></div>
 </div>
-<div id="todayTasksBox" style="margin-bottom:25px;">
-<div style="font-size:15px;font-weight:bold;color:#e8a020;margin-bottom:10px;">🟡 Due Today</div>
+<div id="todayTasksBox" style="margin-bottom:20px;">
+<div style="font-size:15px;font-weight:bold;color:#e8a020;margin-bottom:8px;">🟡 Due Today</div>
 <div id="todayTasksList"></div>
 </div>
-<div id="upcomingTasksBox" style="margin-bottom:25px;">
-<div style="font-size:15px;font-weight:bold;color:#27ae60;margin-bottom:10px;">🟢 Upcoming</div>
+<div id="upcomingTasksBox" style="margin-bottom:20px;">
+<div style="font-size:15px;font-weight:bold;color:#27ae60;margin-bottom:8px;">🟢 Upcoming</div>
 <div id="upcomingTasksList"></div>
 </div>
-<div id="completedTasksBox" style="display:none;margin-bottom:25px;">
-<div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:10px;">✅ Completed</div>
+<div id="completedTasksBox" style="display:none;margin-bottom:20px;">
+<div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:8px;">✅ Completed</div>
 <div id="completedTasksList"></div>
 </div>
 </div>
@@ -348,49 +338,58 @@ td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 <div class="form-group"><label>Expected Payment Date</label><input id="commExpectedDate" type="date"></div>
 <div class="form-group"><label>Actual Payment Date</label><input id="commActualDate" type="date"></div>
 </div>
-<div class="form-group" style="margin-top:15px;"><label>Notes</label><textarea id="commNotes" placeholder="Payment terms, bank details reference, conditions..."></textarea></div>
-<div style="margin-top:15px;display:flex;gap:10px;">
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="commNotes" placeholder="Payment terms, conditions..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveCommission()">Save Record</button>
 <button class="btn-cancel" onclick="hideAddCommission()">Cancel</button>
 </div>
 </div>
-
-<div class="dashboard-grid" style="margin-bottom:25px;">
-<div class="card good">
-<h3>Total Expected</h3>
-<div class="number small" id="commTotalExpected">$0</div>
-<div class="label">All commission records</div>
+<div class="dashboard-grid" style="margin-bottom:20px;">
+<div class="card good"><h3>Total Expected</h3><div class="number small" id="commTotalExpected">$0</div></div>
+<div class="card good"><h3>Jericho Expected</h3><div class="number small" id="commJerichoTotal">$0</div></div>
+<div class="card warning"><h3>Total Received</h3><div class="number small" id="commTotalReceived">$0</div></div>
+<div class="card urgent"><h3>Outstanding</h3><div class="number small" id="commTotalOutstanding">$0</div></div>
 </div>
-<div class="card good">
-<h3>Jericho Expected</h3>
-<div class="number small" id="commJerichoTotal">$0</div>
-<div class="label">Our share total</div>
-</div>
-<div class="card warning">
-<h3>Total Received</h3>
-<div class="number small" id="commTotalReceived">$0</div>
-<div class="label">Confirmed payments</div>
-</div>
-<div class="card urgent">
-<h3>Outstanding</h3>
-<div class="number small" id="commTotalOutstanding">$0</div>
-<div class="label">Pending collection</div>
-</div>
-</div>
-
 <div class="table-box">
 <table>
-<thead>
-<tr>
-<th>Deal</th><th>Currency</th><th>Total Expected</th><th>Jericho Share</th>
-<th>Broker</th><th>Broker Share</th><th>Status</th><th>Received</th>
-<th>Expected Date</th><th>Actions</th>
-</tr>
-</thead>
-<tbody id="commissionsBody">
-<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>
-</tbody>
+<thead><tr><th>Deal</th><th>Currency</th><th>Total</th><th>Jericho</th><th>Broker</th><th>Broker Share</th><th>Status</th><th>Received</th><th>Exp. Date</th><th>Action</th></tr></thead>
+<tbody id="commissionsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr></tbody>
 </table>
+</div>
+</div>
+
+<!-- BACKUP -->
+<div id="backup-section" style="display:none;" class="content">
+<div class="section-title">Data Backup & Restore</div>
+
+<div class="backup-box">
+<h3>📥 Export Your Data</h3>
+<p>Download all your data as a backup file. Store it on your computer, Google Drive, or email it to yourself. Use this regularly to protect your work.</p>
+<button class="btn-success" onclick="exportData()">⬇ Download Backup File</button>
+</div>
+
+<div class="backup-box">
+<h3>📤 Restore From Backup</h3>
+<p>Upload a previously saved backup file to restore all your data. <strong>Warning:</strong> this will replace your current data with the backup.</p>
+<input type="file" id="restoreFile" accept=".json" style="margin-bottom:12px;display:block;">
+<button class="btn-warning" onclick="importData()">⬆ Restore From File</button>
+</div>
+
+<div class="backup-box">
+<h3>📊 Current Data Summary</h3>
+<div class="stats-grid">
+<div class="stat-item"><div class="stat-num" id="backupLeads">0</div><div class="stat-label">Leads</div></div>
+<div class="stat-item"><div class="stat-num" id="backupDeals">0</div><div class="stat-label">Deals</div></div>
+<div class="stat-item"><div class="stat-num" id="backupContacts">0</div><div class="stat-label">Contacts</div></div>
+<div class="stat-item"><div class="stat-num" id="backupTasks">0</div><div class="stat-label">Tasks</div></div>
+<div class="stat-item"><div class="stat-num" id="backupComms">0</div><div class="stat-label">Commission Records</div></div>
+</div>
+</div>
+
+<div class="backup-box" style="border-left: 4px solid #e74c3c;">
+<h3 style="color:#e74c3c;">🗑 Clear All Data</h3>
+<p>Permanently delete all data from this device. Make sure you have a backup first.</p>
+<button class="btn-danger" onclick="clearAllData()" style="padding:11px 20px;font-size:14px;">Clear All Data</button>
 </div>
 </div>
 
@@ -401,15 +400,21 @@ const today = new Date().toISOString().split('T')[0];
 function showSection(section, btn) {
 document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
 btn.classList.add('active');
-['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section'].forEach(id => {
+['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','backup-section'].forEach(id => {
 document.getElementById(id).style.display = 'none';
 });
-if(section==='dashboard') { document.getElementById('mainContent').style.display='block'; updateDashboard(); }
-else if(section==='leads') { document.getElementById('leads-section').style.display='block'; renderLeads(); }
-else if(section==='pipeline') { document.getElementById('pipeline-section').style.display='block'; renderPipeline(); }
-else if(section==='contacts') { document.getElementById('contacts-section').style.display='block'; renderContacts(); }
-else if(section==='tasks') { document.getElementById('tasks-section').style.display='block'; renderTasks(); }
-else if(section==='commissions') { document.getElementById('commissions-section').style.display='block'; renderCommissions(); }
+const map = {
+'dashboard':'mainContent','leads':'leads-section','pipeline':'pipeline-section',
+'contacts':'contacts-section','tasks':'tasks-section','commissions':'commissions-section','backup':'backup-section'
+};
+document.getElementById(map[section]).style.display = 'block';
+if(section==='dashboard') updateDashboard();
+else if(section==='leads') renderLeads();
+else if(section==='pipeline') renderPipeline();
+else if(section==='contacts') renderContacts();
+else if(section==='tasks') renderTasks();
+else if(section==='commissions') renderCommissions();
+else if(section==='backup') updateBackupStats();
 }
 
 // LEADS
@@ -431,19 +436,19 @@ notes: document.getElementById('leadNotes').value,
 date: new Date().toLocaleDateString('en-GB')
 });
 localStorage.setItem('jericho_leads', JSON.stringify(leads));
-renderLeads();
-hideAddLead();
+renderLeads(); hideAddLead();
 ['leadName','leadCompany','leadNotes'].forEach(id => document.getElementById(id).value='');
 }
-function renderLeads() {
+function renderLeads(q='') {
 const tbody = document.getElementById('leadsBody');
-if(!leads.length) { tbody.innerHTML='<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr>'; return; }
+let data = q ? leads.filter(l => (l.name+l.company+l.country+l.type).toLowerCase().includes(q.toLowerCase())) : leads;
+if(!data.length) { tbody.innerHTML='<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>'; return; }
 const colors = {'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
-tbody.innerHTML = leads.map((l,i) => `<tr>
-<td><strong>${l.name}</strong></td><td>${l.company}</td><td>${l.type}</td><td>${l.country}</td>
+tbody.innerHTML = data.map((l,i) => `<tr>
+<td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td>
 <td><span class="badge" style="background:${colors[l.status]||'#999'}">${l.status}</span></td>
 <td>${l.followup||'-'}</td>
-<td><button class="btn-danger" onclick="deleteLead(${i})">Delete</button></td>
+<td><button class="btn-danger" onclick="deleteLead(${leads.indexOf(l)})">Delete</button></td>
 </tr>`).join('');
 }
 function deleteLead(i) {
@@ -490,17 +495,17 @@ const board = document.getElementById('pipelineBoard');
 if(!board) return;
 board.innerHTML = stages.map(stage => {
 const deals = pipeline.filter(d => d.stage===stage);
-return `<div style="min-width:200px;max-width:220px;background:#f8f9fa;border-radius:8px;padding:15px;flex-shrink:0;">
-<div style="font-weight:bold;color:#1a2e4a;font-size:12px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #e8a020;">
-${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 7px;font-size:11px;">${deals.length}</span></div>
-${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0;">Empty</div>':''}
-${deals.map(d=>`<div style="background:white;border-radius:6px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
+return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;">
+<div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">
+${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>
+${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}
+${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
 <div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
-<div style="font-size:12px;color:#666;margin-top:3px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
-<div style="font-size:12px;color:#666;">${d.quantity||''} ${d.unit||''}</div>
-<div style="font-size:11px;color:#999;margin-top:4px;">${d.broker||''}</div>
-<div style="margin-top:8px;">
-<select onchange="moveDeal(${d.id}, this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:5px;">
+<div style="font-size:11px;color:#666;margin-top:3px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
+<div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''}</div>
+<div style="font-size:10px;color:#999;margin-top:3px;">${d.broker||''}</div>
+<div style="margin-top:7px;">
+<select onchange="moveDeal(${d.id}, this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">
 ${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select>
 <button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button>
 </div></div>`).join('')}
@@ -532,20 +537,25 @@ localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
 renderContacts(); hideAddContact();
 ['contactName','contactCompany','contactCommodity','contactNotes'].forEach(id => document.getElementById(id).value='');
 }
-function renderContacts() {
+function renderContacts(_, q='') {
 const tbody = document.getElementById('contactsBody');
 const typeFilter = document.getElementById('filterType').value;
 const trustFilter = document.getElementById('filterTrust').value;
 const kycFilter = document.getElementById('filterKyc').value;
-let filtered = contacts.filter(c => (!typeFilter||c.type===typeFilter) && (!trustFilter||c.trust===trustFilter) && (!kycFilter||c.kyc===kycFilter));
-if(!filtered.length) { tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
-const trustClass = {'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
-const kycClass = {'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
-tbody.innerHTML = filtered.map((c,i) => `<tr>
+let data = contacts.filter(c =>
+(!typeFilter||c.type===typeFilter) &&
+(!trustFilter||c.trust===trustFilter) &&
+(!kycFilter||c.kyc===kycFilter) &&
+(!q||(c.name+c.company+c.country+c.commodity).toLowerCase().includes(q.toLowerCase()))
+);
+if(!data.length) { tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
+const tC = {'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
+const kC = {'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
+tbody.innerHTML = data.map(c => `<tr>
 <td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td>
 <td>${c.commodity||'-'}</td>
-<td><span class="badge ${trustClass[c.trust]||'trust-grey'}">${c.trust}</span></td>
-<td><span class="badge ${kycClass[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
+<td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td>
+<td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
 <td>${c.followup||'-'}</td>
 <td><button class="btn-danger" onclick="deleteContact(${contacts.indexOf(c)})">Delete</button></td>
 </tr>`).join('');
@@ -576,8 +586,8 @@ renderTasks(); hideAddTask();
 ['taskTitle','taskLinked','taskNotes'].forEach(id => document.getElementById(id).value='');
 }
 function completeTask(id) {
-const task = tasks.find(t => t.id===id);
-if(task) { task.completed=true; task.completedDate=new Date().toLocaleDateString('en-GB'); }
+const t = tasks.find(t => t.id===id);
+if(t) { t.completed=true; t.completedDate=new Date().toLocaleDateString('en-GB'); }
 localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
 renderTasks(); updateDashboard();
 }
@@ -589,43 +599,40 @@ renderTasks(); updateDashboard();
 }
 }
 function taskCard(t) {
-const priorityClass = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-return `<div style="background:white;border-radius:6px;padding:15px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-<div style="flex:1;min-width:200px;">
-<div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.6':''}">${t.title}</div>
-<div style="font-size:12px;color:#666;margin-top:4px;">
-<span class="badge ${priorityClass[t.priority]||'priority-low'}" style="margin-right:6px;">${t.priority}</span>
-<span style="background:#e8f4fd;color:#1a2e4a;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:6px;">${t.category}</span>
-${t.assigned?`<span style="color:#999;">→ ${t.assigned}</span>`:''}
+const pC = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+<div style="flex:1;min-width:180px;">
+<div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
+<div style="margin-top:4px;">
+<span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span>
+<span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>
+${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}
 </div>
-${t.linked?`<div style="font-size:12px;color:#999;margin-top:4px;">📎 ${t.linked}</div>`:''}
-${t.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${t.notes}</div>`:''}
-${t.due?`<div style="font-size:12px;color:#666;margin-top:4px;">📅 Due: ${t.due}</div>`:''}
+${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}
+${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}
 </div>
-<div style="display:flex;gap:6px;flex-shrink:0;">
-${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓ Done</button>`:''}
-<button class="btn-danger" onclick="deleteTask(${t.id})">Delete</button>
+<div style="display:flex;gap:5px;">
+${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}
+<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
 </div></div>`;
 }
 function renderTasks() {
-const statusFilter = document.getElementById('filterTaskStatus').value;
-const priorityFilter = document.getElementById('filterTaskPriority').value;
-const categoryFilter = document.getElementById('filterTaskCategory').value;
-let filtered = tasks.filter(t => (!priorityFilter||t.priority===priorityFilter) && (!categoryFilter||t.category===categoryFilter));
-const overdue = filtered.filter(t => !t.completed && t.due && t.due < today);
-const dueToday = filtered.filter(t => !t.completed && t.due===today);
-const upcoming = filtered.filter(t => !t.completed && (!t.due || t.due > today));
-const completed = filtered.filter(t => t.completed);
-document.getElementById('overdueTasksList').innerHTML = overdue.length ? overdue.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No overdue tasks.</div>';
-document.getElementById('todayTasksList').innerHTML = dueToday.length ? dueToday.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No tasks due today.</div>';
-document.getElementById('upcomingTasksList').innerHTML = upcoming.length ? upcoming.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No upcoming tasks.</div>';
-document.getElementById('completedTasksList').innerHTML = completed.length ? completed.map(taskCard).join('') : '<div style="color:#ccc;padding:10px;">No completed tasks.</div>';
-if(statusFilter==='completed') {
-document.getElementById('overdueTasksBox').style.display='none';
-document.getElementById('todayTasksBox').style.display='none';
-document.getElementById('upcomingTasksBox').style.display='none';
+const sf = document.getElementById('filterTaskStatus').value;
+const pf = document.getElementById('filterTaskPriority').value;
+const cf = document.getElementById('filterTaskCategory').value;
+let data = tasks.filter(t => (!pf||t.priority===pf) && (!cf||t.category===cf));
+const overdue = data.filter(t => !t.completed && t.due && t.due < today);
+const dueToday = data.filter(t => !t.completed && t.due===today);
+const upcoming = data.filter(t => !t.completed && (!t.due || t.due > today));
+const completed = data.filter(t => t.completed);
+document.getElementById('overdueTasksList').innerHTML = overdue.length ? overdue.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No overdue tasks.</div>';
+document.getElementById('todayTasksList').innerHTML = dueToday.length ? dueToday.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
+document.getElementById('upcomingTasksList').innerHTML = upcoming.length ? upcoming.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
+document.getElementById('completedTasksList').innerHTML = completed.length ? completed.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
+if(sf==='completed') {
+['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id => document.getElementById(id).style.display='none');
 document.getElementById('completedTasksBox').style.display='block';
-} else if(statusFilter==='all') {
+} else if(sf==='all') {
 ['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id => document.getElementById(id).style.display='block');
 } else {
 ['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id => document.getElementById(id).style.display='block');
@@ -661,64 +668,120 @@ document.getElementById('commDeal').value='';
 document.getElementById('commNotes').value='';
 }
 function deleteCommission(id) {
-if(confirm('Delete this commission record?')) {
+if(confirm('Delete this record?')) {
 commissions = commissions.filter(c => c.id!==id);
 localStorage.setItem('jericho_commissions', JSON.stringify(commissions));
 renderCommissions(); updateDashboard();
 }
 }
 function renderCommissions() {
+const tE = commissions.reduce((s,c)=>s+c.total,0);
+const jE = commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+const tR = commissions.reduce((s,c)=>s+c.received,0);
+const tO = jE-tR;
+document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
+document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
+document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
+document.getElementById('commTotalOutstanding').textContent='$'+(tO>0?tO:0).toLocaleString();
 const tbody = document.getElementById('commissionsBody');
-const totalExp = commissions.reduce((s,c) => s+c.total, 0);
-const jerichoExp = commissions.reduce((s,c) => s+c.jerichoAmount, 0);
-const totalRec = commissions.reduce((s,c) => s+c.received, 0);
-const totalOut = jerichoExp - totalRec;
-document.getElementById('commTotalExpected').textContent = '$'+totalExp.toLocaleString();
-document.getElementById('commJerichoTotal').textContent = '$'+jerichoExp.toLocaleString();
-document.getElementById('commTotalReceived').textContent = '$'+totalRec.toLocaleString();
-document.getElementById('commTotalOutstanding').textContent = '$'+(totalOut>0?totalOut:0).toLocaleString();
 if(!commissions.length) { tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>'; return; }
-const statusClass = {'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
-tbody.innerHTML = commissions.map(c => `<tr>
-<td><strong>${c.deal}</strong></td>
-<td>${c.currency}</td>
+const sC = {'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
+tbody.innerHTML = commissions.map(c=>`<tr>
+<td><strong>${c.deal}</strong></td><td>${c.currency}</td>
 <td>${c.currency} ${c.total.toLocaleString()}</td>
 <td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td>
 <td>${c.broker||'-'}</td>
 <td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td>
-<td><span class="badge ${statusClass[c.status]||'pay-pending'}">${c.status}</span></td>
+<td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td>
 <td>${c.currency} ${c.received.toLocaleString()}</td>
 <td>${c.expectedDate||'-'}</td>
 <td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td>
 </tr>`).join('');
 }
 
+// BACKUP
+function exportData() {
+const data = {
+version: '1.0',
+exportDate: new Date().toISOString(),
+leads, pipeline, contacts, tasks, commissions
+};
+const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'jericho-backup-' + new Date().toISOString().split('T')[0] + '.json';
+a.click();
+URL.revokeObjectURL(url);
+}
+function importData() {
+const file = document.getElementById('restoreFile').files[0];
+if(!file) { alert('Please select a backup file first.'); return; }
+if(!confirm('This will replace all current data with the backup. Are you sure?')) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+try {
+const data = JSON.parse(e.target.result);
+if(data.leads) { leads = data.leads; localStorage.setItem('jericho_leads', JSON.stringify(leads)); }
+if(data.pipeline) { pipeline = data.pipeline; localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline)); }
+if(data.contacts) { contacts = data.contacts; localStorage.setItem('jericho_contacts', JSON.stringify(contacts)); }
+if(data.tasks) { tasks = data.tasks; localStorage.setItem('jericho_tasks', JSON.stringify(tasks)); }
+if(data.commissions) { commissions = data.commissions; localStorage.setItem('jericho_commissions', JSON.stringify(commissions)); }
+alert('✅ Data restored successfully!');
+updateBackupStats();
+updateDashboard();
+} catch(err) { alert('Error reading backup file. Please check the file and try again.'); }
+};
+reader.readAsText(file);
+}
+function clearAllData() {
+if(!confirm('DELETE ALL DATA? This cannot be undone. Make sure you have a backup!')) return;
+if(!confirm('Are you absolutely sure? All leads, deals, contacts, tasks and commissions will be deleted.')) return;
+leads=[]; pipeline=[]; contacts=[]; tasks=[]; commissions=[];
+['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions'].forEach(k => localStorage.removeItem(k));
+alert('All data cleared.');
+updateBackupStats();
+updateDashboard();
+}
+function updateBackupStats() {
+document.getElementById('backupLeads').textContent = leads.length;
+document.getElementById('backupDeals').textContent = pipeline.length;
+document.getElementById('backupContacts').textContent = contacts.length;
+document.getElementById('backupTasks').textContent = tasks.length;
+document.getElementById('backupComms').textContent = commissions.length;
+}
+
+// DASHBOARD
 function updateDashboard() {
 document.getElementById('leadCount').textContent = leads.length;
 document.getElementById('proposalCount').textContent = pipeline.length;
-const overdueTasks = tasks.filter(t => !t.completed && t.due && t.due < today);
-const todayTasks = tasks.filter(t => !t.completed && t.due===today);
-const completedTasks = tasks.filter(t => t.completed);
-document.getElementById('overdueCount').textContent = overdueTasks.length;
-document.getElementById('tasksTodayCount').textContent = todayTasks.length;
-document.getElementById('completedCount') && (document.getElementById('completedCount').textContent = completedTasks.length);
-const totalExp = commissions.reduce((s,c) => s+c.total, 0);
-const jerichoExp = commissions.reduce((s,c) => s+c.jerichoAmount, 0);
-const totalRec = commissions.reduce((s,c) => s+c.received, 0);
-document.getElementById('totalExpected').textContent = '$'+totalExp.toLocaleString();
-document.getElementById('jerichoExpected').textContent = '$'+jerichoExp.toLocaleString();
-document.getElementById('totalReceived').textContent = '$'+totalRec.toLocaleString();
-document.getElementById('totalOutstanding').textContent = '$'+(jerichoExp-totalRec>0?jerichoExp-totalRec:0).toLocaleString();
-const priorityClass = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-document.getElementById('dashOverdueBody').innerHTML = overdueTasks.length ?
-overdueTasks.map(t=>`<tr><td><strong>${t.title}</strong></td>
-<td><span class="badge ${priorityClass[t.priority]||'priority-low'}">${t.priority}</span></td>
+document.getElementById('statLeads').textContent = leads.length;
+document.getElementById('statDeals').textContent = pipeline.length;
+document.getElementById('statContacts').textContent = contacts.length;
+document.getElementById('statTasks').textContent = tasks.filter(t=>!t.completed).length;
+document.getElementById('statComms').textContent = commissions.length;
+document.getElementById('statDone').textContent = tasks.filter(t=>t.completed).length;
+const overdue = tasks.filter(t => !t.completed && t.due && t.due < today);
+const dueToday = tasks.filter(t => !t.completed && t.due===today);
+document.getElementById('overdueCount').textContent = overdue.length;
+document.getElementById('tasksTodayCount').textContent = dueToday.length;
+const tE = commissions.reduce((s,c)=>s+c.total,0);
+const jE = commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+const tR = commissions.reduce((s,c)=>s+c.received,0);
+document.getElementById('totalExpected').textContent = '$'+tE.toLocaleString();
+document.getElementById('jerichoExpected').textContent = '$'+jE.toLocaleString();
+document.getElementById('totalReceived').textContent = '$'+tR.toLocaleString();
+document.getElementById('totalOutstanding').textContent = '$'+(jE-tR>0?jE-tR:0).toLocaleString();
+const pC = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+document.getElementById('dashOverdueBody').innerHTML = overdue.length ?
+overdue.map(t=>`<tr><td><strong>${t.title}</strong></td>
+<td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
 <td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td>
 <td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join('') :
 '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
-document.getElementById('dashTodayBody').innerHTML = todayTasks.length ?
-todayTasks.map(t=>`<tr><td><strong>${t.title}</strong></td>
-<td><span class="badge ${priorityClass[t.priority]||'priority-low'}">${t.priority}</span></td>
+document.getElementById('dashTodayBody').innerHTML = dueToday.length ?
+dueToday.map(t=>`<tr><td><strong>${t.title}</strong></td>
+<td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
 <td>${t.linked||'-'}</td>
 <td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join('') :
 '<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
