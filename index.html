@@ -30,9 +30,10 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .btn-complete { background: #27ae60; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .btn-warning { background: #e8a020; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.btn-info { background: #3498db; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .form-box { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+@media(max-width:600px) { .form-grid { grid-template-columns: 1fr; } .nav button { padding: 10px 10px; font-size: 12px; } }
 .form-group label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 4px; }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .form-group textarea { height: 75px; resize: vertical; }
@@ -63,6 +64,25 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .stat-item { background: white; border-radius: 6px; padding: 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .stat-item .stat-num { font-size: 24px; font-weight: bold; color: #1a2e4a; }
 .stat-item .stat-label { font-size: 11px; color: #999; margin-top: 3px; }
+.comms-log { background: #f8f9fa; border-radius: 6px; padding: 12px; margin-top: 8px; }
+.comms-entry { background: white; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid #1a2e4a; font-size: 13px; }
+.comms-entry.call { border-left-color: #27ae60; }
+.comms-entry.email { border-left-color: #3498db; }
+.comms-entry.whatsapp { border-left-color: #25d366; }
+.comms-entry.meeting { border-left-color: #9b59b6; }
+.comms-entry.note { border-left-color: #e8a020; }
+.doc-entry { background: white; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid #e8a020; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+.modal-box { background: white; border-radius: 8px; padding: 25px; margin: 40px auto; max-width: 650px; width: 90%; }
+.modal-box h3 { color: #1a2e4a; margin-top: 0; border-bottom: 2px solid #e8a020; padding-bottom: 8px; }
+.price-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-top: 4px solid #1a2e4a; text-align: center; }
+.price-card h4 { margin: 0 0 8px 0; font-size: 13px; color: #666; text-transform: uppercase; }
+.price-card .price { font-size: 22px; font-weight: bold; color: #1a2e4a; }
+.price-card .unit { font-size: 11px; color: #999; margin-top: 3px; }
+.price-card .change-up { color: #27ae60; font-size: 12px; margin-top: 4px; }
+.price-card .change-down { color: #e74c3c; font-size: 12px; margin-top: 4px; }
+.rel-map { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+.rel-entry { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 </style>
 </head>
 <body>
@@ -79,6 +99,10 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <button onclick="showSection('contacts', this)">Contacts</button>
 <button onclick="showSection('tasks', this)">Tasks</button>
 <button onclick="showSection('commissions', this)">Commissions</button>
+<button onclick="showSection('commslog', this)">Comms Log</button>
+<button onclick="showSection('documents', this)">Documents</button>
+<button onclick="showSection('prices', this)">Prices</button>
+<button onclick="showSection('relationships', this)">Relationships</button>
 <button onclick="showSection('backup', this)">Backup</button>
 </div>
 
@@ -86,49 +110,17 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <div class="content" id="mainContent">
 <div class="section-title">Today's Overview</div>
 <div class="dashboard-grid">
-<div class="card urgent">
-<h3>Overdue Tasks</h3>
-<div class="number" id="overdueCount">0</div>
-<div class="label">Immediate attention</div>
-</div>
-<div class="card warning">
-<h3>Due Today</h3>
-<div class="number" id="tasksTodayCount">0</div>
-<div class="label">On today's agenda</div>
-</div>
-<div class="card">
-<h3>Active Deals</h3>
-<div class="number" id="proposalCount">0</div>
-<div class="label">In pipeline</div>
-</div>
-<div class="card good">
-<h3>Active Leads</h3>
-<div class="number" id="leadCount">0</div>
-<div class="label">Being tracked</div>
-</div>
+<div class="card urgent"><h3>Overdue Tasks</h3><div class="number" id="overdueCount">0</div><div class="label">Immediate attention</div></div>
+<div class="card warning"><h3>Due Today</h3><div class="number" id="tasksTodayCount">0</div><div class="label">On today's agenda</div></div>
+<div class="card"><h3>Active Deals</h3><div class="number" id="proposalCount">0</div><div class="label">In pipeline</div></div>
+<div class="card good"><h3>Active Leads</h3><div class="number" id="leadCount">0</div><div class="label">Being tracked</div></div>
 </div>
 <div class="section-title">Commission Overview</div>
 <div class="dashboard-grid">
-<div class="card good">
-<h3>Total Expected</h3>
-<div class="number small" id="totalExpected">$0</div>
-<div class="label">Across all deals</div>
-</div>
-<div class="card good">
-<h3>Jericho Expected</h3>
-<div class="number small" id="jerichoExpected">$0</div>
-<div class="label">Our share</div>
-</div>
-<div class="card warning">
-<h3>Received</h3>
-<div class="number small" id="totalReceived">$0</div>
-<div class="label">Confirmed</div>
-</div>
-<div class="card urgent">
-<h3>Outstanding</h3>
-<div class="number small" id="totalOutstanding">$0</div>
-<div class="label">Pending</div>
-</div>
+<div class="card good"><h3>Total Expected</h3><div class="number small" id="totalExpected">$0</div></div>
+<div class="card good"><h3>Jericho Expected</h3><div class="number small" id="jerichoExpected">$0</div></div>
+<div class="card warning"><h3>Received</h3><div class="number small" id="totalReceived">$0</div></div>
+<div class="card urgent"><h3>Outstanding</h3><div class="number small" id="totalOutstanding">$0</div></div>
 </div>
 <div class="section-title">System Summary</div>
 <div class="stats-grid">
@@ -136,8 +128,8 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
 <div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
 <div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
-<div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Commission Records</div></div>
-<div class="stat-item"><div class="stat-num" id="statDone">0</div><div class="stat-label">Completed Tasks</div></div>
+<div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Comm Records</div></div>
+<div class="stat-item"><div class="stat-num" id="statDocs">0</div><div class="stat-label">Documents</div></div>
 </div>
 <div class="section-title">⚠️ Overdue Tasks</div>
 <div class="table-box">
@@ -169,21 +161,23 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <div class="form-group"><label>Country</label><input id="leadCountry" type="text" placeholder="Country"></div>
 <div class="form-group"><label>Phone / WhatsApp</label><input id="leadPhone" type="text" placeholder="+1 234 567 890"></div>
 <div class="form-group"><label>Email</label><input id="leadEmail" type="text" placeholder="email@example.com"></div>
+<div class="form-group"><label>Introduced By</label><input id="leadIntroBy" type="text" placeholder="Who introduced this lead?"></div>
 <div class="form-group"><label>Status</label>
 <select id="leadStatus"><option>New</option><option>Contacted</option><option>Qualified</option><option>Opportunity</option><option>Dead</option></select></div>
 <div class="form-group"><label>Follow-up Date</label><input id="leadFollowup" type="date"></div>
+<div class="form-group"><label>Commodity Interest</label><input id="leadCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
 </div>
-<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What commodity?"></textarea></div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What opportunity?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
 <button class="btn-success" onclick="saveLead()">Save Lead</button>
 <button class="btn-cancel" onclick="hideAddLead()">Cancel</button>
 </div>
 </div>
-<input type="text" class="search-bar" placeholder="🔍 Search leads by name, company, country..." oninput="renderLeads(this.value)">
+<input type="text" class="search-bar" placeholder="🔍 Search leads..." oninput="renderLeads(this.value)">
 <div class="table-box">
 <table>
-<thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
-<tbody id="leadsBody"><tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
+<thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Introduced By</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
+<tbody id="leadsBody"><tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
 </table>
 </div>
 </div>
@@ -196,11 +190,13 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <h3 style="color:#1a2e4a;margin-top:0;">New Deal</h3>
 <div class="form-grid">
 <div class="form-group"><label>Commodity *</label><input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore"></div>
-<div class="form-group"><label>Broker</label><input id="dealBroker" type="text" placeholder="Broker name"></div>
+<div class="form-group"><label>Broker / Introducer</label><input id="dealBroker" type="text" placeholder="Who introduced this deal?"></div>
 <div class="form-group"><label>Buyer</label><input id="dealBuyer" type="text" placeholder="Buyer name"></div>
 <div class="form-group"><label>Seller</label><input id="dealSeller" type="text" placeholder="Seller name"></div>
 <div class="form-group"><label>Quantity</label><input id="dealQuantity" type="text" placeholder="e.g. 5000"></div>
 <div class="form-group"><label>Unit</label><input id="dealUnit" type="text" placeholder="e.g. MT, DMT"></div>
+<div class="form-group"><label>Price (per unit)</label><input id="dealPrice" type="text" placeholder="e.g. USD 150"></div>
+<div class="form-group"><label>Origin Country</label><input id="dealOrigin" type="text" placeholder="e.g. South Africa"></div>
 <div class="form-group"><label>Stage</label>
 <select id="dealStage"><option>New</option><option>Waiting Documents</option><option>Waiting Financials</option><option>Negotiation</option><option>Final SPA</option><option>Closed Won</option><option>Closed Not Monetized</option><option>Lost</option></select></div>
 <div class="form-group"><label>Trust Level</label>
@@ -232,11 +228,13 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
 <div class="form-group"><label>Email</label><input id="contactEmail" type="text" placeholder="email@example.com"></div>
 <div class="form-group"><label>Commodity Focus</label><input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
+<div class="form-group"><label>Introduced By</label><input id="contactIntroBy" type="text" placeholder="Who introduced this contact?"></div>
 <div class="form-group"><label>Trust Level</label>
 <select id="contactTrust"><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select></div>
 <div class="form-group"><label>KYC Status</label>
 <select id="contactKyc"><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select></div>
 <div class="form-group"><label>Follow-up Date</label><input id="contactFollowup" type="date"></div>
+<div class="form-group"><label>LinkedIn / Website</label><input id="contactLinkedin" type="text" placeholder="URL or handle"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="contactNotes" placeholder="How did you meet? What do they trade?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -244,7 +242,7 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
 </div>
 </div>
-<input type="text" class="search-bar" placeholder="🔍 Search contacts by name, company, country, commodity..." oninput="renderContacts('',this.value)">
+<input type="text" class="search-bar" placeholder="🔍 Search contacts..." oninput="renderContacts('',this.value)">
 <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
 <select id="filterType" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
 <option value="">All Types</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option>
@@ -258,8 +256,8 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 <div class="table-box">
 <table>
-<thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
-<tbody id="contactsBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
+<thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Introduced By</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
+<tbody id="contactsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
 </table>
 </div>
 </div>
@@ -358,23 +356,149 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 </div>
 
+<!-- COMMUNICATIONS LOG -->
+<div id="commslog-section" style="display:none;" class="content">
+<div class="section-title">Communication History</div>
+<button class="btn-primary" onclick="showAddComm()">+ Log Communication</button>
+<div id="addCommForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">Log Communication</h3>
+<div class="form-grid">
+<div class="form-group"><label>Contact Name *</label><input id="commLogContact" type="text" placeholder="Who did you communicate with?"></div>
+<div class="form-group"><label>Type</label>
+<select id="commLogType"><option>Call</option><option>Email</option><option>WhatsApp</option><option>Meeting</option><option>Note</option></select></div>
+<div class="form-group"><label>Date</label><input id="commLogDate" type="date"></div>
+<div class="form-group"><label>Direction</label>
+<select id="commLogDirection"><option>Outgoing</option><option>Incoming</option></select></div>
+<div class="form-group"><label>Linked Deal / Lead</label><input id="commLogLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
+<div class="form-group"><label>Follow-up Required</label>
+<select id="commLogFollowup"><option>No</option><option>Yes</option></select></div>
+<div class="form-group"><label>Follow-up Date</label><input id="commLogFollowupDate" type="date"></div>
+<div class="form-group"><label>Outcome</label>
+<select id="commLogOutcome"><option>Positive</option><option>Neutral</option><option>Negative</option><option>Waiting</option></select></div>
+</div>
+<div class="form-group" style="margin-top:12px;"><label>Summary *</label><textarea id="commLogSummary" placeholder="What was discussed? What was agreed? What happens next?"></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+<button class="btn-success" onclick="saveComm()">Save Log</button>
+<button class="btn-cancel" onclick="hideAddComm()">Cancel</button>
+</div>
+</div>
+<input type="text" class="search-bar" placeholder="🔍 Search communications..." oninput="renderComms(this.value)">
+<div id="commsLogList"></div>
+</div>
+
+<!-- DOCUMENTS -->
+<div id="documents-section" style="display:none;" class="content">
+<div class="section-title">Document Management</div>
+<button class="btn-primary" onclick="showAddDoc()">+ Add Document Record</button>
+<div id="addDocForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Document Record</h3>
+<div class="form-grid">
+<div class="form-group"><label>Document Name *</label><input id="docName" type="text" placeholder="e.g. Chrome Ore SPA - Agrisa"></div>
+<div class="form-group"><label>Document Type</label>
+<select id="docType"><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Company Registration</option><option>Proof of Funds</option><option>Proof of Product</option><option>Pricing Sheet</option><option>Commission Agreement</option><option>Contract</option><option>Email</option><option>WhatsApp Screenshot</option><option>Other</option></select></div>
+<div class="form-group"><label>Related Party</label><input id="docParty" type="text" placeholder="e.g. Agrisa, Nobela Group"></div>
+<div class="form-group"><label>Linked Deal / Lead</label><input id="docLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
+<div class="form-group"><label>Document Date</label><input id="docDate" type="date"></div>
+<div class="form-group"><label>Status</label>
+<select id="docStatus"><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option></select></div>
+<div class="form-group"><label>Storage Location</label><input id="docLocation" type="text" placeholder="e.g. Google Drive > Chrome Ore Folder"></div>
+<div class="form-group"><label>Expiry Date</label><input id="docExpiry" type="date"></div>
+</div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="docNotes" placeholder="Key details about this document..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+<button class="btn-success" onclick="saveDoc()">Save Document</button>
+<button class="btn-cancel" onclick="hideAddDoc()">Cancel</button>
+</div>
+</div>
+<input type="text" class="search-bar" placeholder="🔍 Search documents..." oninput="renderDocs(this.value)">
+<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+<select id="filterDocType" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All Types</option><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Commission Agreement</option><option>Contract</option><option>Other</option>
+</select>
+<select id="filterDocStatus" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+<option value="">All Status</option><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option>
+</select>
+</div>
+<div class="table-box">
+<table>
+<thead><tr><th>Document Name</th><th>Type</th><th>Related Party</th><th>Linked To</th><th>Date</th><th>Status</th><th>Location</th><th>Expiry</th><th>Action</th></tr></thead>
+<tbody id="docsBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents yet.</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<!-- COMMODITY PRICES -->
+<div id="prices-section" style="display:none;" class="content">
+<div class="section-title">Commodity Price Intelligence</div>
+<div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:12px;margin-bottom:20px;font-size:13px;color:#856404;">
+⚠️ Prices below are indicative reference ranges based on recent market data. Always verify with LME, Fastmarkets, or your broker before quoting.
+</div>
+<div class="dashboard-grid" id="priceGrid"></div>
+<div class="section-title" style="margin-top:30px;">Manual Price Notes</div>
+<button class="btn-primary" onclick="showAddPrice()">+ Add Price Note</button>
+<div id="addPriceForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Price Note</h3>
+<div class="form-grid">
+<div class="form-group"><label>Commodity *</label><input id="priceCommodity" type="text" placeholder="e.g. Chrome Ore 44%"></div>
+<div class="form-group"><label>Price</label><input id="priceValue" type="text" placeholder="e.g. USD 180/MT"></div>
+<div class="form-group"><label>Source</label><input id="priceSource" type="text" placeholder="e.g. LME, Broker, Fastmarkets"></div>
+<div class="form-group"><label>Date</label><input id="priceDate" type="date"></div>
+</div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="priceNotes" placeholder="Context, basis, incoterms..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;">
+<button class="btn-success" onclick="savePrice()">Save Note</button>
+<button class="btn-cancel" onclick="hideAddPrice()">Cancel</button>
+</div>
+</div>
+<div class="table-box">
+<table>
+<thead><tr><th>Commodity</th><th>Price</th><th>Source</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead>
+<tbody id="pricesBody"><tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">No price notes yet.</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<!-- RELATIONSHIPS -->
+<div id="relationships-section" style="display:none;" class="content">
+<div class="section-title">Relationship Mapping</div>
+<button class="btn-primary" onclick="showAddRel()">+ Add Relationship</button>
+<div id="addRelForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Relationship</h3>
+<div class="form-grid">
+<div class="form-group"><label>Person / Company *</label><input id="relFrom" type="text" placeholder="e.g. John Smith"></div>
+<div class="form-group"><label>Relationship Type</label>
+<select id="relType"><option>Introduced</option><option>Works With</option><option>Referred By</option><option>Partner Of</option><option>Competes With</option><option>Connected To</option></select></div>
+<div class="form-group"><label>Connected To *</label><input id="relTo" type="text" placeholder="e.g. Agrisa, Chrome Deal"></div>
+<div class="form-group"><label>Strength</label>
+<select id="relStrength"><option>Strong</option><option>Medium</option><option>Weak</option><option>Unknown</option></select></div>
+<div class="form-group"><label>Date Established</label><input id="relDate" type="date"></div>
+<div class="form-group"><label>Commission Entitled</label>
+<select id="relCommission"><option>Yes</option><option>No</option><option>TBD</option></select></div>
+</div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="relNotes" placeholder="Context about this relationship..."></textarea></div>
+<div style="margin-top:12px;display:flex;gap:10px;">
+<button class="btn-success" onclick="saveRel()">Save Relationship</button>
+<button class="btn-cancel" onclick="hideAddRel()">Cancel</button>
+</div>
+</div>
+<input type="text" class="search-bar" placeholder="🔍 Search relationships..." oninput="renderRelationships(this.value)">
+<div id="relList"></div>
+</div>
+
 <!-- BACKUP -->
 <div id="backup-section" style="display:none;" class="content">
 <div class="section-title">Data Backup & Restore</div>
-
 <div class="backup-box">
 <h3>📥 Export Your Data</h3>
-<p>Download all your data as a backup file. Store it on your computer, Google Drive, or email it to yourself. Use this regularly to protect your work.</p>
+<p>Download all your data as a backup file. Store it on Google Drive or email it to yourself. Do this regularly.</p>
 <button class="btn-success" onclick="exportData()">⬇ Download Backup File</button>
 </div>
-
 <div class="backup-box">
 <h3>📤 Restore From Backup</h3>
-<p>Upload a previously saved backup file to restore all your data. <strong>Warning:</strong> this will replace your current data with the backup.</p>
+<p>Upload a previously saved backup file to restore all your data. <strong>Warning:</strong> this replaces current data.</p>
 <input type="file" id="restoreFile" accept=".json" style="margin-bottom:12px;display:block;">
 <button class="btn-warning" onclick="importData()">⬆ Restore From File</button>
 </div>
-
 <div class="backup-box">
 <h3>📊 Current Data Summary</h3>
 <div class="stats-grid">
@@ -382,13 +506,15 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 <div class="stat-item"><div class="stat-num" id="backupDeals">0</div><div class="stat-label">Deals</div></div>
 <div class="stat-item"><div class="stat-num" id="backupContacts">0</div><div class="stat-label">Contacts</div></div>
 <div class="stat-item"><div class="stat-num" id="backupTasks">0</div><div class="stat-label">Tasks</div></div>
-<div class="stat-item"><div class="stat-num" id="backupComms">0</div><div class="stat-label">Commission Records</div></div>
+<div class="stat-item"><div class="stat-num" id="backupComms">0</div><div class="stat-label">Comm Records</div></div>
+<div class="stat-item"><div class="stat-num" id="backupDocs">0</div><div class="stat-label">Documents</div></div>
+<div class="stat-item"><div class="stat-num" id="backupRels">0</div><div class="stat-label">Relationships</div></div>
+<div class="stat-item"><div class="stat-num" id="backupPrices">0</div><div class="stat-label">Price Notes</div></div>
 </div>
 </div>
-
-<div class="backup-box" style="border-left: 4px solid #e74c3c;">
+<div class="backup-box" style="border-left:4px solid #e74c3c;">
 <h3 style="color:#e74c3c;">🗑 Clear All Data</h3>
-<p>Permanently delete all data from this device. Make sure you have a backup first.</p>
+<p>Permanently delete all data. Make sure you have a backup first.</p>
 <button class="btn-danger" onclick="clearAllData()" style="padding:11px 20px;font-size:14px;">Clear All Data</button>
 </div>
 </div>
@@ -397,15 +523,20 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 const today = new Date().toISOString().split('T')[0];
 
+// Request notification permission
+if('Notification' in window) Notification.requestPermission();
+
 function showSection(section, btn) {
 document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
 btn.classList.add('active');
-['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','backup-section'].forEach(id => {
+['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'].forEach(id => {
 document.getElementById(id).style.display = 'none';
 });
 const map = {
 'dashboard':'mainContent','leads':'leads-section','pipeline':'pipeline-section',
-'contacts':'contacts-section','tasks':'tasks-section','commissions':'commissions-section','backup':'backup-section'
+'contacts':'contacts-section','tasks':'tasks-section','commissions':'commissions-section',
+'commslog':'commslog-section','documents':'documents-section','prices':'prices-section',
+'relationships':'relationships-section','backup':'backup-section'
 };
 document.getElementById(map[section]).style.display = 'block';
 if(section==='dashboard') updateDashboard();
@@ -414,6 +545,10 @@ else if(section==='pipeline') renderPipeline();
 else if(section==='contacts') renderContacts();
 else if(section==='tasks') renderTasks();
 else if(section==='commissions') renderCommissions();
+else if(section==='commslog') renderComms();
+else if(section==='documents') renderDocs();
+else if(section==='prices') { renderPriceGrid(); renderPrices(); }
+else if(section==='relationships') renderRelationships();
 else if(section==='backup') updateBackupStats();
 }
 
@@ -430,22 +565,25 @@ type: document.getElementById('leadType').value,
 country: document.getElementById('leadCountry').value,
 phone: document.getElementById('leadPhone').value,
 email: document.getElementById('leadEmail').value,
+introBy: document.getElementById('leadIntroBy').value,
 status: document.getElementById('leadStatus').value,
 followup: document.getElementById('leadFollowup').value,
+commodity: document.getElementById('leadCommodity').value,
 notes: document.getElementById('leadNotes').value,
 date: new Date().toLocaleDateString('en-GB')
 });
 localStorage.setItem('jericho_leads', JSON.stringify(leads));
 renderLeads(); hideAddLead();
-['leadName','leadCompany','leadNotes'].forEach(id => document.getElementById(id).value='');
+['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id => document.getElementById(id).value='');
 }
 function renderLeads(q='') {
 const tbody = document.getElementById('leadsBody');
-let data = q ? leads.filter(l => (l.name+l.company+l.country+l.type).toLowerCase().includes(q.toLowerCase())) : leads;
-if(!data.length) { tbody.innerHTML='<tr><td colspan="7" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>'; return; }
+let data = q ? leads.filter(l => (l.name+l.company+l.country+l.type+l.introBy).toLowerCase().includes(q.toLowerCase())) : leads;
+if(!data.length) { tbody.innerHTML='<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>'; return; }
 const colors = {'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
-tbody.innerHTML = data.map((l,i) => `<tr>
+tbody.innerHTML = data.map(l => `<tr>
 <td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td>
+<td>${l.introBy||'-'}</td>
 <td><span class="badge" style="background:${colors[l.status]||'#999'}">${l.status}</span></td>
 <td>${l.followup||'-'}</td>
 <td><button class="btn-danger" onclick="deleteLead(${leads.indexOf(l)})">Delete</button></td>
@@ -469,6 +607,8 @@ buyer: document.getElementById('dealBuyer').value,
 seller: document.getElementById('dealSeller').value,
 quantity: document.getElementById('dealQuantity').value,
 unit: document.getElementById('dealUnit').value,
+price: document.getElementById('dealPrice').value,
+origin: document.getElementById('dealOrigin').value,
 stage: document.getElementById('dealStage').value,
 trust: document.getElementById('dealTrust').value,
 notes: document.getElementById('dealNotes').value,
@@ -476,7 +616,7 @@ date: new Date().toLocaleDateString('en-GB')
 });
 localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
 renderPipeline(); hideAddDeal();
-['dealCommodity','dealNotes'].forEach(id => document.getElementById(id).value='');
+['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id => document.getElementById(id).value='');
 }
 function getTrustColor(t) { return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc'; }
 function moveDeal(id, newStage) {
@@ -501,9 +641,9 @@ ${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:
 ${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}
 ${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
 <div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
-<div style="font-size:11px;color:#666;margin-top:3px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
-<div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''}</div>
-<div style="font-size:10px;color:#999;margin-top:3px;">${d.broker||''}</div>
+<div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
+<div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div>
+<div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div>
 <div style="margin-top:7px;">
 <select onchange="moveDeal(${d.id}, this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">
 ${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select>
@@ -527,33 +667,33 @@ country: document.getElementById('contactCountry').value,
 phone: document.getElementById('contactPhone').value,
 email: document.getElementById('contactEmail').value,
 commodity: document.getElementById('contactCommodity').value,
+introBy: document.getElementById('contactIntroBy').value,
 trust: document.getElementById('contactTrust').value,
 kyc: document.getElementById('contactKyc').value,
 followup: document.getElementById('contactFollowup').value,
+linkedin: document.getElementById('contactLinkedin').value,
 notes: document.getElementById('contactNotes').value,
 date: new Date().toLocaleDateString('en-GB')
 });
 localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
 renderContacts(); hideAddContact();
-['contactName','contactCompany','contactCommodity','contactNotes'].forEach(id => document.getElementById(id).value='');
+['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id => document.getElementById(id).value='');
 }
 function renderContacts(_, q='') {
 const tbody = document.getElementById('contactsBody');
-const typeFilter = document.getElementById('filterType').value;
-const trustFilter = document.getElementById('filterTrust').value;
-const kycFilter = document.getElementById('filterKyc').value;
+const tf = document.getElementById('filterType').value;
+const trf = document.getElementById('filterTrust').value;
+const kf = document.getElementById('filterKyc').value;
 let data = contacts.filter(c =>
-(!typeFilter||c.type===typeFilter) &&
-(!trustFilter||c.trust===trustFilter) &&
-(!kycFilter||c.kyc===kycFilter) &&
-(!q||(c.name+c.company+c.country+c.commodity).toLowerCase().includes(q.toLowerCase()))
+(!tf||c.type===tf) && (!trf||c.trust===trf) && (!kf||c.kyc===kf) &&
+(!q||(c.name+c.company+c.country+c.commodity+c.introBy).toLowerCase().includes(q.toLowerCase()))
 );
-if(!data.length) { tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
-const tC = {'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
-const kC = {'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
+if(!data.length) { tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
+const tC={'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
+const kC={'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
 tbody.innerHTML = data.map(c => `<tr>
 <td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td>
-<td>${c.commodity||'-'}</td>
+<td>${c.commodity||'-'}</td><td>${c.introBy||'-'}</td>
 <td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td>
 <td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
 <td>${c.followup||'-'}</td>
@@ -584,6 +724,7 @@ date: new Date().toLocaleDateString('en-GB')
 localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
 renderTasks(); hideAddTask();
 ['taskTitle','taskLinked','taskNotes'].forEach(id => document.getElementById(id).value='');
+checkReminders();
 }
 function completeTask(id) {
 const t = tasks.find(t => t.id===id);
@@ -599,7 +740,7 @@ renderTasks(); updateDashboard();
 }
 }
 function taskCard(t) {
-const pC = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
 return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
 <div style="flex:1;min-width:180px;">
 <div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
@@ -617,28 +758,36 @@ ${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓
 </div></div>`;
 }
 function renderTasks() {
-const sf = document.getElementById('filterTaskStatus').value;
-const pf = document.getElementById('filterTaskPriority').value;
-const cf = document.getElementById('filterTaskCategory').value;
+const sf=document.getElementById('filterTaskStatus').value;
+const pf=document.getElementById('filterTaskPriority').value;
+const cf=document.getElementById('filterTaskCategory').value;
 let data = tasks.filter(t => (!pf||t.priority===pf) && (!cf||t.category===cf));
-const overdue = data.filter(t => !t.completed && t.due && t.due < today);
-const dueToday = data.filter(t => !t.completed && t.due===today);
-const upcoming = data.filter(t => !t.completed && (!t.due || t.due > today));
-const completed = data.filter(t => t.completed);
-document.getElementById('overdueTasksList').innerHTML = overdue.length ? overdue.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No overdue tasks.</div>';
-document.getElementById('todayTasksList').innerHTML = dueToday.length ? dueToday.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
-document.getElementById('upcomingTasksList').innerHTML = upcoming.length ? upcoming.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
-document.getElementById('completedTasksList').innerHTML = completed.length ? completed.map(taskCard).join('') : '<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
-if(sf==='completed') {
-['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id => document.getElementById(id).style.display='none');
-document.getElementById('completedTasksBox').style.display='block';
-} else if(sf==='all') {
-['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id => document.getElementById(id).style.display='block');
-} else {
-['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id => document.getElementById(id).style.display='block');
-document.getElementById('completedTasksBox').style.display='none';
+const overdue=data.filter(t=>!t.completed&&t.due&&t.due<today);
+const dueToday=data.filter(t=>!t.completed&&t.due===today);
+const upcoming=data.filter(t=>!t.completed&&(!t.due||t.due>today));
+const completed=data.filter(t=>t.completed);
+document.getElementById('overdueTasksList').innerHTML=overdue.length?overdue.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No overdue tasks.</div>';
+document.getElementById('todayTasksList').innerHTML=dueToday.length?dueToday.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
+document.getElementById('upcomingTasksList').innerHTML=upcoming.length?upcoming.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
+document.getElementById('completedTasksList').innerHTML=completed.length?completed.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
+if(sf==='completed'){['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('completedTasksBox').style.display='block';}
+else if(sf==='all'){['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id=>document.getElementById(id).style.display='block');}
+else{['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='block');document.getElementById('completedTasksBox').style.display='none';}
+}
+
+// REMINDERS
+function checkReminders() {
+if(Notification.permission !== 'granted') return;
+const overdue = tasks.filter(t => !t.completed && t.due && t.due < today);
+const dueToday = tasks.filter(t => !t.completed && t.due === today);
+if(overdue.length > 0) {
+new Notification('⚠️ Jericho Operations', { body: `You have ${overdue.length} overdue task(s)!` });
+} else if(dueToday.length > 0) {
+new Notification('📅 Jericho Operations', { body: `You have ${dueToday.length} task(s) due today.` });
 }
 }
+setInterval(checkReminders, 3600000);
+checkReminders();
 
 // COMMISSIONS
 let commissions = JSON.parse(localStorage.getItem('jericho_commissions')) || [];
@@ -664,29 +813,28 @@ date: new Date().toLocaleDateString('en-GB')
 });
 localStorage.setItem('jericho_commissions', JSON.stringify(commissions));
 renderCommissions(); hideAddCommission();
-document.getElementById('commDeal').value='';
-document.getElementById('commNotes').value='';
+document.getElementById('commDeal').value=''; document.getElementById('commNotes').value='';
 }
 function deleteCommission(id) {
 if(confirm('Delete this record?')) {
-commissions = commissions.filter(c => c.id!==id);
+commissions=commissions.filter(c=>c.id!==id);
 localStorage.setItem('jericho_commissions', JSON.stringify(commissions));
 renderCommissions(); updateDashboard();
 }
 }
 function renderCommissions() {
-const tE = commissions.reduce((s,c)=>s+c.total,0);
-const jE = commissions.reduce((s,c)=>s+c.jerichoAmount,0);
-const tR = commissions.reduce((s,c)=>s+c.received,0);
-const tO = jE-tR;
+const tE=commissions.reduce((s,c)=>s+c.total,0);
+const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+const tR=commissions.reduce((s,c)=>s+c.received,0);
+const tO=jE-tR;
 document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
 document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
 document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
 document.getElementById('commTotalOutstanding').textContent='$'+(tO>0?tO:0).toLocaleString();
-const tbody = document.getElementById('commissionsBody');
-if(!commissions.length) { tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>'; return; }
-const sC = {'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
-tbody.innerHTML = commissions.map(c=>`<tr>
+const tbody=document.getElementById('commissionsBody');
+if(!commissions.length){tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>';return;}
+const sC={'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
+tbody.innerHTML=commissions.map(c=>`<tr>
 <td><strong>${c.deal}</strong></td><td>${c.currency}</td>
 <td>${c.currency} ${c.total.toLocaleString()}</td>
 <td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td>
@@ -699,91 +847,297 @@ tbody.innerHTML = commissions.map(c=>`<tr>
 </tr>`).join('');
 }
 
+// COMMUNICATIONS LOG
+let commsLog = JSON.parse(localStorage.getItem('jericho_commslog')) || [];
+function showAddComm() { document.getElementById('addCommForm').style.display='block'; }
+function hideAddComm() { document.getElementById('addCommForm').style.display='none'; }
+function saveComm() {
+const contact = document.getElementById('commLogContact').value;
+const summary = document.getElementById('commLogSummary').value;
+if(!contact||!summary) { alert('Please enter contact and summary'); return; }
+commsLog.push({ id: Date.now(), contact,
+type: document.getElementById('commLogType').value,
+date: document.getElementById('commLogDate').value||today,
+direction: document.getElementById('commLogDirection').value,
+linked: document.getElementById('commLogLinked').value,
+followup: document.getElementById('commLogFollowup').value,
+followupDate: document.getElementById('commLogFollowupDate').value,
+outcome: document.getElementById('commLogOutcome').value,
+summary,
+logged: new Date().toLocaleDateString('en-GB')
+});
+localStorage.setItem('jericho_commslog', JSON.stringify(commsLog));
+renderComms(); hideAddComm();
+['commLogContact','commLogLinked','commLogSummary'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteComm(id) {
+if(confirm('Delete this log entry?')) {
+commsLog=commsLog.filter(c=>c.id!==id);
+localStorage.setItem('jericho_commslog', JSON.stringify(commsLog));
+renderComms();
+}
+}
+function renderComms(q='') {
+const container=document.getElementById('commsLogList');
+let data=q?commsLog.filter(c=>(c.contact+c.summary+c.linked).toLowerCase().includes(q.toLowerCase())):commsLog;
+data=[...data].reverse();
+if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No communications logged yet.</div>';return;}
+const outcomeColor={'Positive':'#27ae60','Neutral':'#3498db','Negative':'#e74c3c','Waiting':'#e8a020'};
+container.innerHTML=data.map(c=>`
+<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+<div style="flex:1;">
+<div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div>
+<div style="margin-top:4px;">
+<span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span>
+<span class="badge" style="background:${outcomeColor[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span>
+<span style="font-size:11px;color:#999;">${c.direction} • ${c.date}</span>
+</div>
+${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}
+<div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>
+${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up required: ${c.followupDate||'date not set'}</div>`:''}
+</div>
+<button class="btn-danger" onclick="deleteComm(${c.id})">✕</button>
+</div></div>`).join('');
+}
+
+// DOCUMENTS
+let documents = JSON.parse(localStorage.getItem('jericho_documents')) || [];
+function showAddDoc() { document.getElementById('addDocForm').style.display='block'; }
+function hideAddDoc() { document.getElementById('addDocForm').style.display='none'; }
+function saveDoc() {
+const name = document.getElementById('docName').value;
+if(!name) { alert('Please enter a document name'); return; }
+documents.push({ id: Date.now(), name,
+type: document.getElementById('docType').value,
+party: document.getElementById('docParty').value,
+linked: document.getElementById('docLinked').value,
+date: document.getElementById('docDate').value,
+status: document.getElementById('docStatus').value,
+location: document.getElementById('docLocation').value,
+expiry: document.getElementById('docExpiry').value,
+notes: document.getElementById('docNotes').value,
+logged: new Date().toLocaleDateString('en-GB')
+});
+localStorage.setItem('jericho_documents', JSON.stringify(documents));
+renderDocs(); hideAddDoc();
+['docName','docParty','docLinked','docLocation','docNotes'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteDoc(id) {
+if(confirm('Delete this document record?')) {
+documents=documents.filter(d=>d.id!==id);
+localStorage.setItem('jericho_documents', JSON.stringify(documents));
+renderDocs();
+}
+}
+function renderDocs(q='') {
+const tbody=document.getElementById('docsBody');
+const tf=document.getElementById('filterDocType').value;
+const sf=document.getElementById('filterDocStatus').value;
+let data=documents.filter(d=>
+(!tf||d.type===tf)&&(!sf||d.status===sf)&&
+(!q||(d.name+d.party+d.linked+d.type).toLowerCase().includes(q.toLowerCase()))
+);
+if(!data.length){tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents found.</td></tr>';return;}
+const sC={'Received':'trust-green','Sent':'trust-yellow','Pending':'trust-grey','Signed':'kyc-yes','Expired':'trust-red'};
+tbody.innerHTML=data.map(d=>`<tr>
+<td><strong>${d.name}</strong></td>
+<td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td>
+<td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td>
+<td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td>
+<td style="font-size:12px;">${d.location||'-'}</td>
+<td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td>
+<td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td>
+</tr>`).join('');
+}
+
+// COMMODITY PRICES
+const refPrices = [
+{name:'Chrome Ore 44%', price:'USD 160–185', unit:'/MT CIF China', note:'Fastmarkets ref'},
+{name:'Chrome Ore 42%', price:'USD 145–165', unit:'/MT CIF China', note:'Fastmarkets ref'},
+{name:'Manganese Ore 37%', price:'USD 4.50–5.20', unit:'/dmtu CIF China', note:'Fastmarkets ref'},
+{name:'Iron Ore 62% Fe', price:'USD 95–115', unit:'/MT CFR China', note:'SGX ref'},
+{name:'Ferrochrome HC', price:'USD 1.10–1.25', unit:'/lb CIF Europe', note:'CRU ref'},
+{name:'Copper', price:'USD 8,500–9,200', unit:'/MT LME', note:'LME ref'},
+{name:'Cobalt', price:'USD 26,000–30,000', unit:'/MT LME', note:'LME ref'},
+{name:'Lithium Carbonate', price:'USD 12,000–16,000', unit:'/MT', note:'Fastmarkets ref'},
+];
+function renderPriceGrid() {
+document.getElementById('priceGrid').innerHTML = refPrices.map(p=>`
+<div class="price-card">
+<h4>${p.name}</h4>
+<div class="price">${p.price}</div>
+<div class="unit">${p.unit}</div>
+<div style="font-size:11px;color:#aaa;margin-top:4px;">${p.note}</div>
+</div>`).join('');
+}
+let priceNotes = JSON.parse(localStorage.getItem('jericho_prices')) || [];
+function showAddPrice() { document.getElementById('addPriceForm').style.display='block'; }
+function hideAddPrice() { document.getElementById('addPriceForm').style.display='none'; }
+function savePrice() {
+const commodity = document.getElementById('priceCommodity').value;
+if(!commodity) { alert('Please enter a commodity'); return; }
+priceNotes.push({ id: Date.now(), commodity,
+price: document.getElementById('priceValue').value,
+source: document.getElementById('priceSource').value,
+date: document.getElementById('priceDate').value,
+notes: document.getElementById('priceNotes').value
+});
+localStorage.setItem('jericho_prices', JSON.stringify(priceNotes));
+renderPrices(); hideAddPrice();
+['priceCommodity','priceValue','priceSource','priceNotes'].forEach(id=>document.getElementById(id).value='');
+}
+function deletePrice(id) {
+if(confirm('Delete this price note?')) {
+priceNotes=priceNotes.filter(p=>p.id!==id);
+localStorage.setItem('jericho_prices', JSON.stringify(priceNotes));
+renderPrices();
+}
+}
+function renderPrices() {
+const tbody=document.getElementById('pricesBody');
+if(!priceNotes.length){tbody.innerHTML='<tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">No price notes yet.</td></tr>';return;}
+tbody.innerHTML=[...priceNotes].reverse().map(p=>`<tr>
+<td><strong>${p.commodity}</strong></td><td>${p.price||'-'}</td><td>${p.source||'-'}</td>
+<td>${p.date||'-'}</td><td style="font-size:12px;">${p.notes||'-'}</td>
+<td><button class="btn-danger" onclick="deletePrice(${p.id})">Delete</button></td>
+</tr>`).join('');
+}
+
+// RELATIONSHIPS
+let relationships = JSON.parse(localStorage.getItem('jericho_relationships')) || [];
+function showAddRel() { document.getElementById('addRelForm').style.display='block'; }
+function hideAddRel() { document.getElementById('addRelForm').style.display='none'; }
+function saveRel() {
+const from = document.getElementById('relFrom').value;
+const to = document.getElementById('relTo').value;
+if(!from||!to) { alert('Please fill in both parties'); return; }
+relationships.push({ id: Date.now(), from,
+type: document.getElementById('relType').value,
+to,
+strength: document.getElementById('relStrength').value,
+date: document.getElementById('relDate').value,
+commission: document.getElementById('relCommission').value,
+notes: document.getElementById('relNotes').value,
+logged: new Date().toLocaleDateString('en-GB')
+});
+localStorage.setItem('jericho_relationships', JSON.stringify(relationships));
+renderRelationships(); hideAddRel();
+['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteRel(id) {
+if(confirm('Delete this relationship?')) {
+relationships=relationships.filter(r=>r.id!==id);
+localStorage.setItem('jericho_relationships', JSON.stringify(relationships));
+renderRelationships();
+}
+}
+function renderRelationships(q='') {
+const container=document.getElementById('relList');
+let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
+if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No relationships mapped yet.</div>';return;}
+const strColor={'Strong':'#27ae60','Medium':'#e8a020','Weak':'#999','Unknown':'#ccc'};
+container.innerHTML=`<div class="rel-map">${data.map(r=>`
+<div class="rel-entry">
+<div style="flex:1;">
+<span style="font-weight:bold;color:#1a2e4a;">${r.from}</span>
+<span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span>
+<span style="font-weight:bold;color:#1a2e4a;">${r.to}</span>
+<div style="margin-top:4px;">
+<span class="badge" style="background:${strColor[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>
+${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''}
+${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}
+</div>
+${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}
+</div>
+<button class="btn-danger" onclick="deleteRel(${r.id})">✕</button>
+</div>`).join('')}</div>`;
+}
+
 // BACKUP
 function exportData() {
-const data = {
-version: '1.0',
-exportDate: new Date().toISOString(),
-leads, pipeline, contacts, tasks, commissions
-};
-const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+const data = { version:'2.0', exportDate:new Date().toISOString(), leads, pipeline, contacts, tasks, commissions, commsLog, documents, priceNotes, relationships };
+const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
-a.href = url;
-a.download = 'jericho-backup-' + new Date().toISOString().split('T')[0] + '.json';
-a.click();
+a.href=url; a.download='jericho-backup-'+today+'.json'; a.click();
 URL.revokeObjectURL(url);
 }
 function importData() {
-const file = document.getElementById('restoreFile').files[0];
-if(!file) { alert('Please select a backup file first.'); return; }
-if(!confirm('This will replace all current data with the backup. Are you sure?')) return;
-const reader = new FileReader();
-reader.onload = function(e) {
-try {
-const data = JSON.parse(e.target.result);
-if(data.leads) { leads = data.leads; localStorage.setItem('jericho_leads', JSON.stringify(leads)); }
-if(data.pipeline) { pipeline = data.pipeline; localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline)); }
-if(data.contacts) { contacts = data.contacts; localStorage.setItem('jericho_contacts', JSON.stringify(contacts)); }
-if(data.tasks) { tasks = data.tasks; localStorage.setItem('jericho_tasks', JSON.stringify(tasks)); }
-if(data.commissions) { commissions = data.commissions; localStorage.setItem('jericho_commissions', JSON.stringify(commissions)); }
+const file=document.getElementById('restoreFile').files[0];
+if(!file){alert('Please select a backup file first.');return;}
+if(!confirm('This will replace all current data. Are you sure?'))return;
+const reader=new FileReader();
+reader.onload=function(e){
+try{
+const data=JSON.parse(e.target.result);
+if(data.leads){leads=data.leads;localStorage.setItem('jericho_leads',JSON.stringify(leads));}
+if(data.pipeline){pipeline=data.pipeline;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));}
+if(data.contacts){contacts=data.contacts;localStorage.setItem('jericho_contacts',JSON.stringify(contacts));}
+if(data.tasks){tasks=data.tasks;localStorage.setItem('jericho_tasks',JSON.stringify(tasks));}
+if(data.commissions){commissions=data.commissions;localStorage.setItem('jericho_commissions',JSON.stringify(commissions));}
+if(data.commsLog){commsLog=data.commsLog;localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));}
+if(data.documents){documents=data.documents;localStorage.setItem('jericho_documents',JSON.stringify(documents));}
+if(data.priceNotes){priceNotes=data.priceNotes;localStorage.setItem('jericho_prices',JSON.stringify(priceNotes));}
+if(data.relationships){relationships=data.relationships;localStorage.setItem('jericho_relationships',JSON.stringify(relationships));}
 alert('✅ Data restored successfully!');
-updateBackupStats();
-updateDashboard();
-} catch(err) { alert('Error reading backup file. Please check the file and try again.'); }
+updateBackupStats(); updateDashboard();
+}catch(err){alert('Error reading backup file.');}
 };
 reader.readAsText(file);
 }
 function clearAllData() {
-if(!confirm('DELETE ALL DATA? This cannot be undone. Make sure you have a backup!')) return;
-if(!confirm('Are you absolutely sure? All leads, deals, contacts, tasks and commissions will be deleted.')) return;
-leads=[]; pipeline=[]; contacts=[]; tasks=[]; commissions=[];
-['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions'].forEach(k => localStorage.removeItem(k));
+if(!confirm('DELETE ALL DATA? This cannot be undone!'))return;
+if(!confirm('Are you absolutely sure?'))return;
+leads=[];pipeline=[];contacts=[];tasks=[];commissions=[];commsLog=[];documents=[];priceNotes=[];relationships=[];
+['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions','jericho_commslog','jericho_documents','jericho_prices','jericho_relationships'].forEach(k=>localStorage.removeItem(k));
 alert('All data cleared.');
-updateBackupStats();
-updateDashboard();
+updateBackupStats(); updateDashboard();
 }
 function updateBackupStats() {
-document.getElementById('backupLeads').textContent = leads.length;
-document.getElementById('backupDeals').textContent = pipeline.length;
-document.getElementById('backupContacts').textContent = contacts.length;
-document.getElementById('backupTasks').textContent = tasks.length;
-document.getElementById('backupComms').textContent = commissions.length;
+document.getElementById('backupLeads').textContent=leads.length;
+document.getElementById('backupDeals').textContent=pipeline.length;
+document.getElementById('backupContacts').textContent=contacts.length;
+document.getElementById('backupTasks').textContent=tasks.length;
+document.getElementById('backupComms').textContent=commissions.length;
+document.getElementById('backupDocs').textContent=documents.length;
+document.getElementById('backupRels').textContent=relationships.length;
+document.getElementById('backupPrices').textContent=priceNotes.length;
 }
 
 // DASHBOARD
 function updateDashboard() {
-document.getElementById('leadCount').textContent = leads.length;
-document.getElementById('proposalCount').textContent = pipeline.length;
-document.getElementById('statLeads').textContent = leads.length;
-document.getElementById('statDeals').textContent = pipeline.length;
-document.getElementById('statContacts').textContent = contacts.length;
-document.getElementById('statTasks').textContent = tasks.filter(t=>!t.completed).length;
-document.getElementById('statComms').textContent = commissions.length;
-document.getElementById('statDone').textContent = tasks.filter(t=>t.completed).length;
-const overdue = tasks.filter(t => !t.completed && t.due && t.due < today);
-const dueToday = tasks.filter(t => !t.completed && t.due===today);
-document.getElementById('overdueCount').textContent = overdue.length;
-document.getElementById('tasksTodayCount').textContent = dueToday.length;
-const tE = commissions.reduce((s,c)=>s+c.total,0);
-const jE = commissions.reduce((s,c)=>s+c.jerichoAmount,0);
-const tR = commissions.reduce((s,c)=>s+c.received,0);
-document.getElementById('totalExpected').textContent = '$'+tE.toLocaleString();
-document.getElementById('jerichoExpected').textContent = '$'+jE.toLocaleString();
-document.getElementById('totalReceived').textContent = '$'+tR.toLocaleString();
-document.getElementById('totalOutstanding').textContent = '$'+(jE-tR>0?jE-tR:0).toLocaleString();
-const pC = {'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-document.getElementById('dashOverdueBody').innerHTML = overdue.length ?
+document.getElementById('leadCount').textContent=leads.length;
+document.getElementById('proposalCount').textContent=pipeline.length;
+document.getElementById('statLeads').textContent=leads.length;
+document.getElementById('statDeals').textContent=pipeline.length;
+document.getElementById('statContacts').textContent=contacts.length;
+document.getElementById('statTasks').textContent=tasks.filter(t=>!t.completed).length;
+document.getElementById('statComms').textContent=commsLog.length;
+document.getElementById('statDocs').textContent=documents.length;
+const overdue=tasks.filter(t=>!t.completed&&t.due&&t.due<today);
+const dueToday=tasks.filter(t=>!t.completed&&t.due===today);
+document.getElementById('overdueCount').textContent=overdue.length;
+document.getElementById('tasksTodayCount').textContent=dueToday.length;
+const tE=commissions.reduce((s,c)=>s+c.total,0);
+const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+const tR=commissions.reduce((s,c)=>s+c.received,0);
+document.getElementById('totalExpected').textContent='$'+tE.toLocaleString();
+document.getElementById('jerichoExpected').textContent='$'+jE.toLocaleString();
+document.getElementById('totalReceived').textContent='$'+tR.toLocaleString();
+document.getElementById('totalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
+const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+document.getElementById('dashOverdueBody').innerHTML=overdue.length?
 overdue.map(t=>`<tr><td><strong>${t.title}</strong></td>
 <td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
 <td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td>
-<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join('') :
+<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):
 '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
-document.getElementById('dashTodayBody').innerHTML = dueToday.length ?
+document.getElementById('dashTodayBody').innerHTML=dueToday.length?
 dueToday.map(t=>`<tr><td><strong>${t.title}</strong></td>
 <td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
 <td>${t.linked||'-'}</td>
-<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join('') :
+<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):
 '<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
