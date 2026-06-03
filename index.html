@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,6 +11,21 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .header { background: #1a2e4a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
 .header span { font-size: 12px; opacity: 0.7; }
+
+/* TICKER */
+.ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
+.ticker-wrap { overflow: hidden; }
+.ticker-track { display: inline-flex; animation: tickerScroll 80s linear infinite; white-space: nowrap; }
+.ticker-bar:hover .ticker-track { animation-play-state: paused; }
+.ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 13px; border-right: 1px solid #2a3f5a; }
+.ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+.ticker-item .t-price { color: white; font-weight: bold; }
+.ticker-item .t-up { color: #27ae60; font-size: 11px; }
+.ticker-item .t-down { color: #e74c3c; font-size: 11px; }
+.ticker-item .t-flat { color: #aaa; font-size: 11px; }
+.ticker-time { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #0f1e30; padding: 0 8px; font-size: 10px; color: #445; z-index: 2; }
+@keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
 .nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
 .nav button { background: none; border: none; color: #aac4e0; padding: 12px 14px; cursor: pointer; font-size: 13px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .nav button.active, .nav button:hover { color: white; border-bottom: 3px solid #e8a020; }
@@ -30,10 +46,9 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .btn-danger { background: #e74c3c; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .btn-complete { background: #27ae60; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .btn-warning { background: #e8a020; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.btn-info { background: #3498db; color: white; border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 .form-box { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media(max-width:600px) { .form-grid { grid-template-columns: 1fr; } .nav button { padding: 10px 10px; font-size: 12px; } }
+@media(max-width:600px) { .form-grid { grid-template-columns: 1fr; } .nav button { padding: 10px 8px; font-size: 11px; } }
 .form-group label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 4px; }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .form-group textarea { height: 75px; resize: vertical; }
@@ -43,19 +58,10 @@ thead tr { background: #1a2e4a; color: white; }
 th { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
 td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; color: white; display: inline-block; white-space: nowrap; }
-.trust-green { background: #27ae60; }
-.trust-yellow { background: #e8a020; }
-.trust-red { background: #e74c3c; }
-.trust-grey { background: #999; }
-.kyc-yes { background: #27ae60; }
-.kyc-partial { background: #e8a020; }
-.kyc-no { background: #e74c3c; }
-.priority-high { background: #e74c3c; }
-.priority-medium { background: #e8a020; }
-.priority-low { background: #3498db; }
-.pay-received { background: #27ae60; }
-.pay-partial { background: #e8a020; }
-.pay-pending { background: #999; }
+.trust-green { background: #27ae60; } .trust-yellow { background: #e8a020; } .trust-red { background: #e74c3c; } .trust-grey { background: #999; }
+.kyc-yes { background: #27ae60; } .kyc-partial { background: #e8a020; } .kyc-no { background: #e74c3c; }
+.priority-high { background: #e74c3c; } .priority-medium { background: #e8a020; } .priority-low { background: #3498db; }
+.pay-received { background: #27ae60; } .pay-partial { background: #e8a020; } .pay-pending { background: #999; }
 .search-bar { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
 .backup-box { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
 .backup-box h3 { color: #1a2e4a; margin-top: 0; }
@@ -64,322 +70,292 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .stat-item { background: white; border-radius: 6px; padding: 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .stat-item .stat-num { font-size: 24px; font-weight: bold; color: #1a2e4a; }
 .stat-item .stat-label { font-size: 11px; color: #999; margin-top: 3px; }
-.comms-log { background: #f8f9fa; border-radius: 6px; padding: 12px; margin-top: 8px; }
 .comms-entry { background: white; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid #1a2e4a; font-size: 13px; }
-.comms-entry.call { border-left-color: #27ae60; }
-.comms-entry.email { border-left-color: #3498db; }
-.comms-entry.whatsapp { border-left-color: #25d366; }
-.comms-entry.meeting { border-left-color: #9b59b6; }
-.comms-entry.note { border-left-color: #e8a020; }
-.doc-entry { background: white; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid #e8a020; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-.modal-box { background: white; border-radius: 8px; padding: 25px; margin: 40px auto; max-width: 650px; width: 90%; }
-.modal-box h3 { color: #1a2e4a; margin-top: 0; border-bottom: 2px solid #e8a020; padding-bottom: 8px; }
-.price-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-top: 4px solid #1a2e4a; text-align: center; }
-.price-card h4 { margin: 0 0 8px 0; font-size: 13px; color: #666; text-transform: uppercase; }
-.price-card .price { font-size: 22px; font-weight: bold; color: #1a2e4a; }
-.price-card .unit { font-size: 11px; color: #999; margin-top: 3px; }
-.price-card .change-up { color: #27ae60; font-size: 12px; margin-top: 4px; }
-.price-card .change-down { color: #e74c3c; font-size: 12px; margin-top: 4px; }
+.comms-entry.call { border-left-color: #27ae60; } .comms-entry.email { border-left-color: #3498db; }
+.comms-entry.whatsapp { border-left-color: #25d366; } .comms-entry.meeting { border-left-color: #9b59b6; } .comms-entry.note { border-left-color: #e8a020; }
 .rel-map { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
 .rel-entry { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* PRICES */
+.live-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.live-card { background: white; border-radius: 8px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); text-align: center; border-top: 4px solid #1a2e4a; }
+.live-card.currency { border-top-color: #27ae60; }
+.live-card.metal { border-top-color: #e8a020; }
+.live-card.energy { border-top-color: #e74c3c; }
+.live-card h4 { margin: 0 0 6px 0; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.live-card .lc-price { font-size: 20px; font-weight: bold; color: #1a2e4a; margin: 4px 0; }
+.live-card .lc-unit { font-size: 11px; color: #aaa; }
+.live-card .lc-chg { font-size: 12px; margin-top: 4px; }
+.lc-up { color: #27ae60; } .lc-down { color: #e74c3c; } .lc-flat { color: #aaa; }
+.live-card .lc-src { font-size: 10px; color: #ccc; margin-top: 3px; }
+.live-card .lc-err { color: #e74c3c; font-size: 12px; padding: 8px 0; }
+.price-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 18px; }
+.price-bar button { background: #1a2e4a; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+.sec-div { font-size: 14px; font-weight: bold; color: #444; margin: 22px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #ddd; }
 </style>
+
 </head>
 <body>
 
 <div class="header">
-<h1>⚡ JERICHO OPERATIONS CENTER</h1>
-<span id="currentDate"></span>
+  <h1>⚡ JERICHO OPERATIONS CENTER</h1>
+  <span id="currentDate"></span>
+</div>
+
+<!-- TICKER -->
+
+<div class="ticker-bar">
+  <div class="ticker-wrap">
+    <div class="ticker-track" id="tickerTrack">
+      <div class="ticker-item"><span class="t-name">Loading market data...</span><span class="t-price">Click Prices → Refresh</span></div>
+    </div>
+  </div>
+  <div class="ticker-time" id="tickerTime"></div>
 </div>
 
 <div class="nav">
-<button class="active" onclick="showSection('dashboard', this)">Dashboard</button>
-<button onclick="showSection('leads', this)">Leads</button>
-<button onclick="showSection('pipeline', this)">Pipeline</button>
-<button onclick="showSection('contacts', this)">Contacts</button>
-<button onclick="showSection('tasks', this)">Tasks</button>
-<button onclick="showSection('commissions', this)">Commissions</button>
-<button onclick="showSection('commslog', this)">Comms Log</button>
-<button onclick="showSection('documents', this)">Documents</button>
-<button onclick="showSection('prices', this)">Prices</button>
-<button onclick="showSection('relationships', this)">Relationships</button>
-<button onclick="showSection('backup', this)">Backup</button>
+  <button class="active" onclick="showSection('dashboard',this)">Dashboard</button>
+  <button onclick="showSection('leads',this)">Leads</button>
+  <button onclick="showSection('pipeline',this)">Pipeline</button>
+  <button onclick="showSection('contacts',this)">Contacts</button>
+  <button onclick="showSection('tasks',this)">Tasks</button>
+  <button onclick="showSection('commissions',this)">Commissions</button>
+  <button onclick="showSection('commslog',this)">Comms Log</button>
+  <button onclick="showSection('documents',this)">Documents</button>
+  <button onclick="showSection('prices',this)">Prices</button>
+  <button onclick="showSection('relationships',this)">Relationships</button>
+  <button onclick="showSection('backup',this)">Backup</button>
 </div>
 
 <!-- DASHBOARD -->
+
 <div class="content" id="mainContent">
 <div class="section-title">Today's Overview</div>
 <div class="dashboard-grid">
-<div class="card urgent"><h3>Overdue Tasks</h3><div class="number" id="overdueCount">0</div><div class="label">Immediate attention</div></div>
-<div class="card warning"><h3>Due Today</h3><div class="number" id="tasksTodayCount">0</div><div class="label">On today's agenda</div></div>
-<div class="card"><h3>Active Deals</h3><div class="number" id="proposalCount">0</div><div class="label">In pipeline</div></div>
-<div class="card good"><h3>Active Leads</h3><div class="number" id="leadCount">0</div><div class="label">Being tracked</div></div>
+  <div class="card urgent"><h3>Overdue Tasks</h3><div class="number" id="overdueCount">0</div><div class="label">Immediate attention</div></div>
+  <div class="card warning"><h3>Due Today</h3><div class="number" id="tasksTodayCount">0</div><div class="label">On today's agenda</div></div>
+  <div class="card"><h3>Active Deals</h3><div class="number" id="proposalCount">0</div><div class="label">In pipeline</div></div>
+  <div class="card good"><h3>Active Leads</h3><div class="number" id="leadCount">0</div><div class="label">Being tracked</div></div>
 </div>
 <div class="section-title">Commission Overview</div>
 <div class="dashboard-grid">
-<div class="card good"><h3>Total Expected</h3><div class="number small" id="totalExpected">$0</div></div>
-<div class="card good"><h3>Jericho Expected</h3><div class="number small" id="jerichoExpected">$0</div></div>
-<div class="card warning"><h3>Received</h3><div class="number small" id="totalReceived">$0</div></div>
-<div class="card urgent"><h3>Outstanding</h3><div class="number small" id="totalOutstanding">$0</div></div>
+  <div class="card good"><h3>Total Expected</h3><div class="number small" id="totalExpected">$0</div></div>
+  <div class="card good"><h3>Jericho Expected</h3><div class="number small" id="jerichoExpected">$0</div></div>
+  <div class="card warning"><h3>Received</h3><div class="number small" id="totalReceived">$0</div></div>
+  <div class="card urgent"><h3>Outstanding</h3><div class="number small" id="totalOutstanding">$0</div></div>
 </div>
 <div class="section-title">System Summary</div>
 <div class="stats-grid">
-<div class="stat-item"><div class="stat-num" id="statLeads">0</div><div class="stat-label">Leads</div></div>
-<div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
-<div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
-<div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
-<div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Comm Records</div></div>
-<div class="stat-item"><div class="stat-num" id="statDocs">0</div><div class="stat-label">Documents</div></div>
+  <div class="stat-item"><div class="stat-num" id="statLeads">0</div><div class="stat-label">Leads</div></div>
+  <div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
+  <div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
+  <div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
+  <div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Comm Records</div></div>
+  <div class="stat-item"><div class="stat-num" id="statDocs">0</div><div class="stat-label">Documents</div></div>
 </div>
 <div class="section-title">⚠️ Overdue Tasks</div>
-<div class="table-box">
-<table>
-<thead><tr><th>Task</th><th>Priority</th><th>Due Date</th><th>Linked To</th><th>Action</th></tr></thead>
-<tbody id="dashOverdueBody"><tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Task</th><th>Priority</th><th>Due Date</th><th>Linked To</th><th>Action</th></tr></thead>
+  <tbody id="dashOverdueBody"><tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr></tbody>
+</table></div>
 <div class="section-title">📅 Due Today</div>
-<div class="table-box">
-<table>
-<thead><tr><th>Task</th><th>Priority</th><th>Linked To</th><th>Action</th></tr></thead>
-<tbody id="dashTodayBody"><tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Task</th><th>Priority</th><th>Linked To</th><th>Action</th></tr></thead>
+  <tbody id="dashTodayBody"><tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr></tbody>
+</table></div>
 </div>
 
 <!-- LEADS -->
+
 <div id="leads-section" style="display:none;" class="content">
 <div class="section-title">Lead Management</div>
 <button class="btn-primary" onclick="showAddLead()">+ Add New Lead</button>
 <div id="addLeadForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Lead</h3>
 <div class="form-grid">
-<div class="form-group"><label>Full Name *</label><input id="leadName" type="text" placeholder="Name"></div>
-<div class="form-group"><label>Company</label><input id="leadCompany" type="text" placeholder="Company name"></div>
-<div class="form-group"><label>Type</label>
-<select id="leadType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading Company</option><option>Other</option></select></div>
-<div class="form-group"><label>Country</label><input id="leadCountry" type="text" placeholder="Country"></div>
-<div class="form-group"><label>Phone / WhatsApp</label><input id="leadPhone" type="text" placeholder="+1 234 567 890"></div>
-<div class="form-group"><label>Email</label><input id="leadEmail" type="text" placeholder="email@example.com"></div>
-<div class="form-group"><label>Introduced By</label><input id="leadIntroBy" type="text" placeholder="Who introduced this lead?"></div>
-<div class="form-group"><label>Status</label>
-<select id="leadStatus"><option>New</option><option>Contacted</option><option>Qualified</option><option>Opportunity</option><option>Dead</option></select></div>
-<div class="form-group"><label>Follow-up Date</label><input id="leadFollowup" type="date"></div>
-<div class="form-group"><label>Commodity Interest</label><input id="leadCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
+  <div class="form-group"><label>Full Name *</label><input id="leadName" type="text" placeholder="Name"></div>
+  <div class="form-group"><label>Company</label><input id="leadCompany" type="text" placeholder="Company name"></div>
+  <div class="form-group"><label>Type</label><select id="leadType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading Company</option><option>Other</option></select></div>
+  <div class="form-group"><label>Country</label><input id="leadCountry" type="text" placeholder="Country"></div>
+  <div class="form-group"><label>Phone / WhatsApp</label><input id="leadPhone" type="text" placeholder="+1 234 567 890"></div>
+  <div class="form-group"><label>Email</label><input id="leadEmail" type="text" placeholder="email@example.com"></div>
+  <div class="form-group"><label>Introduced By</label><input id="leadIntroBy" type="text" placeholder="Who introduced this lead?"></div>
+  <div class="form-group"><label>Status</label><select id="leadStatus"><option>New</option><option>Contacted</option><option>Qualified</option><option>Opportunity</option><option>Dead</option></select></div>
+  <div class="form-group"><label>Follow-up Date</label><input id="leadFollowup" type="date"></div>
+  <div class="form-group"><label>Commodity Interest</label><input id="leadCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What opportunity?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveLead()">Save Lead</button>
-<button class="btn-cancel" onclick="hideAddLead()">Cancel</button>
+  <button class="btn-success" onclick="saveLead()">Save Lead</button>
+  <button class="btn-cancel" onclick="hideAddLead()">Cancel</button>
 </div>
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search leads..." oninput="renderLeads(this.value)">
-<div class="table-box">
-<table>
-<thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Introduced By</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
-<tbody id="leadsBody"><tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Introduced By</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
+  <tbody id="leadsBody"><tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
+</table></div>
 </div>
 
 <!-- PIPELINE -->
+
 <div id="pipeline-section" style="display:none;" class="content">
 <div class="section-title">Deal Pipeline</div>
 <button class="btn-primary" onclick="showAddDeal()">+ Add New Deal</button>
 <div id="addDealForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Deal</h3>
 <div class="form-grid">
-<div class="form-group"><label>Commodity *</label><input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore"></div>
-<div class="form-group"><label>Broker / Introducer</label><input id="dealBroker" type="text" placeholder="Who introduced this deal?"></div>
-<div class="form-group"><label>Buyer</label><input id="dealBuyer" type="text" placeholder="Buyer name"></div>
-<div class="form-group"><label>Seller</label><input id="dealSeller" type="text" placeholder="Seller name"></div>
-<div class="form-group"><label>Quantity</label><input id="dealQuantity" type="text" placeholder="e.g. 5000"></div>
-<div class="form-group"><label>Unit</label><input id="dealUnit" type="text" placeholder="e.g. MT, DMT"></div>
-<div class="form-group"><label>Price (per unit)</label><input id="dealPrice" type="text" placeholder="e.g. USD 150"></div>
-<div class="form-group"><label>Origin Country</label><input id="dealOrigin" type="text" placeholder="e.g. South Africa"></div>
-<div class="form-group"><label>Stage</label>
-<select id="dealStage"><option>New</option><option>Waiting Documents</option><option>Waiting Financials</option><option>Negotiation</option><option>Final SPA</option><option>Closed Won</option><option>Closed Not Monetized</option><option>Lost</option></select></div>
-<div class="form-group"><label>Trust Level</label>
-<select id="dealTrust"><option>Green</option><option>Yellow</option><option>Red</option></select></div>
+  <div class="form-group"><label>Commodity *</label><input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore"></div>
+  <div class="form-group"><label>Broker / Introducer</label><input id="dealBroker" type="text" placeholder="Who introduced this deal?"></div>
+  <div class="form-group"><label>Buyer</label><input id="dealBuyer" type="text" placeholder="Buyer name"></div>
+  <div class="form-group"><label>Seller</label><input id="dealSeller" type="text" placeholder="Seller name"></div>
+  <div class="form-group"><label>Quantity</label><input id="dealQuantity" type="text" placeholder="e.g. 5000"></div>
+  <div class="form-group"><label>Unit</label><input id="dealUnit" type="text" placeholder="e.g. MT, DMT"></div>
+  <div class="form-group"><label>Price (per unit)</label><input id="dealPrice" type="text" placeholder="e.g. USD 150"></div>
+  <div class="form-group"><label>Origin Country</label><input id="dealOrigin" type="text" placeholder="e.g. South Africa"></div>
+  <div class="form-group"><label>Stage</label><select id="dealStage"><option>New</option><option>Waiting Documents</option><option>Waiting Financials</option><option>Negotiation</option><option>Final SPA</option><option>Closed Won</option><option>Closed Not Monetized</option><option>Lost</option></select></div>
+  <div class="form-group"><label>Trust Level</label><select id="dealTrust"><option>Green</option><option>Yellow</option><option>Red</option></select></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="dealNotes" placeholder="Key details..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveDeal()">Save Deal</button>
-<button class="btn-cancel" onclick="hideAddDeal()">Cancel</button>
+  <button class="btn-success" onclick="saveDeal()">Save Deal</button>
+  <button class="btn-cancel" onclick="hideAddDeal()">Cancel</button>
 </div>
 </div>
-<div style="overflow-x:auto;">
-<div id="pipelineBoard" style="display:flex;gap:12px;padding-bottom:20px;"></div>
-</div>
+<div style="overflow-x:auto;"><div id="pipelineBoard" style="display:flex;gap:12px;padding-bottom:20px;"></div></div>
 </div>
 
 <!-- CONTACTS -->
+
 <div id="contacts-section" style="display:none;" class="content">
 <div class="section-title">Contacts & Broker Management</div>
 <button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
 <div id="addContactForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Contact</h3>
 <div class="form-grid">
-<div class="form-group"><label>Full Name *</label><input id="contactName" type="text" placeholder="Full name"></div>
-<div class="form-group"><label>Company</label><input id="contactCompany" type="text" placeholder="Company name"></div>
-<div class="form-group"><label>Role / Type</label>
-<select id="contactType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading House</option><option>End User</option><option>Other</option></select></div>
-<div class="form-group"><label>Country</label><input id="contactCountry" type="text" placeholder="Country"></div>
-<div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
-<div class="form-group"><label>Email</label><input id="contactEmail" type="text" placeholder="email@example.com"></div>
-<div class="form-group"><label>Commodity Focus</label><input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
-<div class="form-group"><label>Introduced By</label><input id="contactIntroBy" type="text" placeholder="Who introduced this contact?"></div>
-<div class="form-group"><label>Trust Level</label>
-<select id="contactTrust"><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select></div>
-<div class="form-group"><label>KYC Status</label>
-<select id="contactKyc"><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select></div>
-<div class="form-group"><label>Follow-up Date</label><input id="contactFollowup" type="date"></div>
-<div class="form-group"><label>LinkedIn / Website</label><input id="contactLinkedin" type="text" placeholder="URL or handle"></div>
+  <div class="form-group"><label>Full Name *</label><input id="contactName" type="text" placeholder="Full name"></div>
+  <div class="form-group"><label>Company</label><input id="contactCompany" type="text" placeholder="Company name"></div>
+  <div class="form-group"><label>Role / Type</label><select id="contactType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading House</option><option>End User</option><option>Other</option></select></div>
+  <div class="form-group"><label>Country</label><input id="contactCountry" type="text" placeholder="Country"></div>
+  <div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
+  <div class="form-group"><label>Email</label><input id="contactEmail" type="text" placeholder="email@example.com"></div>
+  <div class="form-group"><label>Commodity Focus</label><input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
+  <div class="form-group"><label>Introduced By</label><input id="contactIntroBy" type="text" placeholder="Who introduced this contact?"></div>
+  <div class="form-group"><label>Trust Level</label><select id="contactTrust"><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select></div>
+  <div class="form-group"><label>KYC Status</label><select id="contactKyc"><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select></div>
+  <div class="form-group"><label>Follow-up Date</label><input id="contactFollowup" type="date"></div>
+  <div class="form-group"><label>LinkedIn / Website</label><input id="contactLinkedin" type="text" placeholder="URL or handle"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="contactNotes" placeholder="How did you meet? What do they trade?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveContact()">Save Contact</button>
-<button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
+  <button class="btn-success" onclick="saveContact()">Save Contact</button>
+  <button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
 </div>
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search contacts..." oninput="renderContacts('',this.value)">
 <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-<select id="filterType" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Types</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option>
-</select>
-<select id="filterTrust" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Trust</option><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option>
-</select>
-<select id="filterKyc" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All KYC</option><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option>
-</select>
+  <select id="filterType" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Types</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option></select>
+  <select id="filterTrust" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Trust</option><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select>
+  <select id="filterKyc" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All KYC</option><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select>
 </div>
-<div class="table-box">
-<table>
-<thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Introduced By</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
-<tbody id="contactsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Introduced By</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
+  <tbody id="contactsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
+</table></div>
 </div>
 
 <!-- TASKS -->
+
 <div id="tasks-section" style="display:none;" class="content">
 <div class="section-title">Tasks & Follow-up Center</div>
 <button class="btn-primary" onclick="showAddTask()">+ Add New Task</button>
 <div id="addTaskForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Task</h3>
 <div class="form-grid">
-<div class="form-group"><label>Task Description *</label><input id="taskTitle" type="text" placeholder="e.g. Call broker about pricing"></div>
-<div class="form-group"><label>Priority</label>
-<select id="taskPriority"><option>High</option><option>Medium</option><option>Low</option></select></div>
-<div class="form-group"><label>Due Date</label><input id="taskDue" type="date"></div>
-<div class="form-group"><label>Assigned To</label>
-<select id="taskAssigned"><option>Rafael</option><option>Rodrigo</option><option>Both</option></select></div>
-<div class="form-group"><label>Category</label>
-<select id="taskCategory"><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option></select></div>
-<div class="form-group"><label>Linked To</label><input id="taskLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
+  <div class="form-group"><label>Task Description *</label><input id="taskTitle" type="text" placeholder="e.g. Call broker about pricing"></div>
+  <div class="form-group"><label>Priority</label><select id="taskPriority"><option>High</option><option>Medium</option><option>Low</option></select></div>
+  <div class="form-group"><label>Due Date</label><input id="taskDue" type="date"></div>
+  <div class="form-group"><label>Assigned To</label><select id="taskAssigned"><option>Rafael</option><option>Rodrigo</option><option>Both</option></select></div>
+  <div class="form-group"><label>Category</label><select id="taskCategory"><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option></select></div>
+  <div class="form-group"><label>Linked To</label><input id="taskLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="taskNotes" placeholder="Additional details..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveTask()">Save Task</button>
-<button class="btn-cancel" onclick="hideAddTask()">Cancel</button>
+  <button class="btn-success" onclick="saveTask()">Save Task</button>
+  <button class="btn-cancel" onclick="hideAddTask()">Cancel</button>
 </div>
 </div>
 <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-<select id="filterTaskStatus" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="active">Active Tasks</option><option value="completed">Completed</option><option value="all">All Tasks</option>
-</select>
-<select id="filterTaskPriority" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Priorities</option><option>High</option><option>Medium</option><option>Low</option>
-</select>
-<select id="filterTaskCategory" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Categories</option><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option>
-</select>
+  <select id="filterTaskStatus" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="active">Active Tasks</option><option value="completed">Completed</option><option value="all">All Tasks</option></select>
+  <select id="filterTaskPriority" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Priorities</option><option>High</option><option>Medium</option><option>Low</option></select>
+  <select id="filterTaskCategory" onchange="renderTasks()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Categories</option><option>Call</option><option>Email</option><option>Document</option><option>Follow-up</option><option>Review</option><option>Meeting</option><option>KYC</option><option>Contract</option><option>Logistics</option><option>Other</option></select>
 </div>
-<div id="overdueTasksBox" style="margin-bottom:20px;">
-<div style="font-size:15px;font-weight:bold;color:#e74c3c;margin-bottom:8px;">🔴 Overdue</div>
-<div id="overdueTasksList"></div>
-</div>
-<div id="todayTasksBox" style="margin-bottom:20px;">
-<div style="font-size:15px;font-weight:bold;color:#e8a020;margin-bottom:8px;">🟡 Due Today</div>
-<div id="todayTasksList"></div>
-</div>
-<div id="upcomingTasksBox" style="margin-bottom:20px;">
-<div style="font-size:15px;font-weight:bold;color:#27ae60;margin-bottom:8px;">🟢 Upcoming</div>
-<div id="upcomingTasksList"></div>
-</div>
-<div id="completedTasksBox" style="display:none;margin-bottom:20px;">
-<div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:8px;">✅ Completed</div>
-<div id="completedTasksList"></div>
-</div>
+<div id="overdueTasksBox" style="margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#e74c3c;margin-bottom:8px;">🔴 Overdue</div><div id="overdueTasksList"></div></div>
+<div id="todayTasksBox" style="margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#e8a020;margin-bottom:8px;">🟡 Due Today</div><div id="todayTasksList"></div></div>
+<div id="upcomingTasksBox" style="margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#27ae60;margin-bottom:8px;">🟢 Upcoming</div><div id="upcomingTasksList"></div></div>
+<div id="completedTasksBox" style="display:none;margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:8px;">✅ Completed</div><div id="completedTasksList"></div></div>
 </div>
 
 <!-- COMMISSIONS -->
+
 <div id="commissions-section" style="display:none;" class="content">
 <div class="section-title">Commission Tracking</div>
 <button class="btn-primary" onclick="showAddCommission()">+ Add Commission Record</button>
 <div id="addCommissionForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Commission Record</h3>
 <div class="form-grid">
-<div class="form-group"><label>Deal / Commodity *</label><input id="commDeal" type="text" placeholder="e.g. Chrome Ore - Agrisa"></div>
-<div class="form-group"><label>Currency</label>
-<select id="commCurrency"><option>USD</option><option>EUR</option><option>ZAR</option><option>GBP</option></select></div>
-<div class="form-group"><label>Total Commission Expected</label><input id="commTotal" type="number" placeholder="0.00"></div>
-<div class="form-group"><label>Jericho Share (%)</label><input id="commJerichoPercent" type="number" placeholder="e.g. 40"></div>
-<div class="form-group"><label>Jericho Amount</label><input id="commJerichoAmount" type="number" placeholder="0.00"></div>
-<div class="form-group"><label>Broker / Partner</label><input id="commBroker" type="text" placeholder="Broker or partner name"></div>
-<div class="form-group"><label>Broker Share (%)</label><input id="commBrokerPercent" type="number" placeholder="e.g. 40"></div>
-<div class="form-group"><label>Broker Amount</label><input id="commBrokerAmount" type="number" placeholder="0.00"></div>
-<div class="form-group"><label>Payment Status</label>
-<select id="commStatus"><option>Pending</option><option>Partial</option><option>Received</option></select></div>
-<div class="form-group"><label>Amount Received</label><input id="commReceived" type="number" placeholder="0.00"></div>
-<div class="form-group"><label>Expected Payment Date</label><input id="commExpectedDate" type="date"></div>
-<div class="form-group"><label>Actual Payment Date</label><input id="commActualDate" type="date"></div>
+  <div class="form-group"><label>Deal / Commodity *</label><input id="commDeal" type="text" placeholder="e.g. Chrome Ore - Agrisa"></div>
+  <div class="form-group"><label>Currency</label><select id="commCurrency"><option>USD</option><option>EUR</option><option>ZAR</option><option>GBP</option></select></div>
+  <div class="form-group"><label>Total Commission Expected</label><input id="commTotal" type="number" placeholder="0.00"></div>
+  <div class="form-group"><label>Jericho Share (%)</label><input id="commJerichoPercent" type="number" placeholder="e.g. 40"></div>
+  <div class="form-group"><label>Jericho Amount</label><input id="commJerichoAmount" type="number" placeholder="0.00"></div>
+  <div class="form-group"><label>Broker / Partner</label><input id="commBroker" type="text" placeholder="Broker or partner name"></div>
+  <div class="form-group"><label>Broker Share (%)</label><input id="commBrokerPercent" type="number" placeholder="e.g. 40"></div>
+  <div class="form-group"><label>Broker Amount</label><input id="commBrokerAmount" type="number" placeholder="0.00"></div>
+  <div class="form-group"><label>Payment Status</label><select id="commStatus"><option>Pending</option><option>Partial</option><option>Received</option></select></div>
+  <div class="form-group"><label>Amount Received</label><input id="commReceived" type="number" placeholder="0.00"></div>
+  <div class="form-group"><label>Expected Payment Date</label><input id="commExpectedDate" type="date"></div>
+  <div class="form-group"><label>Actual Payment Date</label><input id="commActualDate" type="date"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="commNotes" placeholder="Payment terms, conditions..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveCommission()">Save Record</button>
-<button class="btn-cancel" onclick="hideAddCommission()">Cancel</button>
+  <button class="btn-success" onclick="saveCommission()">Save Record</button>
+  <button class="btn-cancel" onclick="hideAddCommission()">Cancel</button>
 </div>
 </div>
 <div class="dashboard-grid" style="margin-bottom:20px;">
-<div class="card good"><h3>Total Expected</h3><div class="number small" id="commTotalExpected">$0</div></div>
-<div class="card good"><h3>Jericho Expected</h3><div class="number small" id="commJerichoTotal">$0</div></div>
-<div class="card warning"><h3>Total Received</h3><div class="number small" id="commTotalReceived">$0</div></div>
-<div class="card urgent"><h3>Outstanding</h3><div class="number small" id="commTotalOutstanding">$0</div></div>
+  <div class="card good"><h3>Total Expected</h3><div class="number small" id="commTotalExpected">$0</div></div>
+  <div class="card good"><h3>Jericho Expected</h3><div class="number small" id="commJerichoTotal">$0</div></div>
+  <div class="card warning"><h3>Total Received</h3><div class="number small" id="commTotalReceived">$0</div></div>
+  <div class="card urgent"><h3>Outstanding</h3><div class="number small" id="commTotalOutstanding">$0</div></div>
 </div>
-<div class="table-box">
-<table>
-<thead><tr><th>Deal</th><th>Currency</th><th>Total</th><th>Jericho</th><th>Broker</th><th>Broker Share</th><th>Status</th><th>Received</th><th>Exp. Date</th><th>Action</th></tr></thead>
-<tbody id="commissionsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Deal</th><th>Currency</th><th>Total</th><th>Jericho</th><th>Broker</th><th>Broker Share</th><th>Status</th><th>Received</th><th>Exp. Date</th><th>Action</th></tr></thead>
+  <tbody id="commissionsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr></tbody>
+</table></div>
 </div>
 
-<!-- COMMUNICATIONS LOG -->
+<!-- COMMS LOG -->
+
 <div id="commslog-section" style="display:none;" class="content">
 <div class="section-title">Communication History</div>
 <button class="btn-primary" onclick="showAddComm()">+ Log Communication</button>
 <div id="addCommForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">Log Communication</h3>
 <div class="form-grid">
-<div class="form-group"><label>Contact Name *</label><input id="commLogContact" type="text" placeholder="Who did you communicate with?"></div>
-<div class="form-group"><label>Type</label>
-<select id="commLogType"><option>Call</option><option>Email</option><option>WhatsApp</option><option>Meeting</option><option>Note</option></select></div>
-<div class="form-group"><label>Date</label><input id="commLogDate" type="date"></div>
-<div class="form-group"><label>Direction</label>
-<select id="commLogDirection"><option>Outgoing</option><option>Incoming</option></select></div>
-<div class="form-group"><label>Linked Deal / Lead</label><input id="commLogLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
-<div class="form-group"><label>Follow-up Required</label>
-<select id="commLogFollowup"><option>No</option><option>Yes</option></select></div>
-<div class="form-group"><label>Follow-up Date</label><input id="commLogFollowupDate" type="date"></div>
-<div class="form-group"><label>Outcome</label>
-<select id="commLogOutcome"><option>Positive</option><option>Neutral</option><option>Negative</option><option>Waiting</option></select></div>
+  <div class="form-group"><label>Contact Name *</label><input id="commLogContact" type="text" placeholder="Who did you communicate with?"></div>
+  <div class="form-group"><label>Type</label><select id="commLogType"><option>Call</option><option>Email</option><option>WhatsApp</option><option>Meeting</option><option>Note</option></select></div>
+  <div class="form-group"><label>Date</label><input id="commLogDate" type="date"></div>
+  <div class="form-group"><label>Direction</label><select id="commLogDirection"><option>Outgoing</option><option>Incoming</option></select></div>
+  <div class="form-group"><label>Linked Deal / Lead</label><input id="commLogLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
+  <div class="form-group"><label>Follow-up Required</label><select id="commLogFollowup"><option>No</option><option>Yes</option></select></div>
+  <div class="form-group"><label>Follow-up Date</label><input id="commLogFollowupDate" type="date"></div>
+  <div class="form-group"><label>Outcome</label><select id="commLogOutcome"><option>Positive</option><option>Neutral</option><option>Negative</option><option>Waiting</option></select></div>
 </div>
-<div class="form-group" style="margin-top:12px;"><label>Summary *</label><textarea id="commLogSummary" placeholder="What was discussed? What was agreed? What happens next?"></textarea></div>
+<div class="form-group" style="margin-top:12px;"><label>Summary *</label><textarea id="commLogSummary" placeholder="What was discussed? What was agreed?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveComm()">Save Log</button>
-<button class="btn-cancel" onclick="hideAddComm()">Cancel</button>
+  <button class="btn-success" onclick="saveComm()">Save Log</button>
+  <button class="btn-cancel" onclick="hideAddComm()">Cancel</button>
 </div>
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search communications..." oninput="renderComms(this.value)">
@@ -387,98 +363,108 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- DOCUMENTS -->
+
 <div id="documents-section" style="display:none;" class="content">
 <div class="section-title">Document Management</div>
 <button class="btn-primary" onclick="showAddDoc()">+ Add Document Record</button>
 <div id="addDocForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Document Record</h3>
 <div class="form-grid">
-<div class="form-group"><label>Document Name *</label><input id="docName" type="text" placeholder="e.g. Chrome Ore SPA - Agrisa"></div>
-<div class="form-group"><label>Document Type</label>
-<select id="docType"><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Company Registration</option><option>Proof of Funds</option><option>Proof of Product</option><option>Pricing Sheet</option><option>Commission Agreement</option><option>Contract</option><option>Email</option><option>WhatsApp Screenshot</option><option>Other</option></select></div>
-<div class="form-group"><label>Related Party</label><input id="docParty" type="text" placeholder="e.g. Agrisa, Nobela Group"></div>
-<div class="form-group"><label>Linked Deal / Lead</label><input id="docLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
-<div class="form-group"><label>Document Date</label><input id="docDate" type="date"></div>
-<div class="form-group"><label>Status</label>
-<select id="docStatus"><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option></select></div>
-<div class="form-group"><label>Storage Location</label><input id="docLocation" type="text" placeholder="e.g. Google Drive > Chrome Ore Folder"></div>
-<div class="form-group"><label>Expiry Date</label><input id="docExpiry" type="date"></div>
+  <div class="form-group"><label>Document Name *</label><input id="docName" type="text" placeholder="e.g. Chrome Ore SPA - Agrisa"></div>
+  <div class="form-group"><label>Document Type</label><select id="docType"><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Company Registration</option><option>Proof of Funds</option><option>Proof of Product</option><option>Pricing Sheet</option><option>Commission Agreement</option><option>Contract</option><option>Email</option><option>WhatsApp Screenshot</option><option>Other</option></select></div>
+  <div class="form-group"><label>Related Party</label><input id="docParty" type="text" placeholder="e.g. Agrisa, Nobela Group"></div>
+  <div class="form-group"><label>Linked Deal / Lead</label><input id="docLinked" type="text" placeholder="e.g. Chrome Ore Deal"></div>
+  <div class="form-group"><label>Document Date</label><input id="docDate" type="date"></div>
+  <div class="form-group"><label>Status</label><select id="docStatus"><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option></select></div>
+  <div class="form-group"><label>Storage Location</label><input id="docLocation" type="text" placeholder="e.g. Google Drive > Chrome Ore Folder"></div>
+  <div class="form-group"><label>Expiry Date</label><input id="docExpiry" type="date"></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="docNotes" placeholder="Key details about this document..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-<button class="btn-success" onclick="saveDoc()">Save Document</button>
-<button class="btn-cancel" onclick="hideAddDoc()">Cancel</button>
+  <button class="btn-success" onclick="saveDoc()">Save Document</button>
+  <button class="btn-cancel" onclick="hideAddDoc()">Cancel</button>
 </div>
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search documents..." oninput="renderDocs(this.value)">
 <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-<select id="filterDocType" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Types</option><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Commission Agreement</option><option>Contract</option><option>Other</option>
-</select>
-<select id="filterDocStatus" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-<option value="">All Status</option><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option>
-</select>
+  <select id="filterDocType" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Types</option><option>SPA</option><option>LOI</option><option>ICPO</option><option>FCO</option><option>SCO</option><option>KYC</option><option>Passport</option><option>Commission Agreement</option><option>Contract</option><option>Other</option></select>
+  <select id="filterDocStatus" onchange="renderDocs()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Status</option><option>Received</option><option>Sent</option><option>Pending</option><option>Signed</option><option>Expired</option></select>
 </div>
-<div class="table-box">
-<table>
-<thead><tr><th>Document Name</th><th>Type</th><th>Related Party</th><th>Linked To</th><th>Date</th><th>Status</th><th>Location</th><th>Expiry</th><th>Action</th></tr></thead>
-<tbody id="docsBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents yet.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Document Name</th><th>Type</th><th>Related Party</th><th>Linked To</th><th>Date</th><th>Status</th><th>Location</th><th>Expiry</th><th>Action</th></tr></thead>
+  <tbody id="docsBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents yet.</td></tr></tbody>
+</table></div>
 </div>
 
-<!-- COMMODITY PRICES -->
+<!-- PRICES -->
+
 <div id="prices-section" style="display:none;" class="content">
-<div class="section-title">Commodity Price Intelligence</div>
-<div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:12px;margin-bottom:20px;font-size:13px;color:#856404;">
-⚠️ Prices below are indicative reference ranges based on recent market data. Always verify with LME, Fastmarkets, or your broker before quoting.
+<div class="section-title">Market Intelligence — Live Prices</div>
+<div class="price-bar">
+  <button onclick="fetchAllPrices(true)">🔄 Refresh All Prices</button>
+  <span id="priceMsg" style="font-size:12px;color:#888;">Click Refresh to load latest prices.</span>
+  <span id="priceTime" style="margin-left:auto;font-size:11px;color:#aaa;"></span>
 </div>
-<div class="dashboard-grid" id="priceGrid"></div>
-<div class="section-title" style="margin-top:30px;">Manual Price Notes</div>
-<button class="btn-primary" onclick="showAddPrice()">+ Add Price Note</button>
-<div id="addPriceForm" class="form-box">
-<h3 style="color:#1a2e4a;margin-top:0;">New Price Note</h3>
+<div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#856404;">
+  ⚠️ Gold &amp; Silver: GoldPriceZ (up to 60 req/hour). Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium: manual entry only — no free public API exists for these.
+</div>
+
+<div class="sec-div">💱 Currencies — Live</div>
+<div class="live-grid" id="gridCurrency"></div>
+
+<div class="sec-div">🥇 Precious &amp; Base Metals</div>
+<div class="live-grid" id="gridMetals"></div>
+
+<div class="sec-div">🛢️ Energy — Crude Oil</div>
+<div class="live-grid" id="gridEnergy"></div>
+
+<div class="sec-div">📋 Broker Quotes — Chrome Ore · Manganese · Ferrochrome · Lithium · Iron Ore</div>
+<div style="background:#f0f4f8;border-radius:6px;padding:10px 14px;margin-bottom:15px;font-size:12px;color:#555;">No free API exists for these. Enter quotes from your brokers, Fastmarkets references, or CRU reports. All entries stored with source, grade, and date.</div>
+<button class="btn-primary" onclick="showAddQuote()">+ Add Broker Quote</button>
+<div id="addQuoteForm" class="form-box">
+<h3 style="color:#1a2e4a;margin-top:0;">New Broker Quote / Manual Price</h3>
 <div class="form-grid">
-<div class="form-group"><label>Commodity *</label><input id="priceCommodity" type="text" placeholder="e.g. Chrome Ore 44%"></div>
-<div class="form-group"><label>Price</label><input id="priceValue" type="text" placeholder="e.g. USD 180/MT"></div>
-<div class="form-group"><label>Source</label><input id="priceSource" type="text" placeholder="e.g. LME, Broker, Fastmarkets"></div>
-<div class="form-group"><label>Date</label><input id="priceDate" type="date"></div>
+  <div class="form-group"><label>Commodity *</label>
+  <select id="qCommodity"><option value="">Select...</option><option>Chrome Ore 38% Cr2O3</option><option>Chrome Ore 40% Cr2O3</option><option>Chrome Ore 42% Cr2O3</option><option>Chrome Ore 44% Cr2O3</option><option>Chrome Ore 46% Cr2O3</option><option>Manganese Ore 36% Mn</option><option>Manganese Ore 38% Mn</option><option>Manganese Ore 42% Mn</option><option>Manganese Ore 44% Mn</option><option>Ferrochrome HC</option><option>Ferrochrome MC</option><option>Ferrochrome LC</option><option>Lithium Carbonate 99.5%</option><option>Lithium Hydroxide</option><option>Iron Ore 62% Fe CFR China</option><option>Other</option></select></div>
+  <div class="form-group"><label>Price</label><input id="qPrice" type="text" placeholder="e.g. USD 185/MT"></div>
+  <div class="form-group"><label>Origin</label><input id="qOrigin" type="text" placeholder="e.g. South Africa, Zimbabwe"></div>
+  <div class="form-group"><label>Delivery Terms</label><input id="qTerms" type="text" placeholder="e.g. FOB, CIF China"></div>
+  <div class="form-group"><label>Quantity</label><input id="qQty" type="text" placeholder="e.g. 5,000 MT"></div>
+  <div class="form-group"><label>Source</label><input id="qSource" type="text" placeholder="e.g. Broker name, Fastmarkets, CRU"></div>
+  <div class="form-group"><label>Date</label><input id="qDate" type="date"></div>
+  <div class="form-group"><label>Direction</label><select id="qDirection"><option>Offer (seller quote)</option><option>Bid (buyer quote)</option><option>Reference / Market</option></select></div>
 </div>
-<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="priceNotes" placeholder="Context, basis, incoterms..."></textarea></div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="qNotes" placeholder="Grade details, basis, conditions, who provided this..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;">
-<button class="btn-success" onclick="savePrice()">Save Note</button>
-<button class="btn-cancel" onclick="hideAddPrice()">Cancel</button>
+  <button class="btn-success" onclick="saveQuote()">Save Quote</button>
+  <button class="btn-cancel" onclick="hideAddQuote()">Cancel</button>
 </div>
 </div>
-<div class="table-box">
-<table>
-<thead><tr><th>Commodity</th><th>Price</th><th>Source</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead>
-<tbody id="pricesBody"><tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">No price notes yet.</td></tr></tbody>
-</table>
-</div>
+<div class="table-box"><table>
+  <thead><tr><th>Commodity</th><th>Price</th><th>Origin</th><th>Terms</th><th>Direction</th><th>Source</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead>
+  <tbody id="quotesBody"><tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr></tbody>
+</table></div>
 </div>
 
 <!-- RELATIONSHIPS -->
+
 <div id="relationships-section" style="display:none;" class="content">
 <div class="section-title">Relationship Mapping</div>
 <button class="btn-primary" onclick="showAddRel()">+ Add Relationship</button>
 <div id="addRelForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Relationship</h3>
 <div class="form-grid">
-<div class="form-group"><label>Person / Company *</label><input id="relFrom" type="text" placeholder="e.g. John Smith"></div>
-<div class="form-group"><label>Relationship Type</label>
-<select id="relType"><option>Introduced</option><option>Works With</option><option>Referred By</option><option>Partner Of</option><option>Competes With</option><option>Connected To</option></select></div>
-<div class="form-group"><label>Connected To *</label><input id="relTo" type="text" placeholder="e.g. Agrisa, Chrome Deal"></div>
-<div class="form-group"><label>Strength</label>
-<select id="relStrength"><option>Strong</option><option>Medium</option><option>Weak</option><option>Unknown</option></select></div>
-<div class="form-group"><label>Date Established</label><input id="relDate" type="date"></div>
-<div class="form-group"><label>Commission Entitled</label>
-<select id="relCommission"><option>Yes</option><option>No</option><option>TBD</option></select></div>
+  <div class="form-group"><label>Person / Company *</label><input id="relFrom" type="text" placeholder="e.g. John Smith"></div>
+  <div class="form-group"><label>Relationship Type</label><select id="relType"><option>Introduced</option><option>Works With</option><option>Referred By</option><option>Partner Of</option><option>Competes With</option><option>Connected To</option></select></div>
+  <div class="form-group"><label>Connected To *</label><input id="relTo" type="text" placeholder="e.g. Agrisa, Chrome Deal"></div>
+  <div class="form-group"><label>Strength</label><select id="relStrength"><option>Strong</option><option>Medium</option><option>Weak</option><option>Unknown</option></select></div>
+  <div class="form-group"><label>Date Established</label><input id="relDate" type="date"></div>
+  <div class="form-group"><label>Commission Entitled</label><select id="relCommission"><option>Yes</option><option>No</option><option>TBD</option></select></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="relNotes" placeholder="Context about this relationship..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;">
-<button class="btn-success" onclick="saveRel()">Save Relationship</button>
-<button class="btn-cancel" onclick="hideAddRel()">Cancel</button>
+  <button class="btn-success" onclick="saveRel()">Save Relationship</button>
+  <button class="btn-cancel" onclick="hideAddRel()">Cancel</button>
 </div>
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search relationships..." oninput="renderRelationships(this.value)">
@@ -486,662 +472,654 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- BACKUP -->
+
 <div id="backup-section" style="display:none;" class="content">
 <div class="section-title">Data Backup & Restore</div>
 <div class="backup-box">
-<h3>📥 Export Your Data</h3>
-<p>Download all your data as a backup file. Store it on Google Drive or email it to yourself. Do this regularly.</p>
-<button class="btn-success" onclick="exportData()">⬇ Download Backup File</button>
+  <h3>📥 Export Your Data</h3>
+  <p>Download all your data as a backup file. Do this after every major session.</p>
+  <button class="btn-success" onclick="exportData()">⬇ Download Backup File</button>
 </div>
 <div class="backup-box">
-<h3>📤 Restore From Backup</h3>
-<p>Upload a previously saved backup file to restore all your data. <strong>Warning:</strong> this replaces current data.</p>
-<input type="file" id="restoreFile" accept=".json" style="margin-bottom:12px;display:block;">
-<button class="btn-warning" onclick="importData()">⬆ Restore From File</button>
+  <h3>📤 Restore From Backup</h3>
+  <p>Upload a previously saved backup file. <strong>Warning:</strong> this replaces current data.</p>
+  <input type="file" id="restoreFile" accept=".json" style="margin-bottom:12px;display:block;">
+  <button class="btn-warning" onclick="importData()">⬆ Restore From File</button>
 </div>
 <div class="backup-box">
-<h3>📊 Current Data Summary</h3>
-<div class="stats-grid">
-<div class="stat-item"><div class="stat-num" id="backupLeads">0</div><div class="stat-label">Leads</div></div>
-<div class="stat-item"><div class="stat-num" id="backupDeals">0</div><div class="stat-label">Deals</div></div>
-<div class="stat-item"><div class="stat-num" id="backupContacts">0</div><div class="stat-label">Contacts</div></div>
-<div class="stat-item"><div class="stat-num" id="backupTasks">0</div><div class="stat-label">Tasks</div></div>
-<div class="stat-item"><div class="stat-num" id="backupComms">0</div><div class="stat-label">Comm Records</div></div>
-<div class="stat-item"><div class="stat-num" id="backupDocs">0</div><div class="stat-label">Documents</div></div>
-<div class="stat-item"><div class="stat-num" id="backupRels">0</div><div class="stat-label">Relationships</div></div>
-<div class="stat-item"><div class="stat-num" id="backupPrices">0</div><div class="stat-label">Price Notes</div></div>
-</div>
+  <h3>📊 Current Data Summary</h3>
+  <div class="stats-grid">
+    <div class="stat-item"><div class="stat-num" id="bkLeads">0</div><div class="stat-label">Leads</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkDeals">0</div><div class="stat-label">Deals</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkContacts">0</div><div class="stat-label">Contacts</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkTasks">0</div><div class="stat-label">Tasks</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkComms">0</div><div class="stat-label">Comm Records</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkDocs">0</div><div class="stat-label">Documents</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkRels">0</div><div class="stat-label">Relationships</div></div>
+    <div class="stat-item"><div class="stat-num" id="bkQuotes">0</div><div class="stat-label">Broker Quotes</div></div>
+  </div>
 </div>
 <div class="backup-box" style="border-left:4px solid #e74c3c;">
-<h3 style="color:#e74c3c;">🗑 Clear All Data</h3>
-<p>Permanently delete all data. Make sure you have a backup first.</p>
-<button class="btn-danger" onclick="clearAllData()" style="padding:11px 20px;font-size:14px;">Clear All Data</button>
+  <h3 style="color:#e74c3c;">🗑 Clear All Data</h3>
+  <p>Permanently delete all data. Make sure you have a backup first.</p>
+  <button class="btn-danger" onclick="clearAllData()" style="padding:11px 20px;font-size:14px;">Clear All Data</button>
 </div>
 </div>
 
 <script>
-document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-const today = new Date().toISOString().split('T')[0];
+// ============================================================
+// API KEYS
+// ============================================================
+const KEY_GOLDPRICEZ = 'a0287c10549de17fca6c786e1350e1e7a0287c10';
+const KEY_EIA        = '1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
+const KEY_NINJAS     = '034KYsidNnvQQ4or7aVvNLHr31IFKdXNjX8nw8LN';
+const KEY_METALS_DEV = 'UKWP4CPKJC1AR0PNFDUJ503PNFDUJ'; // backup only
 
-// Request notification permission
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const today = new Date().toISOString().split('T')[0];
 if('Notification' in window) Notification.requestPermission();
 
-function showSection(section, btn) {
-document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-btn.classList.add('active');
-['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'].forEach(id => {
-document.getElementById(id).style.display = 'none';
-});
-const map = {
-'dashboard':'mainContent','leads':'leads-section','pipeline':'pipeline-section',
-'contacts':'contacts-section','tasks':'tasks-section','commissions':'commissions-section',
-'commslog':'commslog-section','documents':'documents-section','prices':'prices-section',
-'relationships':'relationships-section','backup':'backup-section'
-};
-document.getElementById(map[section]).style.display = 'block';
-if(section==='dashboard') updateDashboard();
-else if(section==='leads') renderLeads();
-else if(section==='pipeline') renderPipeline();
-else if(section==='contacts') renderContacts();
-else if(section==='tasks') renderTasks();
-else if(section==='commissions') renderCommissions();
-else if(section==='commslog') renderComms();
-else if(section==='documents') renderDocs();
-else if(section==='prices') { renderPriceGrid(); renderPrices(); }
-else if(section==='relationships') renderRelationships();
-else if(section==='backup') updateBackupStats();
+// ============================================================
+// PRICE CACHE
+// ============================================================
+let priceCache = JSON.parse(localStorage.getItem('jericho_price_cache')) || {};
+function saveCache(){ localStorage.setItem('jericho_price_cache', JSON.stringify(priceCache)); }
+function isStale(key, maxHours){
+  if(!priceCache[key] || !priceCache[key].ts) return true;
+  return (Date.now() - priceCache[key].ts) > maxHours * 3600000;
 }
 
+// ============================================================
+// CARD HELPERS
+// ============================================================
+function makeCard(id, label, cssClass){
+  return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}">
+    <h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div>
+  </div>`;
+}
+function fillCard(id, price, unit, change, pct, source, ts){
+  const el = document.getElementById('card_'+id);
+  if(!el) return;
+  const label = el.dataset.label || id;
+  const dir = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+  const arrow = dir==='up'?'▲':dir==='down'?'▼':'—';
+  const chg = (change!==null && change!==undefined) ? `<span class="lc-${dir}">${arrow} ${Math.abs(change).toFixed(2)}${pct?' ('+Math.abs(pct).toFixed(2)+'%)':''}</span>` : '';
+  const time = ts ? new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+  el.innerHTML = `<h4>${label}</h4><div class="lc-price">${price}</div><div class="lc-unit">${unit}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
+}
+function errCard(id, msg){
+  const el = document.getElementById('card_'+id);
+  if(!el) return;
+  const label = el.dataset.label || id;
+  el.innerHTML = `<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;
+}
+function renderPriceGrids(){
+  document.getElementById('gridCurrency').innerHTML =
+    makeCard('EURUSD','EUR / USD','currency') +
+    makeCard('USDZAR','USD / ZAR','currency') +
+    makeCard('EURZAR','EUR / ZAR','currency');
+  document.getElementById('gridMetals').innerHTML =
+    makeCard('GOLD','Gold (XAU)','metal') +
+    makeCard('SILVER','Silver (XAG)','metal') +
+    makeCard('COPPER','Copper','metal');
+  document.getElementById('gridEnergy').innerHTML =
+    makeCard('BRENT','Brent Crude','energy') +
+    makeCard('WTI','WTI Crude','energy');
+}
+
+// ============================================================
+// FETCH CURRENCIES — ExchangeRate-API (free, no key)
+// ============================================================
+async function fetchCurrencies(force){
+  if(!force && !isStale('cur',1)){
+    applyCur(priceCache['cur'].d); return;
+  }
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const j = await r.json();
+    if(j && j.rates){
+      priceCache['cur'] = {d:{EUR:j.rates.EUR, ZAR:j.rates.ZAR}, ts:Date.now()};
+      saveCache(); applyCur(priceCache['cur'].d);
+    }
+  } catch(e){ errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
+}
+function applyCur(d){
+  const ts = priceCache['cur']?.ts || Date.now();
+  if(d.EUR){
+    const eurusd=(1/d.EUR).toFixed(4);
+    fillCard('EURUSD',eurusd,'1 EUR in USD',null,null,'ExchangeRate-API',ts);
+  }
+  if(d.ZAR){
+    fillCard('USDZAR',d.ZAR.toFixed(2),'1 USD in ZAR',null,null,'ExchangeRate-API',ts);
+    if(d.EUR){ fillCard('EURZAR',(d.ZAR/d.EUR).toFixed(2),'1 EUR in ZAR',null,null,'ExchangeRate-API',ts); }
+  }
+}
+
+// ============================================================
+// FETCH GOLD & SILVER — GoldPriceZ (~44,000 req/month free)
+// ============================================================
+async function fetchMetals(force){
+  if(!force && !isStale('metals',4)){
+    applyMetals(priceCache['metals'].d); return;
+  }
+  try {
+    const r = await fetch(`https://goldpricez.com/api/rates/currency/usd`, {
+      headers: { 'x-access-token': KEY_GOLDPRICEZ }
+    });
+    const j = await r.json();
+    if(j && (j.gold_price_usd || j.gold || j['XAU'])){
+      priceCache['metals'] = {d:j, ts:Date.now()};
+      saveCache(); applyMetals(j);
+    } else {
+      // Fallback to Metals.dev (25/month backup)
+      await fetchMetalsFallback();
+    }
+  } catch(e){ await fetchMetalsFallback(); }
+}
+async function fetchMetalsFallback(){
+  try {
+    const r = await fetch(`https://api.metals.dev/v1/latest?api_key=${KEY_METALS_DEV}&currency=USD&unit=troy_oz`);
+    const j = await r.json();
+    if(j && j.metals){
+      priceCache['metals'] = {d:{_fallback:true, gold:j.metals.gold, silver:j.metals.silver, copper:j.metals.copper}, ts:Date.now()};
+      saveCache(); applyMetals(priceCache['metals'].d);
+    } else { errCard('GOLD','No data'); errCard('SILVER','No data'); errCard('COPPER','No data'); }
+  } catch(e){ errCard('GOLD','API error'); errCard('SILVER','API error'); errCard('COPPER','API error'); }
+}
+function applyMetals(d){
+  const ts = priceCache['metals']?.ts || Date.now();
+  const src = d._fallback ? 'Metals.Dev (backup)' : 'GoldPriceZ';
+  // GoldPriceZ possible keys
+  const goldVal = d.gold_price_usd || d.gold_price || d.gold || d['XAU'] || d['gold'];
+  const silverVal = d.silver_price_usd || d.silver_price || d.silver || d['XAG'] || d['silver'];
+  const copperVal = d.copper_price_usd || d.copper_price || d.copper || d['copper'];
+  if(goldVal){ fillCard('GOLD','$'+parseFloat(goldVal).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / troy oz',null,null,src,ts); }
+  else { errCard('GOLD','No gold data'); }
+  if(silverVal){ fillCard('SILVER','$'+parseFloat(silverVal).toFixed(3),'USD / troy oz',null,null,src,ts); }
+  else { errCard('SILVER','No silver data'); }
+  if(copperVal){
+    // If per troy oz, convert to per MT
+    const raw = parseFloat(copperVal);
+    const perMT = raw < 1 ? (raw*32150.7).toFixed(0) : raw.toFixed(2);
+    fillCard('COPPER','$'+Number(perMT).toLocaleString(),'USD / metric ton',null,null,src,ts);
+  } else { errCard('COPPER','No copper data'); }
+}
+
+// ============================================================
+// FETCH OIL — EIA US Government (free, unlimited)
+// ============================================================
+async function fetchOil(force){
+  if(!force && !isStale('oil',6)){
+    applyOil(priceCache['oil'].d); return;
+  }
+  try {
+    // Brent: series PET.RBRTE.D — WTI: series PET.RWTC.D
+    const [bRes, wRes] = await Promise.all([
+      fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RBRTE`),
+      fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RWTC`)
+    ]);
+    const bj = await bRes.json();
+    const wj = await wRes.json();
+    const brent = bj?.response?.data?.[0];
+    const wti   = wj?.response?.data?.[0];
+    if(brent || wti){
+      priceCache['oil'] = {d:{brent, wti}, ts:Date.now()};
+      saveCache(); applyOil({brent, wti});
+    } else {
+      errCard('BRENT','No EIA data'); errCard('WTI','No EIA data');
+    }
+  } catch(e){ errCard('BRENT','EIA error'); errCard('WTI','EIA error'); }
+}
+function applyOil(d){
+  const ts = priceCache['oil']?.ts || Date.now();
+  if(d.brent && d.brent.value){
+    fillCard('BRENT','$'+parseFloat(d.brent.value).toFixed(2),'USD / barrel · '+d.brent.period,null,null,'EIA (US Gov)',ts);
+  } else { errCard('BRENT','No EIA data'); }
+  if(d.wti && d.wti.value){
+    fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
+  } else { errCard('WTI','No EIA data'); }
+}
+
+// ============================================================
+// FETCH ALL
+// ============================================================
+async function fetchAllPrices(force){
+  const msg = document.getElementById('priceMsg');
+  if(msg) msg.textContent = 'Fetching prices...';
+  renderPriceGrids();
+  await Promise.all([ fetchCurrencies(force), fetchMetals(force), fetchOil(force) ]);
+  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(msg) msg.textContent = 'Prices loaded.';
+  const pt = document.getElementById('priceTime');
+  if(pt) pt.textContent = 'Last refresh: '+now;
+  buildTicker();
+}
+
+// ============================================================
+// TICKER
+// ============================================================
+function buildTicker(){
+  const items = [];
+  const cur = priceCache['cur'];
+  if(cur?.d){
+    items.push({n:'EUR/USD', p:(1/cur.d.EUR).toFixed(4), ch:null});
+    items.push({n:'USD/ZAR', p:cur.d.ZAR.toFixed(2), ch:null});
+  }
+  const met = priceCache['metals'];
+  if(met?.d){
+    const gv = met.d.gold_price_usd||met.d.gold_price||met.d.gold||met.d['XAU']||met.d['gold'];
+    const sv = met.d.silver_price_usd||met.d.silver_price||met.d.silver||met.d['XAG']||met.d['silver'];
+    if(gv) items.push({n:'GOLD', p:'$'+parseFloat(gv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}), ch:null});
+    if(sv) items.push({n:'SILVER', p:'$'+parseFloat(sv).toFixed(3), ch:null});
+  }
+  const oil = priceCache['oil'];
+  if(oil?.d){
+    if(oil.d.brent?.value) items.push({n:'BRENT', p:'$'+parseFloat(oil.d.brent.value).toFixed(2), ch:null});
+    if(oil.d.wti?.value)   items.push({n:'WTI',   p:'$'+parseFloat(oil.d.wti.value).toFixed(2), ch:null});
+  }
+  if(!items.length){
+    document.getElementById('tickerTrack').innerHTML = '<div class="ticker-item"><span class="t-name">No price data yet</span><span class="t-price">Go to Prices → Refresh</span></div>';
+    return;
+  }
+  const all = [...items,...items]; // duplicate for seamless loop
+  document.getElementById('tickerTrack').innerHTML = all.map(i=>
+    `<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`
+  ).join('');
+  document.getElementById('tickerTime').textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ============================================================
+// BROKER QUOTES
+// ============================================================
+let brokerQuotes = JSON.parse(localStorage.getItem('jericho_broker_quotes')) || [];
+function showAddQuote(){ document.getElementById('addQuoteForm').style.display='block'; }
+function hideAddQuote(){ document.getElementById('addQuoteForm').style.display='none'; }
+function saveQuote(){
+  const c = document.getElementById('qCommodity').value;
+  if(!c){ alert('Please select a commodity'); return; }
+  brokerQuotes.push({ id:Date.now(), commodity:c,
+    price:document.getElementById('qPrice').value,
+    origin:document.getElementById('qOrigin').value,
+    terms:document.getElementById('qTerms').value,
+    qty:document.getElementById('qQty').value,
+    source:document.getElementById('qSource').value,
+    date:document.getElementById('qDate').value,
+    direction:document.getElementById('qDirection').value,
+    notes:document.getElementById('qNotes').value,
+    logged:new Date().toLocaleDateString('en-GB')
+  });
+  localStorage.setItem('jericho_broker_quotes', JSON.stringify(brokerQuotes));
+  renderQuotes(); hideAddQuote();
+  ['qPrice','qOrigin','qTerms','qQty','qSource','qNotes'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteQuote(id){
+  if(!confirm('Delete this quote?')) return;
+  brokerQuotes = brokerQuotes.filter(q=>q.id!==id);
+  localStorage.setItem('jericho_broker_quotes', JSON.stringify(brokerQuotes));
+  renderQuotes();
+}
+function renderQuotes(){
+  const tb = document.getElementById('quotesBody');
+  if(!tb) return;
+  if(!brokerQuotes.length){ tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>'; return; }
+  const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
+  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr>
+    <td><strong>${q.commodity}</strong></td>
+    <td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td>
+    <td>${q.origin||'-'}</td><td>${q.terms||'-'}</td>
+    <td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td>
+    <td>${q.source||'-'}</td><td>${q.date||'-'}</td>
+    <td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td>
+    <td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td>
+  </tr>`).join('');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(s, btn){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section',
+   'commissions-section','commslog-section','documents-section','prices-section',
+   'relationships-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
+  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',
+    contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',
+    commslog:'commslog-section',documents:'documents-section',prices:'prices-section',
+    relationships:'relationships-section',backup:'backup-section'};
+  document.getElementById(map[s]).style.display='block';
+  if(s==='dashboard') updateDashboard();
+  else if(s==='leads') renderLeads();
+  else if(s==='pipeline') renderPipeline();
+  else if(s==='contacts') renderContacts();
+  else if(s==='tasks') renderTasks();
+  else if(s==='commissions') renderCommissions();
+  else if(s==='commslog') renderComms();
+  else if(s==='documents') renderDocs();
+  else if(s==='prices'){ renderPriceGrids(); renderQuotes(); fetchAllPrices(false); }
+  else if(s==='relationships') renderRelationships();
+  else if(s==='backup') updateBackupStats();
+}
+
+// ============================================================
 // LEADS
-let leads = JSON.parse(localStorage.getItem('jericho_leads')) || [];
-function showAddLead() { document.getElementById('addLeadForm').style.display='block'; }
-function hideAddLead() { document.getElementById('addLeadForm').style.display='none'; }
-function saveLead() {
-const name = document.getElementById('leadName').value;
-if(!name) { alert('Please enter a name'); return; }
-leads.push({ id: Date.now(), name,
-company: document.getElementById('leadCompany').value,
-type: document.getElementById('leadType').value,
-country: document.getElementById('leadCountry').value,
-phone: document.getElementById('leadPhone').value,
-email: document.getElementById('leadEmail').value,
-introBy: document.getElementById('leadIntroBy').value,
-status: document.getElementById('leadStatus').value,
-followup: document.getElementById('leadFollowup').value,
-commodity: document.getElementById('leadCommodity').value,
-notes: document.getElementById('leadNotes').value,
-date: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_leads', JSON.stringify(leads));
-renderLeads(); hideAddLead();
-['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id => document.getElementById(id).value='');
+// ============================================================
+let leads = JSON.parse(localStorage.getItem('jericho_leads'))||[];
+function showAddLead(){ document.getElementById('addLeadForm').style.display='block'; }
+function hideAddLead(){ document.getElementById('addLeadForm').style.display='none'; }
+function saveLead(){
+  const name=document.getElementById('leadName').value;
+  if(!name){alert('Please enter a name');return;}
+  leads.push({id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:document.getElementById('leadCommodity').value,notes:document.getElementById('leadNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_leads',JSON.stringify(leads));
+  renderLeads(); hideAddLead();
+  ['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id=>document.getElementById(id).value='');
 }
-function renderLeads(q='') {
-const tbody = document.getElementById('leadsBody');
-let data = q ? leads.filter(l => (l.name+l.company+l.country+l.type+l.introBy).toLowerCase().includes(q.toLowerCase())) : leads;
-if(!data.length) { tbody.innerHTML='<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>'; return; }
-const colors = {'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
-tbody.innerHTML = data.map(l => `<tr>
-<td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td>
-<td>${l.introBy||'-'}</td>
-<td><span class="badge" style="background:${colors[l.status]||'#999'}">${l.status}</span></td>
-<td>${l.followup||'-'}</td>
-<td><button class="btn-danger" onclick="deleteLead(${leads.indexOf(l)})">Delete</button></td>
-</tr>`).join('');
+function renderLeads(q=''){
+  const tb=document.getElementById('leadsBody');
+  let data=q?leads.filter(l=>(l.name+l.company+l.country+l.type+l.introBy).toLowerCase().includes(q.toLowerCase())):leads;
+  if(!data.length){tb.innerHTML='<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>';return;}
+  const sc={'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
+  tb.innerHTML=data.map(l=>`<tr><td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td><td>${l.introBy||'-'}</td><td><span class="badge" style="background:${sc[l.status]||'#999'}">${l.status}</span></td><td>${l.followup||'-'}</td><td><button class="btn-danger" onclick="deleteLead(${leads.indexOf(l)})">Delete</button></td></tr>`).join('');
 }
-function deleteLead(i) {
-if(confirm('Delete this lead?')) { leads.splice(i,1); localStorage.setItem('jericho_leads', JSON.stringify(leads)); renderLeads(); }
-}
+function deleteLead(i){if(confirm('Delete this lead?')){leads.splice(i,1);localStorage.setItem('jericho_leads',JSON.stringify(leads));renderLeads();}}
 
+// ============================================================
 // PIPELINE
-let pipeline = JSON.parse(localStorage.getItem('jericho_pipeline')) || [];
-const stages = ['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
-function showAddDeal() { document.getElementById('addDealForm').style.display='block'; }
-function hideAddDeal() { document.getElementById('addDealForm').style.display='none'; }
-function saveDeal() {
-const commodity = document.getElementById('dealCommodity').value;
-if(!commodity) { alert('Please enter a commodity'); return; }
-pipeline.push({ id: Date.now(), commodity,
-broker: document.getElementById('dealBroker').value,
-buyer: document.getElementById('dealBuyer').value,
-seller: document.getElementById('dealSeller').value,
-quantity: document.getElementById('dealQuantity').value,
-unit: document.getElementById('dealUnit').value,
-price: document.getElementById('dealPrice').value,
-origin: document.getElementById('dealOrigin').value,
-stage: document.getElementById('dealStage').value,
-trust: document.getElementById('dealTrust').value,
-notes: document.getElementById('dealNotes').value,
-date: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline));
-renderPipeline(); hideAddDeal();
-['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id => document.getElementById(id).value='');
+// ============================================================
+let pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
+const stages=['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
+function showAddDeal(){document.getElementById('addDealForm').style.display='block';}
+function hideAddDeal(){document.getElementById('addDealForm').style.display='none';}
+function saveDeal(){
+  const commodity=document.getElementById('dealCommodity').value;
+  if(!commodity){alert('Please enter a commodity');return;}
+  pipeline.push({id:Date.now(),commodity,broker:document.getElementById('dealBroker').value,buyer:document.getElementById('dealBuyer').value,seller:document.getElementById('dealSeller').value,quantity:document.getElementById('dealQuantity').value,unit:document.getElementById('dealUnit').value,price:document.getElementById('dealPrice').value,origin:document.getElementById('dealOrigin').value,stage:document.getElementById('dealStage').value,trust:document.getElementById('dealTrust').value,notes:document.getElementById('dealNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));
+  renderPipeline(); hideAddDeal();
+  ['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id=>document.getElementById(id).value='');
 }
-function getTrustColor(t) { return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc'; }
-function moveDeal(id, newStage) {
-const deal = pipeline.find(d => d.id===id);
-if(deal) deal.stage = newStage;
-localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline)); renderPipeline();
-}
-function deleteDeal(id) {
-if(confirm('Delete this deal?')) {
-pipeline = pipeline.filter(d => d.id!==id);
-localStorage.setItem('jericho_pipeline', JSON.stringify(pipeline)); renderPipeline();
-}
-}
-function renderPipeline() {
-const board = document.getElementById('pipelineBoard');
-if(!board) return;
-board.innerHTML = stages.map(stage => {
-const deals = pipeline.filter(d => d.stage===stage);
-return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;">
-<div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">
-${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>
-${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}
-${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
-<div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
-<div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
-<div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div>
-<div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div>
-<div style="margin-top:7px;">
-<select onchange="moveDeal(${d.id}, this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">
-${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select>
-<button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button>
-</div></div>`).join('')}
-</div>`;
-}).join('');
+function getTrustColor(t){return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';}
+function moveDeal(id,ns){const d=pipeline.find(d=>d.id===id);if(d)d.stage=ns;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();}
+function deleteDeal(id){if(confirm('Delete this deal?')){pipeline=pipeline.filter(d=>d.id!==id);localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();}}
+function renderPipeline(){
+  const board=document.getElementById('pipelineBoard');if(!board)return;
+  board.innerHTML=stages.map(stage=>{
+    const deals=pipeline.filter(d=>d.stage===stage);
+    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;">
+      <div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>
+      ${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}
+      ${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
+        <div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
+        <div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
+        <div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div>
+        <div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div>
+        <div style="margin-top:7px;">
+          <select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select>
+          <button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button>
+        </div></div>`).join('')}
+    </div>`;
+  }).join('');
 }
 
+// ============================================================
 // CONTACTS
-let contacts = JSON.parse(localStorage.getItem('jericho_contacts')) || [];
-function showAddContact() { document.getElementById('addContactForm').style.display='block'; }
-function hideAddContact() { document.getElementById('addContactForm').style.display='none'; }
-function saveContact() {
-const name = document.getElementById('contactName').value;
-if(!name) { alert('Please enter a name'); return; }
-contacts.push({ id: Date.now(), name,
-company: document.getElementById('contactCompany').value,
-type: document.getElementById('contactType').value,
-country: document.getElementById('contactCountry').value,
-phone: document.getElementById('contactPhone').value,
-email: document.getElementById('contactEmail').value,
-commodity: document.getElementById('contactCommodity').value,
-introBy: document.getElementById('contactIntroBy').value,
-trust: document.getElementById('contactTrust').value,
-kyc: document.getElementById('contactKyc').value,
-followup: document.getElementById('contactFollowup').value,
-linkedin: document.getElementById('contactLinkedin').value,
-notes: document.getElementById('contactNotes').value,
-date: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_contacts', JSON.stringify(contacts));
-renderContacts(); hideAddContact();
-['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id => document.getElementById(id).value='');
+// ============================================================
+let contacts=JSON.parse(localStorage.getItem('jericho_contacts'))||[];
+function showAddContact(){document.getElementById('addContactForm').style.display='block';}
+function hideAddContact(){document.getElementById('addContactForm').style.display='none';}
+function saveContact(){
+  const name=document.getElementById('contactName').value;if(!name){alert('Please enter a name');return;}
+  contacts.push({id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:document.getElementById('contactCommodity').value,introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();hideAddContact();
+  ['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');
 }
-function renderContacts(_, q='') {
-const tbody = document.getElementById('contactsBody');
-const tf = document.getElementById('filterType').value;
-const trf = document.getElementById('filterTrust').value;
-const kf = document.getElementById('filterKyc').value;
-let data = contacts.filter(c =>
-(!tf||c.type===tf) && (!trf||c.trust===trf) && (!kf||c.kyc===kf) &&
-(!q||(c.name+c.company+c.country+c.commodity+c.introBy).toLowerCase().includes(q.toLowerCase()))
-);
-if(!data.length) { tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>'; return; }
-const tC={'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
-const kC={'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
-tbody.innerHTML = data.map(c => `<tr>
-<td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td>
-<td>${c.commodity||'-'}</td><td>${c.introBy||'-'}</td>
-<td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td>
-<td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td>
-<td>${c.followup||'-'}</td>
-<td><button class="btn-danger" onclick="deleteContact(${contacts.indexOf(c)})">Delete</button></td>
-</tr>`).join('');
+function renderContacts(_,q=''){
+  const tb=document.getElementById('contactsBody');
+  const tf=document.getElementById('filterType').value,trf=document.getElementById('filterTrust').value,kf=document.getElementById('filterKyc').value;
+  let data=contacts.filter(c=>(!tf||c.type===tf)&&(!trf||c.trust===trf)&&(!kf||c.kyc===kf)&&(!q||(c.name+c.company+c.country+c.commodity+c.introBy).toLowerCase().includes(q.toLowerCase())));
+  if(!data.length){tb.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>';return;}
+  const tC={'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
+  const kC={'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
+  tb.innerHTML=data.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td><td>${c.commodity||'-'}</td><td>${c.introBy||'-'}</td><td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td><td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td><td>${c.followup||'-'}</td><td><button class="btn-danger" onclick="deleteContact(${contacts.indexOf(c)})">Delete</button></td></tr>`).join('');
 }
-function deleteContact(i) {
-if(confirm('Delete this contact?')) { contacts.splice(i,1); localStorage.setItem('jericho_contacts', JSON.stringify(contacts)); renderContacts(); }
-}
+function deleteContact(i){if(confirm('Delete this contact?')){contacts.splice(i,1);localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();}}
 
+// ============================================================
 // TASKS
-let tasks = JSON.parse(localStorage.getItem('jericho_tasks')) || [];
-function showAddTask() { document.getElementById('addTaskForm').style.display='block'; }
-function hideAddTask() { document.getElementById('addTaskForm').style.display='none'; }
-function saveTask() {
-const title = document.getElementById('taskTitle').value;
-if(!title) { alert('Please enter a task description'); return; }
-tasks.push({ id: Date.now(), title,
-priority: document.getElementById('taskPriority').value,
-due: document.getElementById('taskDue').value,
-assigned: document.getElementById('taskAssigned').value,
-category: document.getElementById('taskCategory').value,
-linked: document.getElementById('taskLinked').value,
-notes: document.getElementById('taskNotes').value,
-completed: false,
-date: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
-renderTasks(); hideAddTask();
-['taskTitle','taskLinked','taskNotes'].forEach(id => document.getElementById(id).value='');
-checkReminders();
+// ============================================================
+let tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
+function showAddTask(){document.getElementById('addTaskForm').style.display='block';}
+function hideAddTask(){document.getElementById('addTaskForm').style.display='none';}
+function saveTask(){
+  const title=document.getElementById('taskTitle').value;if(!title){alert('Please enter a task description');return;}
+  tasks.push({id:Date.now(),title,priority:document.getElementById('taskPriority').value,due:document.getElementById('taskDue').value,assigned:document.getElementById('taskAssigned').value,category:document.getElementById('taskCategory').value,linked:document.getElementById('taskLinked').value,notes:document.getElementById('taskNotes').value,completed:false,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();hideAddTask();
+  ['taskTitle','taskLinked','taskNotes'].forEach(id=>document.getElementById(id).value='');
+  checkReminders();
 }
-function completeTask(id) {
-const t = tasks.find(t => t.id===id);
-if(t) { t.completed=true; t.completedDate=new Date().toLocaleDateString('en-GB'); }
-localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
-renderTasks(); updateDashboard();
+function completeTask(id){const t=tasks.find(t=>t.id===id);if(t){t.completed=true;t.completedDate=new Date().toLocaleDateString('en-GB');}localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();updateDashboard();}
+function deleteTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(t=>t.id!==id);localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();updateDashboard();}}
+function taskCard(t){
+  const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+    <div style="flex:1;min-width:180px;">
+      <div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
+      <div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>
+      ${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}
+      ${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}
+    </div>
+    <div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div>
+  </div>`;
 }
-function deleteTask(id) {
-if(confirm('Delete this task?')) {
-tasks = tasks.filter(t => t.id!==id);
-localStorage.setItem('jericho_tasks', JSON.stringify(tasks));
-renderTasks(); updateDashboard();
+function renderTasks(){
+  const sf=document.getElementById('filterTaskStatus').value,pf=document.getElementById('filterTaskPriority').value,cf=document.getElementById('filterTaskCategory').value;
+  let data=tasks.filter(t=>(!pf||t.priority===pf)&&(!cf||t.category===cf));
+  const ov=data.filter(t=>!t.completed&&t.due&&t.due<today);
+  const dt=data.filter(t=>!t.completed&&t.due===today);
+  const up=data.filter(t=>!t.completed&&(!t.due||t.due>today));
+  const co=data.filter(t=>t.completed);
+  document.getElementById('overdueTasksList').innerHTML=ov.length?ov.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No overdue tasks.</div>';
+  document.getElementById('todayTasksList').innerHTML=dt.length?dt.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
+  document.getElementById('upcomingTasksList').innerHTML=up.length?up.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
+  document.getElementById('completedTasksList').innerHTML=co.length?co.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
+  if(sf==='completed'){['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('completedTasksBox').style.display='block';}
+  else if(sf==='all'){['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id=>document.getElementById(id).style.display='block');}
+  else{['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='block');document.getElementById('completedTasksBox').style.display='none';}
 }
+function checkReminders(){
+  if(Notification.permission!=='granted')return;
+  const ov=tasks.filter(t=>!t.completed&&t.due&&t.due<today);
+  const dt=tasks.filter(t=>!t.completed&&t.due===today);
+  if(ov.length>0) new Notification('⚠️ Jericho Operations',{body:`You have ${ov.length} overdue task(s)!`});
+  else if(dt.length>0) new Notification('📅 Jericho Operations',{body:`You have ${dt.length} task(s) due today.`});
 }
-function taskCard(t) {
-const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-<div style="flex:1;min-width:180px;">
-<div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
-<div style="margin-top:4px;">
-<span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span>
-<span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>
-${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}
-</div>
-${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}
-${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}
-</div>
-<div style="display:flex;gap:5px;">
-${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}
-<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button>
-</div></div>`;
-}
-function renderTasks() {
-const sf=document.getElementById('filterTaskStatus').value;
-const pf=document.getElementById('filterTaskPriority').value;
-const cf=document.getElementById('filterTaskCategory').value;
-let data = tasks.filter(t => (!pf||t.priority===pf) && (!cf||t.category===cf));
-const overdue=data.filter(t=>!t.completed&&t.due&&t.due<today);
-const dueToday=data.filter(t=>!t.completed&&t.due===today);
-const upcoming=data.filter(t=>!t.completed&&(!t.due||t.due>today));
-const completed=data.filter(t=>t.completed);
-document.getElementById('overdueTasksList').innerHTML=overdue.length?overdue.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No overdue tasks.</div>';
-document.getElementById('todayTasksList').innerHTML=dueToday.length?dueToday.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
-document.getElementById('upcomingTasksList').innerHTML=upcoming.length?upcoming.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
-document.getElementById('completedTasksList').innerHTML=completed.length?completed.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
-if(sf==='completed'){['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('completedTasksBox').style.display='block';}
-else if(sf==='all'){['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id=>document.getElementById(id).style.display='block');}
-else{['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='block');document.getElementById('completedTasksBox').style.display='none';}
-}
+setInterval(checkReminders,3600000); checkReminders();
 
-// REMINDERS
-function checkReminders() {
-if(Notification.permission !== 'granted') return;
-const overdue = tasks.filter(t => !t.completed && t.due && t.due < today);
-const dueToday = tasks.filter(t => !t.completed && t.due === today);
-if(overdue.length > 0) {
-new Notification('⚠️ Jericho Operations', { body: `You have ${overdue.length} overdue task(s)!` });
-} else if(dueToday.length > 0) {
-new Notification('📅 Jericho Operations', { body: `You have ${dueToday.length} task(s) due today.` });
-}
-}
-setInterval(checkReminders, 3600000);
-checkReminders();
-
+// ============================================================
 // COMMISSIONS
-let commissions = JSON.parse(localStorage.getItem('jericho_commissions')) || [];
-function showAddCommission() { document.getElementById('addCommissionForm').style.display='block'; }
-function hideAddCommission() { document.getElementById('addCommissionForm').style.display='none'; }
-function saveCommission() {
-const deal = document.getElementById('commDeal').value;
-if(!deal) { alert('Please enter a deal name'); return; }
-commissions.push({ id: Date.now(), deal,
-currency: document.getElementById('commCurrency').value,
-total: parseFloat(document.getElementById('commTotal').value)||0,
-jerichoPercent: parseFloat(document.getElementById('commJerichoPercent').value)||0,
-jerichoAmount: parseFloat(document.getElementById('commJerichoAmount').value)||0,
-broker: document.getElementById('commBroker').value,
-brokerPercent: parseFloat(document.getElementById('commBrokerPercent').value)||0,
-brokerAmount: parseFloat(document.getElementById('commBrokerAmount').value)||0,
-status: document.getElementById('commStatus').value,
-received: parseFloat(document.getElementById('commReceived').value)||0,
-expectedDate: document.getElementById('commExpectedDate').value,
-actualDate: document.getElementById('commActualDate').value,
-notes: document.getElementById('commNotes').value,
-date: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_commissions', JSON.stringify(commissions));
-renderCommissions(); hideAddCommission();
-document.getElementById('commDeal').value=''; document.getElementById('commNotes').value='';
+// ============================================================
+let commissions=JSON.parse(localStorage.getItem('jericho_commissions'))||[];
+function showAddCommission(){document.getElementById('addCommissionForm').style.display='block';}
+function hideAddCommission(){document.getElementById('addCommissionForm').style.display='none';}
+function saveCommission(){
+  const deal=document.getElementById('commDeal').value;if(!deal){alert('Please enter a deal name');return;}
+  commissions.push({id:Date.now(),deal,currency:document.getElementById('commCurrency').value,total:parseFloat(document.getElementById('commTotal').value)||0,jerichoPercent:parseFloat(document.getElementById('commJerichoPercent').value)||0,jerichoAmount:parseFloat(document.getElementById('commJerichoAmount').value)||0,broker:document.getElementById('commBroker').value,brokerPercent:parseFloat(document.getElementById('commBrokerPercent').value)||0,brokerAmount:parseFloat(document.getElementById('commBrokerAmount').value)||0,status:document.getElementById('commStatus').value,received:parseFloat(document.getElementById('commReceived').value)||0,expectedDate:document.getElementById('commExpectedDate').value,actualDate:document.getElementById('commActualDate').value,notes:document.getElementById('commNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();hideAddCommission();
+  document.getElementById('commDeal').value='';document.getElementById('commNotes').value='';
 }
-function deleteCommission(id) {
-if(confirm('Delete this record?')) {
-commissions=commissions.filter(c=>c.id!==id);
-localStorage.setItem('jericho_commissions', JSON.stringify(commissions));
-renderCommissions(); updateDashboard();
-}
-}
-function renderCommissions() {
-const tE=commissions.reduce((s,c)=>s+c.total,0);
-const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
-const tR=commissions.reduce((s,c)=>s+c.received,0);
-const tO=jE-tR;
-document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
-document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
-document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
-document.getElementById('commTotalOutstanding').textContent='$'+(tO>0?tO:0).toLocaleString();
-const tbody=document.getElementById('commissionsBody');
-if(!commissions.length){tbody.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>';return;}
-const sC={'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
-tbody.innerHTML=commissions.map(c=>`<tr>
-<td><strong>${c.deal}</strong></td><td>${c.currency}</td>
-<td>${c.currency} ${c.total.toLocaleString()}</td>
-<td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td>
-<td>${c.broker||'-'}</td>
-<td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td>
-<td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td>
-<td>${c.currency} ${c.received.toLocaleString()}</td>
-<td>${c.expectedDate||'-'}</td>
-<td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td>
-</tr>`).join('');
+function deleteCommission(id){if(confirm('Delete this record?')){commissions=commissions.filter(c=>c.id!==id);localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();updateDashboard();}}
+function renderCommissions(){
+  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
+  document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
+  document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
+  document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
+  document.getElementById('commTotalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
+  const tb=document.getElementById('commissionsBody');
+  if(!commissions.length){tb.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>';return;}
+  const sC={'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
+  tb.innerHTML=commissions.map(c=>`<tr><td><strong>${c.deal}</strong></td><td>${c.currency}</td><td>${c.currency} ${c.total.toLocaleString()}</td><td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td><td>${c.broker||'-'}</td><td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td><td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td><td>${c.currency} ${c.received.toLocaleString()}</td><td>${c.expectedDate||'-'}</td><td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td></tr>`).join('');
 }
 
-// COMMUNICATIONS LOG
-let commsLog = JSON.parse(localStorage.getItem('jericho_commslog')) || [];
-function showAddComm() { document.getElementById('addCommForm').style.display='block'; }
-function hideAddComm() { document.getElementById('addCommForm').style.display='none'; }
-function saveComm() {
-const contact = document.getElementById('commLogContact').value;
-const summary = document.getElementById('commLogSummary').value;
-if(!contact||!summary) { alert('Please enter contact and summary'); return; }
-commsLog.push({ id: Date.now(), contact,
-type: document.getElementById('commLogType').value,
-date: document.getElementById('commLogDate').value||today,
-direction: document.getElementById('commLogDirection').value,
-linked: document.getElementById('commLogLinked').value,
-followup: document.getElementById('commLogFollowup').value,
-followupDate: document.getElementById('commLogFollowupDate').value,
-outcome: document.getElementById('commLogOutcome').value,
-summary,
-logged: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_commslog', JSON.stringify(commsLog));
-renderComms(); hideAddComm();
-['commLogContact','commLogLinked','commLogSummary'].forEach(id=>document.getElementById(id).value='');
+// ============================================================
+// COMMS LOG
+// ============================================================
+let commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
+function showAddComm(){document.getElementById('addCommForm').style.display='block';}
+function hideAddComm(){document.getElementById('addCommForm').style.display='none';}
+function saveComm(){
+  const contact=document.getElementById('commLogContact').value,summary=document.getElementById('commLogSummary').value;
+  if(!contact||!summary){alert('Please enter contact and summary');return;}
+  commsLog.push({id:Date.now(),contact,type:document.getElementById('commLogType').value,date:document.getElementById('commLogDate').value||today,direction:document.getElementById('commLogDirection').value,linked:document.getElementById('commLogLinked').value,followup:document.getElementById('commLogFollowup').value,followupDate:document.getElementById('commLogFollowupDate').value,outcome:document.getElementById('commLogOutcome').value,summary,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();hideAddComm();
+  ['commLogContact','commLogLinked','commLogSummary'].forEach(id=>document.getElementById(id).value='');
 }
-function deleteComm(id) {
-if(confirm('Delete this log entry?')) {
-commsLog=commsLog.filter(c=>c.id!==id);
-localStorage.setItem('jericho_commslog', JSON.stringify(commsLog));
-renderComms();
-}
-}
-function renderComms(q='') {
-const container=document.getElementById('commsLogList');
-let data=q?commsLog.filter(c=>(c.contact+c.summary+c.linked).toLowerCase().includes(q.toLowerCase())):commsLog;
-data=[...data].reverse();
-if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No communications logged yet.</div>';return;}
-const outcomeColor={'Positive':'#27ae60','Neutral':'#3498db','Negative':'#e74c3c','Waiting':'#e8a020'};
-container.innerHTML=data.map(c=>`
-<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
-<div style="flex:1;">
-<div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div>
-<div style="margin-top:4px;">
-<span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span>
-<span class="badge" style="background:${outcomeColor[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span>
-<span style="font-size:11px;color:#999;">${c.direction} • ${c.date}</span>
-</div>
-${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}
-<div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>
-${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up required: ${c.followupDate||'date not set'}</div>`:''}
-</div>
-<button class="btn-danger" onclick="deleteComm(${c.id})">✕</button>
-</div></div>`).join('');
+function deleteComm(id){if(confirm('Delete this log entry?')){commsLog=commsLog.filter(c=>c.id!==id);localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();}}
+function renderComms(q=''){
+  const container=document.getElementById('commsLogList');
+  let data=q?commsLog.filter(c=>(c.contact+c.summary+c.linked).toLowerCase().includes(q.toLowerCase())):commsLog;
+  data=[...data].reverse();
+  if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No communications logged yet.</div>';return;}
+  const oc={'Positive':'#27ae60','Neutral':'#3498db','Negative':'#e74c3c','Waiting':'#e8a020'};
+  container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+      <div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div>
+      <div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span><span style="font-size:11px;color:#999;">${c.direction} · ${c.date}</span></div>
+      ${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}
+      <div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>
+      ${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${c.followupDate||'date not set'}</div>`:''}</div>
+      <button class="btn-danger" onclick="deleteComm(${c.id})">✕</button>
+    </div></div>`).join('');
 }
 
+// ============================================================
 // DOCUMENTS
-let documents = JSON.parse(localStorage.getItem('jericho_documents')) || [];
-function showAddDoc() { document.getElementById('addDocForm').style.display='block'; }
-function hideAddDoc() { document.getElementById('addDocForm').style.display='none'; }
-function saveDoc() {
-const name = document.getElementById('docName').value;
-if(!name) { alert('Please enter a document name'); return; }
-documents.push({ id: Date.now(), name,
-type: document.getElementById('docType').value,
-party: document.getElementById('docParty').value,
-linked: document.getElementById('docLinked').value,
-date: document.getElementById('docDate').value,
-status: document.getElementById('docStatus').value,
-location: document.getElementById('docLocation').value,
-expiry: document.getElementById('docExpiry').value,
-notes: document.getElementById('docNotes').value,
-logged: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_documents', JSON.stringify(documents));
-renderDocs(); hideAddDoc();
-['docName','docParty','docLinked','docLocation','docNotes'].forEach(id=>document.getElementById(id).value='');
+// ============================================================
+let documents=JSON.parse(localStorage.getItem('jericho_documents'))||[];
+function showAddDoc(){document.getElementById('addDocForm').style.display='block';}
+function hideAddDoc(){document.getElementById('addDocForm').style.display='none';}
+function saveDoc(){
+  const name=document.getElementById('docName').value;if(!name){alert('Please enter a document name');return;}
+  documents.push({id:Date.now(),name,type:document.getElementById('docType').value,party:document.getElementById('docParty').value,linked:document.getElementById('docLinked').value,date:document.getElementById('docDate').value,status:document.getElementById('docStatus').value,location:document.getElementById('docLocation').value,expiry:document.getElementById('docExpiry').value,notes:document.getElementById('docNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();hideAddDoc();
+  ['docName','docParty','docLinked','docLocation','docNotes'].forEach(id=>document.getElementById(id).value='');
 }
-function deleteDoc(id) {
-if(confirm('Delete this document record?')) {
-documents=documents.filter(d=>d.id!==id);
-localStorage.setItem('jericho_documents', JSON.stringify(documents));
-renderDocs();
-}
-}
-function renderDocs(q='') {
-const tbody=document.getElementById('docsBody');
-const tf=document.getElementById('filterDocType').value;
-const sf=document.getElementById('filterDocStatus').value;
-let data=documents.filter(d=>
-(!tf||d.type===tf)&&(!sf||d.status===sf)&&
-(!q||(d.name+d.party+d.linked+d.type).toLowerCase().includes(q.toLowerCase()))
-);
-if(!data.length){tbody.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents found.</td></tr>';return;}
-const sC={'Received':'trust-green','Sent':'trust-yellow','Pending':'trust-grey','Signed':'kyc-yes','Expired':'trust-red'};
-tbody.innerHTML=data.map(d=>`<tr>
-<td><strong>${d.name}</strong></td>
-<td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td>
-<td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td>
-<td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td>
-<td style="font-size:12px;">${d.location||'-'}</td>
-<td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td>
-<td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td>
-</tr>`).join('');
+function deleteDoc(id){if(confirm('Delete this document record?')){documents=documents.filter(d=>d.id!==id);localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();}}
+function renderDocs(q=''){
+  const tb=document.getElementById('docsBody');
+  const tf=document.getElementById('filterDocType').value,sf=document.getElementById('filterDocStatus').value;
+  let data=documents.filter(d=>(!tf||d.type===tf)&&(!sf||d.status===sf)&&(!q||(d.name+d.party+d.linked+d.type).toLowerCase().includes(q.toLowerCase())));
+  if(!data.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents found.</td></tr>';return;}
+  const sC={'Received':'trust-green','Sent':'trust-yellow','Pending':'trust-grey','Signed':'kyc-yes','Expired':'trust-red'};
+  tb.innerHTML=data.map(d=>`<tr><td><strong>${d.name}</strong></td><td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td><td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td><td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td><td style="font-size:12px;">${d.location||'-'}</td><td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td><td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td></tr>`).join('');
 }
 
-// COMMODITY PRICES
-const refPrices = [
-{name:'Chrome Ore 44%', price:'USD 160–185', unit:'/MT CIF China', note:'Fastmarkets ref'},
-{name:'Chrome Ore 42%', price:'USD 145–165', unit:'/MT CIF China', note:'Fastmarkets ref'},
-{name:'Manganese Ore 37%', price:'USD 4.50–5.20', unit:'/dmtu CIF China', note:'Fastmarkets ref'},
-{name:'Iron Ore 62% Fe', price:'USD 95–115', unit:'/MT CFR China', note:'SGX ref'},
-{name:'Ferrochrome HC', price:'USD 1.10–1.25', unit:'/lb CIF Europe', note:'CRU ref'},
-{name:'Copper', price:'USD 8,500–9,200', unit:'/MT LME', note:'LME ref'},
-{name:'Cobalt', price:'USD 26,000–30,000', unit:'/MT LME', note:'LME ref'},
-{name:'Lithium Carbonate', price:'USD 12,000–16,000', unit:'/MT', note:'Fastmarkets ref'},
-];
-function renderPriceGrid() {
-document.getElementById('priceGrid').innerHTML = refPrices.map(p=>`
-<div class="price-card">
-<h4>${p.name}</h4>
-<div class="price">${p.price}</div>
-<div class="unit">${p.unit}</div>
-<div style="font-size:11px;color:#aaa;margin-top:4px;">${p.note}</div>
-</div>`).join('');
-}
-let priceNotes = JSON.parse(localStorage.getItem('jericho_prices')) || [];
-function showAddPrice() { document.getElementById('addPriceForm').style.display='block'; }
-function hideAddPrice() { document.getElementById('addPriceForm').style.display='none'; }
-function savePrice() {
-const commodity = document.getElementById('priceCommodity').value;
-if(!commodity) { alert('Please enter a commodity'); return; }
-priceNotes.push({ id: Date.now(), commodity,
-price: document.getElementById('priceValue').value,
-source: document.getElementById('priceSource').value,
-date: document.getElementById('priceDate').value,
-notes: document.getElementById('priceNotes').value
-});
-localStorage.setItem('jericho_prices', JSON.stringify(priceNotes));
-renderPrices(); hideAddPrice();
-['priceCommodity','priceValue','priceSource','priceNotes'].forEach(id=>document.getElementById(id).value='');
-}
-function deletePrice(id) {
-if(confirm('Delete this price note?')) {
-priceNotes=priceNotes.filter(p=>p.id!==id);
-localStorage.setItem('jericho_prices', JSON.stringify(priceNotes));
-renderPrices();
-}
-}
-function renderPrices() {
-const tbody=document.getElementById('pricesBody');
-if(!priceNotes.length){tbody.innerHTML='<tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">No price notes yet.</td></tr>';return;}
-tbody.innerHTML=[...priceNotes].reverse().map(p=>`<tr>
-<td><strong>${p.commodity}</strong></td><td>${p.price||'-'}</td><td>${p.source||'-'}</td>
-<td>${p.date||'-'}</td><td style="font-size:12px;">${p.notes||'-'}</td>
-<td><button class="btn-danger" onclick="deletePrice(${p.id})">Delete</button></td>
-</tr>`).join('');
-}
-
+// ============================================================
 // RELATIONSHIPS
-let relationships = JSON.parse(localStorage.getItem('jericho_relationships')) || [];
-function showAddRel() { document.getElementById('addRelForm').style.display='block'; }
-function hideAddRel() { document.getElementById('addRelForm').style.display='none'; }
-function saveRel() {
-const from = document.getElementById('relFrom').value;
-const to = document.getElementById('relTo').value;
-if(!from||!to) { alert('Please fill in both parties'); return; }
-relationships.push({ id: Date.now(), from,
-type: document.getElementById('relType').value,
-to,
-strength: document.getElementById('relStrength').value,
-date: document.getElementById('relDate').value,
-commission: document.getElementById('relCommission').value,
-notes: document.getElementById('relNotes').value,
-logged: new Date().toLocaleDateString('en-GB')
-});
-localStorage.setItem('jericho_relationships', JSON.stringify(relationships));
-renderRelationships(); hideAddRel();
-['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
+// ============================================================
+let relationships=JSON.parse(localStorage.getItem('jericho_relationships'))||[];
+function showAddRel(){document.getElementById('addRelForm').style.display='block';}
+function hideAddRel(){document.getElementById('addRelForm').style.display='none';}
+function saveRel(){
+  const from=document.getElementById('relFrom').value,to=document.getElementById('relTo').value;
+  if(!from||!to){alert('Please fill in both parties');return;}
+  relationships.push({id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,commission:document.getElementById('relCommission').value,notes:document.getElementById('relNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();hideAddRel();
+  ['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
 }
-function deleteRel(id) {
-if(confirm('Delete this relationship?')) {
-relationships=relationships.filter(r=>r.id!==id);
-localStorage.setItem('jericho_relationships', JSON.stringify(relationships));
-renderRelationships();
-}
-}
-function renderRelationships(q='') {
-const container=document.getElementById('relList');
-let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
-if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No relationships mapped yet.</div>';return;}
-const strColor={'Strong':'#27ae60','Medium':'#e8a020','Weak':'#999','Unknown':'#ccc'};
-container.innerHTML=`<div class="rel-map">${data.map(r=>`
-<div class="rel-entry">
-<div style="flex:1;">
-<span style="font-weight:bold;color:#1a2e4a;">${r.from}</span>
-<span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span>
-<span style="font-weight:bold;color:#1a2e4a;">${r.to}</span>
-<div style="margin-top:4px;">
-<span class="badge" style="background:${strColor[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>
-${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''}
-${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}
-</div>
-${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}
-</div>
-<button class="btn-danger" onclick="deleteRel(${r.id})">✕</button>
-</div>`).join('')}</div>`;
+function deleteRel(id){if(confirm('Delete this relationship?')){relationships=relationships.filter(r=>r.id!==id);localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();}}
+function renderRelationships(q=''){
+  const container=document.getElementById('relList');
+  let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
+  if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No relationships mapped yet.</div>';return;}
+  const sc={'Strong':'#27ae60','Medium':'#e8a020','Weak':'#999','Unknown':'#ccc'};
+  container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''} ${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
 }
 
+// ============================================================
 // BACKUP
-function exportData() {
-const data = { version:'2.0', exportDate:new Date().toISOString(), leads, pipeline, contacts, tasks, commissions, commsLog, documents, priceNotes, relationships };
-const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href=url; a.download='jericho-backup-'+today+'.json'; a.click();
-URL.revokeObjectURL(url);
+// ============================================================
+function exportData(){
+  const data={version:'3.0',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commissions,commsLog,documents,brokerQuotes,relationships};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='jericho-backup-'+today+'.json';a.click();URL.revokeObjectURL(url);
 }
-function importData() {
-const file=document.getElementById('restoreFile').files[0];
-if(!file){alert('Please select a backup file first.');return;}
-if(!confirm('This will replace all current data. Are you sure?'))return;
-const reader=new FileReader();
-reader.onload=function(e){
-try{
-const data=JSON.parse(e.target.result);
-if(data.leads){leads=data.leads;localStorage.setItem('jericho_leads',JSON.stringify(leads));}
-if(data.pipeline){pipeline=data.pipeline;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));}
-if(data.contacts){contacts=data.contacts;localStorage.setItem('jericho_contacts',JSON.stringify(contacts));}
-if(data.tasks){tasks=data.tasks;localStorage.setItem('jericho_tasks',JSON.stringify(tasks));}
-if(data.commissions){commissions=data.commissions;localStorage.setItem('jericho_commissions',JSON.stringify(commissions));}
-if(data.commsLog){commsLog=data.commsLog;localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));}
-if(data.documents){documents=data.documents;localStorage.setItem('jericho_documents',JSON.stringify(documents));}
-if(data.priceNotes){priceNotes=data.priceNotes;localStorage.setItem('jericho_prices',JSON.stringify(priceNotes));}
-if(data.relationships){relationships=data.relationships;localStorage.setItem('jericho_relationships',JSON.stringify(relationships));}
-alert('✅ Data restored successfully!');
-updateBackupStats(); updateDashboard();
-}catch(err){alert('Error reading backup file.');}
-};
-reader.readAsText(file);
+function importData(){
+  const file=document.getElementById('restoreFile').files[0];
+  if(!file){alert('Please select a backup file first.');return;}
+  if(!confirm('This will replace all current data. Are you sure?'))return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.leads){leads=d.leads;localStorage.setItem('jericho_leads',JSON.stringify(leads));}
+      if(d.pipeline){pipeline=d.pipeline;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));}
+      if(d.contacts){contacts=d.contacts;localStorage.setItem('jericho_contacts',JSON.stringify(contacts));}
+      if(d.tasks){tasks=d.tasks;localStorage.setItem('jericho_tasks',JSON.stringify(tasks));}
+      if(d.commissions){commissions=d.commissions;localStorage.setItem('jericho_commissions',JSON.stringify(commissions));}
+      if(d.commsLog){commsLog=d.commsLog;localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));}
+      if(d.documents){documents=d.documents;localStorage.setItem('jericho_documents',JSON.stringify(documents));}
+      if(d.brokerQuotes){brokerQuotes=d.brokerQuotes;localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));}
+      if(d.relationships){relationships=d.relationships;localStorage.setItem('jericho_relationships',JSON.stringify(relationships));}
+      alert('✅ Data restored successfully!');updateBackupStats();updateDashboard();
+    }catch(err){alert('Error reading backup file.');}
+  };reader.readAsText(file);
 }
-function clearAllData() {
-if(!confirm('DELETE ALL DATA? This cannot be undone!'))return;
-if(!confirm('Are you absolutely sure?'))return;
-leads=[];pipeline=[];contacts=[];tasks=[];commissions=[];commsLog=[];documents=[];priceNotes=[];relationships=[];
-['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions','jericho_commslog','jericho_documents','jericho_prices','jericho_relationships'].forEach(k=>localStorage.removeItem(k));
-alert('All data cleared.');
-updateBackupStats(); updateDashboard();
+function clearAllData(){
+  if(!confirm('DELETE ALL DATA? This cannot be undone!'))return;
+  if(!confirm('Are you absolutely sure?'))return;
+  leads=[];pipeline=[];contacts=[];tasks=[];commissions=[];commsLog=[];documents=[];brokerQuotes=[];relationships=[];
+  ['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions','jericho_commslog','jericho_documents','jericho_broker_quotes','jericho_relationships','jericho_price_cache'].forEach(k=>localStorage.removeItem(k));
+  alert('All data cleared.');updateBackupStats();updateDashboard();
 }
-function updateBackupStats() {
-document.getElementById('backupLeads').textContent=leads.length;
-document.getElementById('backupDeals').textContent=pipeline.length;
-document.getElementById('backupContacts').textContent=contacts.length;
-document.getElementById('backupTasks').textContent=tasks.length;
-document.getElementById('backupComms').textContent=commissions.length;
-document.getElementById('backupDocs').textContent=documents.length;
-document.getElementById('backupRels').textContent=relationships.length;
-document.getElementById('backupPrices').textContent=priceNotes.length;
+function updateBackupStats(){
+  document.getElementById('bkLeads').textContent=leads.length;
+  document.getElementById('bkDeals').textContent=pipeline.length;
+  document.getElementById('bkContacts').textContent=contacts.length;
+  document.getElementById('bkTasks').textContent=tasks.length;
+  document.getElementById('bkComms').textContent=commissions.length;
+  document.getElementById('bkDocs').textContent=documents.length;
+  document.getElementById('bkRels').textContent=relationships.length;
+  document.getElementById('bkQuotes').textContent=brokerQuotes.length;
 }
 
+// ============================================================
 // DASHBOARD
-function updateDashboard() {
-document.getElementById('leadCount').textContent=leads.length;
-document.getElementById('proposalCount').textContent=pipeline.length;
-document.getElementById('statLeads').textContent=leads.length;
-document.getElementById('statDeals').textContent=pipeline.length;
-document.getElementById('statContacts').textContent=contacts.length;
-document.getElementById('statTasks').textContent=tasks.filter(t=>!t.completed).length;
-document.getElementById('statComms').textContent=commsLog.length;
-document.getElementById('statDocs').textContent=documents.length;
-const overdue=tasks.filter(t=>!t.completed&&t.due&&t.due<today);
-const dueToday=tasks.filter(t=>!t.completed&&t.due===today);
-document.getElementById('overdueCount').textContent=overdue.length;
-document.getElementById('tasksTodayCount').textContent=dueToday.length;
-const tE=commissions.reduce((s,c)=>s+c.total,0);
-const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
-const tR=commissions.reduce((s,c)=>s+c.received,0);
-document.getElementById('totalExpected').textContent='$'+tE.toLocaleString();
-document.getElementById('jerichoExpected').textContent='$'+jE.toLocaleString();
-document.getElementById('totalReceived').textContent='$'+tR.toLocaleString();
-document.getElementById('totalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
-const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-document.getElementById('dashOverdueBody').innerHTML=overdue.length?
-overdue.map(t=>`<tr><td><strong>${t.title}</strong></td>
-<td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
-<td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td>
-<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):
-'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
-document.getElementById('dashTodayBody').innerHTML=dueToday.length?
-dueToday.map(t=>`<tr><td><strong>${t.title}</strong></td>
-<td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td>
-<td>${t.linked||'-'}</td>
-<td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):
-'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
+// ============================================================
+function updateDashboard(){
+  document.getElementById('leadCount').textContent=leads.length;
+  document.getElementById('proposalCount').textContent=pipeline.length;
+  document.getElementById('statLeads').textContent=leads.length;
+  document.getElementById('statDeals').textContent=pipeline.length;
+  document.getElementById('statContacts').textContent=contacts.length;
+  document.getElementById('statTasks').textContent=tasks.filter(t=>!t.completed).length;
+  document.getElementById('statComms').textContent=commsLog.length;
+  document.getElementById('statDocs').textContent=documents.length;
+  const ov=tasks.filter(t=>!t.completed&&t.due&&t.due<today);
+  const dt=tasks.filter(t=>!t.completed&&t.due===today);
+  document.getElementById('overdueCount').textContent=ov.length;
+  document.getElementById('tasksTodayCount').textContent=dt.length;
+  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
+  document.getElementById('totalExpected').textContent='$'+tE.toLocaleString();
+  document.getElementById('jerichoExpected').textContent='$'+jE.toLocaleString();
+  document.getElementById('totalReceived').textContent='$'+tR.toLocaleString();
+  document.getElementById('totalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
+  const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
+  document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
+  document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
+// ============================================================
+// STARTUP
+// ============================================================
 updateDashboard();
+// Load currencies silently on start for ticker (no quota used)
+fetchCurrencies(false).then(()=>buildTicker());
 </script>
+
 </body>
 </html>
