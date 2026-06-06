@@ -27,12 +27,12 @@
 
 - { margin: 0; padding: 0; box-sizing: border-box; -webkit-box-sizing: border-box; }
 
-html { background: #0a1628; }
+html { background: #f5f0e8; }
 
 body {
-background-color: #0a1628 !important;
-background: #0a1628 !important;
-color: #f5f0e8 !important;
+background-color: #f5f0e8 !important;
+background: #f5f0e8 !important;
+color: #111111 !important;
 font-family: ‘DM Sans’, sans-serif;
 min-height: 100vh;
 overflow-x: hidden;
@@ -55,37 +55,29 @@ z-index: 0;
 
 .app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
 
-/* Header */
-.header {
-padding: 40px 0 30px;
-border-bottom: 1px solid var(–border);
-margin-bottom: 40px;
-display: flex;
-align-items: center;
-justify-content: space-between;
-}
+/* header already defined above */
 .logo-block { display: flex; flex-direction: column; }
 .logo-name {
 font-family: ‘Playfair Display’, serif;
 font-size: 28px;
 font-weight: 900;
 letter-spacing: 3px;
-color: var(–gold);
+color: #c9a84c;
 text-transform: uppercase;
 }
 .logo-sub {
 font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 4px;
-color: var(–gray);
+color: #777777;
 text-transform: uppercase;
 margin-top: 4px;
 }
 .header-right { display: flex; gap: 12px; }
 .nav-btn {
 background: transparent;
-border: 1px solid var(–border);
-color: var(–gray);
+border: 1px solid rgba(10,22,40,0.3);
+color: #444;
 font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
@@ -96,9 +88,9 @@ transition: all 0.2s;
 border-radius: 2px;
 }
 .nav-btn:hover, .nav-btn.active {
-border-color: var(–gold);
-color: var(–gold);
-background: rgba(201,168,76,0.05);
+border-color: #0a1628;
+color: #ffffff;
+background: #0a1628;
 }
 
 /* Views */
@@ -107,19 +99,29 @@ background: rgba(201,168,76,0.05);
 
 /* Search Panel */
 .search-panel {
-background: #112240 !important;
-background-color: #112240 !important;
-border: 1px solid rgba(201,168,76,0.3);
+background: #ffffff !important;
+background-color: #ffffff !important;
+border: 1px solid rgba(10,22,40,0.15);
 border-radius: 4px;
 padding: 36px;
 margin-bottom: 32px;
+box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 .panel-title {
 font-family: ‘Playfair Display’, serif;
 font-size: 20px;
-color: var(–gold);
+color: #c9a84c;
 margin-bottom: 28px;
 letter-spacing: 1px;
+}
+
+.header {
+padding: 40px 0 30px;
+border-bottom: 2px solid #c9a84c;
+margin-bottom: 40px;
+display: flex;
+align-items: center;
+justify-content: space-between;
 }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 .form-group { display: flex; flex-direction: column; gap: 8px; }
@@ -129,14 +131,14 @@ font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 3px;
 text-transform: uppercase;
-color: var(–gray);
+color: #555555;
 }
 input, select, textarea {
-background: #0d1e38 !important;
-background-color: #0d1e38 !important;
-border: 1px solid rgba(201,168,76,0.4) !important;
-color: #f5f0e8 !important;
--webkit-text-fill-color: #f5f0e8 !important;
+background: #f9f7f3 !important;
+background-color: #f9f7f3 !important;
+border: 1px solid #cccccc !important;
+color: #111111 !important;
+-webkit-text-fill-color: #111111 !important;
 font-family: ‘DM Sans’, sans-serif;
 font-size: 16px;
 padding: 12px 16px;
@@ -146,16 +148,16 @@ transition: border-color 0.2s;
 -webkit-appearance: none;
 appearance: none;
 }
-input::placeholder, textarea::placeholder { color: #8a9bb0 !important; -webkit-text-fill-color: #8a9bb0 !important; opacity: 1; }
+input::placeholder, textarea::placeholder { color: #999999 !important; -webkit-text-fill-color: #999999 !important; opacity: 1; }
 input:focus, select:focus, textarea:focus { border-color: #c9a84c !important; }
-select option { background: #112240; color: #f5f0e8; }
+select option { background: #ffffff; color: #111111; }
 textarea { resize: vertical; min-height: 80px; }
 
 .sector-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .sector-tag {
-background: rgba(10,22,40,0.6);
-border: 1px solid rgba(201,168,76,0.2);
-color: var(–gray);
+background: #f5f2ec;
+border: 1px solid #cccccc;
+color: #555555;
 font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 1px;
@@ -167,16 +169,16 @@ transition: all 0.2s;
 text-transform: uppercase;
 }
 .sector-tag.selected {
-background: rgba(201,168,76,0.15);
-border-color: var(–gold);
-color: var(–gold);
+background: #0a1628;
+border-color: #0a1628;
+color: #ffffff;
 }
 
 .run-btn {
 width: 100%;
-background: linear-gradient(135deg, var(–gold) 0%, #a07830 100%);
+background: #0a1628;
 border: none;
-color: var(–navy);
+color: #ffffff;
 font-family: ‘Playfair Display’, serif;
 font-size: 16px;
 font-weight: 700;
@@ -188,18 +190,19 @@ border-radius: 2px;
 transition: all 0.3s;
 margin-top: 24px;
 }
-.run-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
-.run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.run-btn:hover { background: #1a3a5c; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(10,22,40,0.3); }
+.run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 /* Progress */
 .progress-panel {
-background: #112240 !important;
-background-color: #112240 !important;
-border: 2px solid #c9a84c;
+background: #ffffff !important;
+background-color: #ffffff !important;
+border: 2px solid #0a1628;
 border-radius: 4px;
 padding: 32px;
 margin-bottom: 32px;
 display: none;
+box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
 .progress-panel.active { display: block !important; }
 .progress-title {
@@ -207,22 +210,22 @@ font-family: ‘DM Mono’, monospace;
 font-size: 13px;
 letter-spacing: 3px;
 text-transform: uppercase;
-color: #c9a84c !important;
+color: #0a1628 !important;
 margin-bottom: 20px;
 font-weight: bold;
 }
 .progress-bar-wrap {
-height: 8px;
-background: rgba(201,168,76,0.2);
-border-radius: 4px;
+height: 10px;
+background: #e8e4dc;
+border-radius: 5px;
 margin-bottom: 24px;
 overflow: hidden;
-border: 1px solid rgba(201,168,76,0.3);
+border: 1px solid #cccccc;
 }
 .progress-bar {
 height: 100%;
 background: #c9a84c;
-border-radius: 4px;
+border-radius: 5px;
 transition: width 0.4s ease;
 width: 0%;
 }
@@ -233,11 +236,11 @@ align-items: center;
 gap: 12px;
 font-family: ‘DM Mono’, monospace;
 font-size: 13px;
-color: #8a9bb0;
+color: #999999;
 transition: color 0.3s;
 }
-.step-item.done { color: #27ae60 !important; }
-.step-item.active { color: #c9a84c !important; font-weight: bold; }
+.step-item.done { color: #1a7a4a !important; }
+.step-item.active { color: #0a1628 !important; font-weight: bold; }
 .step-dot {
 width: 8px; height: 8px;
 border-radius: 50%;
@@ -277,12 +280,12 @@ border: 1px solid;
 .score-banner.amber .score-label { color: var(–amber); }
 .score-banner.red .score-label { color: var(–red-soft); }
 
-.result-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid var(–border); }
+.result-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid #dddddd; }
 .result-tab {
 background: transparent;
 border: none;
 border-bottom: 2px solid transparent;
-color: var(–gray);
+color: #777777;
 font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
@@ -292,8 +295,8 @@ cursor: pointer;
 transition: all 0.2s;
 margin-bottom: -1px;
 }
-.result-tab:hover { color: var(–gold); }
-.result-tab.active { color: var(–gold); border-bottom-color: var(–gold); }
+.result-tab:hover { color: #0a1628; }
+.result-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
 
 .result-content { padding-top: 28px; }
 .result-section { display: none; }
@@ -355,36 +358,38 @@ margin-bottom: 8px;
 /* Info cards */
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
 .info-card {
-background: #0d1e38 !important;
-background-color: #0d1e38 !important;
-border: 1px solid rgba(201,168,76,0.2);
+background: #ffffff !important;
+background-color: #ffffff !important;
+border: 1px solid #dddddd;
 border-radius: 4px;
 padding: 20px;
+box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .info-card-label {
 font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 2px;
-color: var(–gray);
+color: #777777;
 text-transform: uppercase;
 margin-bottom: 8px;
 }
-.info-card-value { font-size: 14px; line-height: 1.6; color: var(–white); }
-.info-card-value.ok { color: var(–green-soft); }
-.info-card-value.warn { color: var(–amber); }
-.info-card-value.bad { color: var(–red-soft); }
+.info-card-value { font-size: 14px; line-height: 1.6; color: #111111; }
+.info-card-value.ok { color: #1a7a4a; }
+.info-card-value.warn { color: #d4861a; }
+.info-card-value.bad { color: #c0392b; }
 
 /* Person cards */
 .person-card {
-background: #0d1e38 !important;
-background-color: #0d1e38 !important;
-border: 1px solid rgba(201,168,76,0.2);
+background: #ffffff !important;
+background-color: #ffffff !important;
+border: 1px solid #dddddd;
 border-radius: 4px;
 padding: 20px;
 margin-bottom: 16px;
+box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.person-name { font-family: ‘Playfair Display’, serif; font-size: 17px; margin-bottom: 4px; }
-.person-role { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: var(–gray); text-transform: uppercase; margin-bottom: 14px; }
+.person-name { font-family: ‘Playfair Display’, serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
+.person-role { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; margin-bottom: 14px; }
 .person-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .check-badge {
 font-family: ‘DM Mono’, monospace;
@@ -400,9 +405,19 @@ text-transform: uppercase;
 
 /* Raw dump */
 .raw-dump {
-background: #060e1c !important;
-background-color: #060e1c !important;
-border: 1px solid rgba(201,168,76,0.2);
+background: #f0ede6 !important;
+background-color: #f0ede6 !important;
+border: 1px solid #cccccc;
+border-radius: 4px;
+padding: 24px;
+font-family: ‘DM Mono’, monospace;
+font-size: 12px;
+line-height: 1.8;
+color: #333333;
+white-space: pre-wrap;
+max-height: 600px;
+overflow-y: auto;
+}
 border-radius: 4px;
 padding: 24px;
 font-family: ‘DM Mono’, monospace;
@@ -421,8 +436,8 @@ overflow-y: auto;
 .action-row { display: flex; gap: 12px; margin-top: 28px; }
 .action-btn {
 background: transparent;
-border: 1px solid var(–border);
-color: var(–gray);
+border: 1px solid #cccccc;
+color: #555555;
 font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
@@ -435,19 +450,35 @@ display: flex;
 align-items: center;
 gap: 8px;
 }
-.action-btn:hover { border-color: var(–gold); color: var(–gold); }
+.action-btn:hover { border-color: #0a1628; color: #0a1628; }
 .action-btn.primary {
-background: rgba(201,168,76,0.1);
-border-color: var(–gold);
-color: var(–gold);
+background: #0a1628;
+border-color: #0a1628;
+color: #ffffff;
 }
+.action-btn.primary:hover { background: #1a3a5c; }
+
+.small-btn {
+background: transparent;
+border: 1px solid #cccccc;
+color: #555555;
+font-family: ‘DM Mono’, monospace;
+font-size: 10px;
+letter-spacing: 1px;
+padding: 6px 12px;
+cursor: pointer;
+border-radius: 2px;
+transition: all 0.2s;
+text-transform: uppercase;
+}
+.small-btn:hover { border-color: #c9a84c; color: #c9a84c; }
 
 /* History */
 .history-list { display: flex; flex-direction: column; gap: 12px; }
 .history-item {
-background: #112240 !important;
-background-color: #112240 !important;
-border: 1px solid rgba(201,168,76,0.2);
+background: #ffffff !important;
+background-color: #ffffff !important;
+border: 1px solid #dddddd;
 border-radius: 4px;
 padding: 20px 24px;
 display: flex;
@@ -455,11 +486,11 @@ align-items: center;
 justify-content: space-between;
 cursor: pointer;
 transition: border-color 0.2s;
+box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.history-item:hover { border-color: var(–gold); }
-.history-left { display: flex; flex-direction: column; gap: 4px; }
-.history-company { font-family: ‘Playfair Display’, serif; font-size: 17px; }
-.history-meta { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: var(–gray); text-transform: uppercase; }
+.history-item:hover { border-color: #c9a84c; }
+.history-company { font-family: ‘Playfair Display’, serif; font-size: 17px; color: #111111; }
+.history-meta { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; }
 .history-right { display: flex; align-items: center; gap: 16px; }
 .score-pill {
 font-family: ‘Playfair Display’, serif;
@@ -519,14 +550,14 @@ font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 4px;
 text-transform: uppercase;
-color: var(–gold);
+color: #c9a84c;
 margin-bottom: 16px;
 padding-bottom: 8px;
-border-bottom: 1px solid var(–border);
+border-bottom: 1px solid #dddddd;
 }
 
-.prose { font-size: 14px; line-height: 1.8; color: var(–gray-light); margin-bottom: 20px; }
-.prose strong { color: var(–white); }
+.prose { font-size: 14px; line-height: 1.8; color: #333333; margin-bottom: 20px; }
+.prose strong { color: #111111; }
 
 /* Empty state */
 .empty-state {
@@ -541,12 +572,11 @@ letter-spacing: 2px;
 /* File input hidden */
 #fileInput { display: none; }
 
-/* Loading spinner */
 .spinner {
 display: inline-block;
 width: 14px; height: 14px;
-border: 2px solid rgba(201,168,76,0.2);
-border-top-color: var(–gold);
+border: 2px solid rgba(255,255,255,0.3);
+border-top-color: #ffffff;
 border-radius: 50%;
 animation: spin 0.8s linear infinite;
 vertical-align: middle;
@@ -635,7 +665,10 @@ vertical-align: middle;
 
 <!-- Progress -->
 <div class="progress-panel" id="progressPanel">
-  <div class="progress-title">⬡ &nbsp; Research in progress</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="progress-title" style="margin-bottom:0;">⬡ &nbsp; Research in progress — please wait</div>
+    <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#c9a84c;letter-spacing:2px;background:#0a1628;padding:8px 16px;border-radius:4px;border:2px solid #c9a84c;" id="runTimer">00:00</div>
+  </div>
   <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
   <div class="progress-steps" id="progressSteps"></div>
 </div>
@@ -709,6 +742,24 @@ function showTab(name) {
 function toggleSector(el) { el.classList.toggle('selected'); }
 
 // ── Research Runner ─────────────────────────────────────────────────────
+let timerInterval = null;
+
+function startTimer() {
+  let seconds = 0;
+  const timerEl = document.getElementById('runTimer');
+  if (timerEl) timerEl.textContent = '00:00';
+  timerInterval = setInterval(() => {
+    seconds++;
+    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const ss = String(seconds % 60).padStart(2, '0');
+    if (timerEl) timerEl.textContent = mm + ':' + ss;
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
 async function runResearch() {
   const company = document.getElementById('companyName').value.trim();
   const country = document.getElementById('companyCountry').value.trim();
@@ -720,6 +771,7 @@ async function runResearch() {
   const notes = document.getElementById('extraNotes').value.trim();
 
   document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').innerHTML = '<span class="spinner"></span> &nbsp; Searching...';
   document.getElementById('progressPanel').classList.add('active');
   document.getElementById('resultsPanel').classList.remove('active');
 
@@ -739,16 +791,23 @@ async function runResearch() {
   ];
 
   renderProgressSteps(steps);
-  await animateProgress(steps);
+  startTimer();
 
+  // Run animation and API call in parallel
   const prompt = buildPrompt(company, country, website, keyPerson, sectors, notes);
-  const raw = await callClaude(prompt);
+  const [raw] = await Promise.all([
+    callClaude(prompt),
+    animateProgress(steps)
+  ]);
+
+  stopTimer();
   currentResult = { company, country, website, keyPerson, sectors, notes, raw, date: new Date().toISOString() };
 
   renderResults(currentResult);
   document.getElementById('progressPanel').classList.remove('active');
   document.getElementById('resultsPanel').classList.add('active');
   document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').innerHTML = '⬡ &nbsp; Run Full Due Diligence';
 }
 
 function renderProgressSteps(steps) {
