@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +9,9 @@
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #333; }
 .header { background: #1a2e4a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
-.header span { font-size: 12px; opacity: 0.7; }
+.header-right { text-align: right; }
+.header-right .hdate { font-size: 12px; opacity: 0.7; display: block; }
+.header-right .hclock { font-size: 15px; font-weight: bold; opacity: 0.9; display: block; margin-top: 2px; letter-spacing: 1px; }
 
 /* TICKER */
 .ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
@@ -20,10 +21,6 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 13px; border-right: 1px solid #2a3f5a; }
 .ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
 .ticker-item .t-price { color: white; font-weight: bold; }
-.ticker-item .t-up { color: #27ae60; font-size: 11px; }
-.ticker-item .t-down { color: #e74c3c; font-size: 11px; }
-.ticker-item .t-flat { color: #aaa; font-size: 11px; }
-.ticker-time { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #0f1e30; padding: 0 8px; font-size: 10px; color: #445; z-index: 2; }
 @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
 .nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
@@ -75,8 +72,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .comms-entry.whatsapp { border-left-color: #25d366; } .comms-entry.meeting { border-left-color: #9b59b6; } .comms-entry.note { border-left-color: #e8a020; }
 .rel-map { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
 .rel-entry { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-
-/* PRICES */
 .live-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin-bottom: 20px; }
 .live-card { background: white; border-radius: 8px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); text-align: center; border-top: 4px solid #1a2e4a; }
 .live-card.currency { border-top-color: #27ae60; }
@@ -93,24 +88,24 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 .price-bar button { background: #1a2e4a; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; }
 .sec-div { font-size: 14px; font-weight: bold; color: #444; margin: 22px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #ddd; }
 </style>
-
 </head>
 <body>
 
 <div class="header">
   <h1>⚡ JERICHO OPERATIONS CENTER</h1>
-  <span id="currentDate"></span>
+  <div class="header-right">
+    <span class="hdate" id="currentDate"></span>
+    <span class="hclock" id="currentTime"></span>
+  </div>
 </div>
 
 <!-- TICKER -->
-
 <div class="ticker-bar">
   <div class="ticker-wrap">
     <div class="ticker-track" id="tickerTrack">
       <div class="ticker-item"><span class="t-name">Loading market data...</span><span class="t-price">Click Prices → Refresh</span></div>
     </div>
   </div>
-  <div class="ticker-time" id="tickerTime"></div>
 </div>
 
 <div class="nav">
@@ -128,7 +123,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- DASHBOARD -->
-
 <div class="content" id="mainContent">
 <div class="section-title">Today's Overview</div>
 <div class="dashboard-grid">
@@ -166,7 +160,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- LEADS -->
-
 <div id="leads-section" style="display:none;" class="content">
 <div class="section-title">Lead Management</div>
 <button class="btn-primary" onclick="showAddLead()">+ Add New Lead</button>
@@ -198,7 +191,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- PIPELINE -->
-
 <div id="pipeline-section" style="display:none;" class="content">
 <div class="section-title">Deal Pipeline</div>
 <button class="btn-primary" onclick="showAddDeal()">+ Add New Deal</button>
@@ -226,7 +218,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- CONTACTS -->
-
 <div id="contacts-section" style="display:none;" class="content">
 <div class="section-title">Contacts & Broker Management</div>
 <button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
@@ -265,7 +256,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- TASKS -->
-
 <div id="tasks-section" style="display:none;" class="content">
 <div class="section-title">Tasks & Follow-up Center</div>
 <button class="btn-primary" onclick="showAddTask()">+ Add New Task</button>
@@ -297,7 +287,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- COMMISSIONS -->
-
 <div id="commissions-section" style="display:none;" class="content">
 <div class="section-title">Commission Tracking</div>
 <button class="btn-primary" onclick="showAddCommission()">+ Add Commission Record</button>
@@ -336,7 +325,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- COMMS LOG -->
-
 <div id="commslog-section" style="display:none;" class="content">
 <div class="section-title">Communication History</div>
 <button class="btn-primary" onclick="showAddComm()">+ Log Communication</button>
@@ -363,7 +351,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- DOCUMENTS -->
-
 <div id="documents-section" style="display:none;" class="content">
 <div class="section-title">Document Management</div>
 <button class="btn-primary" onclick="showAddDoc()">+ Add Document Record</button>
@@ -397,7 +384,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- PRICES -->
-
 <div id="prices-section" style="display:none;" class="content">
 <div class="section-title">Market Intelligence — Live Prices</div>
 <div class="price-bar">
@@ -406,20 +392,16 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
   <span id="priceTime" style="margin-left:auto;font-size:11px;color:#aaa;"></span>
 </div>
 <div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#856404;">
-  ⚠️ Gold &amp; Silver: GoldPriceZ (up to 60 req/hour). Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium: manual entry only — no free public API exists for these.
+  ⚠️ Gold &amp; Silver: GoldPriceZ. Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium: manual entry only — no free public API exists for these.
 </div>
-
 <div class="sec-div">💱 Currencies — Live</div>
 <div class="live-grid" id="gridCurrency"></div>
-
 <div class="sec-div">🥇 Precious &amp; Base Metals</div>
 <div class="live-grid" id="gridMetals"></div>
-
 <div class="sec-div">🛢️ Energy — Crude Oil</div>
 <div class="live-grid" id="gridEnergy"></div>
-
 <div class="sec-div">📋 Broker Quotes — Chrome Ore · Manganese · Ferrochrome · Lithium · Iron Ore</div>
-<div style="background:#f0f4f8;border-radius:6px;padding:10px 14px;margin-bottom:15px;font-size:12px;color:#555;">No free API exists for these. Enter quotes from your brokers, Fastmarkets references, or CRU reports. All entries stored with source, grade, and date.</div>
+<div style="background:#f0f4f8;border-radius:6px;padding:10px 14px;margin-bottom:15px;font-size:12px;color:#555;">No free API exists for these. Enter quotes from your brokers, Fastmarkets references, or CRU reports.</div>
 <button class="btn-primary" onclick="showAddQuote()">+ Add Broker Quote</button>
 <div id="addQuoteForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Broker Quote / Manual Price</h3>
@@ -434,7 +416,7 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
   <div class="form-group"><label>Date</label><input id="qDate" type="date"></div>
   <div class="form-group"><label>Direction</label><select id="qDirection"><option>Offer (seller quote)</option><option>Bid (buyer quote)</option><option>Reference / Market</option></select></div>
 </div>
-<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="qNotes" placeholder="Grade details, basis, conditions, who provided this..."></textarea></div>
+<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="qNotes" placeholder="Grade details, basis, conditions..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;">
   <button class="btn-success" onclick="saveQuote()">Save Quote</button>
   <button class="btn-cancel" onclick="hideAddQuote()">Cancel</button>
@@ -447,7 +429,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- RELATIONSHIPS -->
-
 <div id="relationships-section" style="display:none;" class="content">
 <div class="section-title">Relationship Mapping</div>
 <button class="btn-primary" onclick="showAddRel()">+ Add Relationship</button>
@@ -472,7 +453,6 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <!-- BACKUP -->
-
 <div id="backup-section" style="display:none;" class="content">
 <div class="section-title">Data Backup & Restore</div>
 <div class="backup-box">
@@ -507,24 +487,22 @@ td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 </div>
 
 <script>
-// ============================================================
-// API KEYS
-// ============================================================
 const KEY_GOLDPRICEZ = 'a0287c10549de17fca6c786e1350e1e7a0287c10';
 const KEY_EIA        = '1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
-const KEY_NINJAS     = '034KYsidNnvQQ4or7aVvNLHr31IFKdXNjX8nw8LN';
-const KEY_METALS_DEV = 'UKWP4CPKJC1AR0PNFDUJ503PNFDUJ'; // backup only
+const KEY_METALS_DEV = 'UKWP4CPKJC1AR0PNFDUJ503PNFDUJ';
 
-// ============================================================
-// INIT
-// ============================================================
+// DATE + LIVE CLOCK
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+function updateClock(){
+  const now = new Date();
+  document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
 const today = new Date().toISOString().split('T')[0];
 if('Notification' in window) Notification.requestPermission();
 
-// ============================================================
-// PRICE CACHE
-// ============================================================
 let priceCache = JSON.parse(localStorage.getItem('jericho_price_cache')) || {};
 function saveCache(){ localStorage.setItem('jericho_price_cache', JSON.stringify(priceCache)); }
 function isStale(key, maxHours){
@@ -532,17 +510,11 @@ function isStale(key, maxHours){
   return (Date.now() - priceCache[key].ts) > maxHours * 3600000;
 }
 
-// ============================================================
-// CARD HELPERS
-// ============================================================
 function makeCard(id, label, cssClass){
-  return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}">
-    <h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div>
-  </div>`;
+  return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}"><h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;
 }
 function fillCard(id, price, unit, change, pct, source, ts){
-  const el = document.getElementById('card_'+id);
-  if(!el) return;
+  const el = document.getElementById('card_'+id); if(!el) return;
   const label = el.dataset.label || id;
   const dir = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
   const arrow = dir==='up'?'▲':dir==='down'?'▼':'—';
@@ -551,245 +523,136 @@ function fillCard(id, price, unit, change, pct, source, ts){
   el.innerHTML = `<h4>${label}</h4><div class="lc-price">${price}</div><div class="lc-unit">${unit}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
 }
 function errCard(id, msg){
-  const el = document.getElementById('card_'+id);
-  if(!el) return;
+  const el = document.getElementById('card_'+id); if(!el) return;
   const label = el.dataset.label || id;
   el.innerHTML = `<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;
 }
 function renderPriceGrids(){
-  document.getElementById('gridCurrency').innerHTML =
-    makeCard('EURUSD','EUR / USD','currency') +
-    makeCard('USDZAR','USD / ZAR','currency') +
-    makeCard('EURZAR','EUR / ZAR','currency');
-  document.getElementById('gridMetals').innerHTML =
-    makeCard('GOLD','Gold (XAU)','metal') +
-    makeCard('SILVER','Silver (XAG)','metal') +
-    makeCard('COPPER','Copper','metal');
-  document.getElementById('gridEnergy').innerHTML =
-    makeCard('BRENT','Brent Crude','energy') +
-    makeCard('WTI','WTI Crude','energy');
+  document.getElementById('gridCurrency').innerHTML = makeCard('EURUSD','EUR / USD','currency')+makeCard('USDZAR','USD / ZAR','currency')+makeCard('EURZAR','EUR / ZAR','currency');
+  document.getElementById('gridMetals').innerHTML = makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal');
+  document.getElementById('gridEnergy').innerHTML = makeCard('BRENT','Brent Crude','energy')+makeCard('WTI','WTI Crude','energy');
 }
 
-// ============================================================
-// FETCH CURRENCIES — ExchangeRate-API (free, no key)
-// ============================================================
 async function fetchCurrencies(force){
-  if(!force && !isStale('cur',1)){
-    applyCur(priceCache['cur'].d); return;
-  }
+  if(!force && !isStale('cur',1)){ applyCur(priceCache['cur'].d); return; }
   try {
     const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const j = await r.json();
-    if(j && j.rates){
-      priceCache['cur'] = {d:{EUR:j.rates.EUR, ZAR:j.rates.ZAR}, ts:Date.now()};
-      saveCache(); applyCur(priceCache['cur'].d);
-    }
+    if(j && j.rates){ priceCache['cur']={d:{EUR:j.rates.EUR,ZAR:j.rates.ZAR},ts:Date.now()}; saveCache(); applyCur(priceCache['cur'].d); }
   } catch(e){ errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
 }
 function applyCur(d){
-  const ts = priceCache['cur']?.ts || Date.now();
-  if(d.EUR){
-    const eurusd=(1/d.EUR).toFixed(4);
-    fillCard('EURUSD',eurusd,'1 EUR in USD',null,null,'ExchangeRate-API',ts);
-  }
-  if(d.ZAR){
-    fillCard('USDZAR',d.ZAR.toFixed(2),'1 USD in ZAR',null,null,'ExchangeRate-API',ts);
-    if(d.EUR){ fillCard('EURZAR',(d.ZAR/d.EUR).toFixed(2),'1 EUR in ZAR',null,null,'ExchangeRate-API',ts); }
-  }
+  const ts = priceCache['cur']?.ts||Date.now();
+  if(d.EUR) fillCard('EURUSD',(1/d.EUR).toFixed(4),'1 EUR in USD',null,null,'ExchangeRate-API',ts);
+  if(d.ZAR){ fillCard('USDZAR',d.ZAR.toFixed(2),'1 USD in ZAR',null,null,'ExchangeRate-API',ts); if(d.EUR) fillCard('EURZAR',(d.ZAR/d.EUR).toFixed(2),'1 EUR in ZAR',null,null,'ExchangeRate-API',ts); }
 }
 
-// ============================================================
-// FETCH GOLD & SILVER — GoldPriceZ (~44,000 req/month free)
-// ============================================================
 async function fetchMetals(force){
-  if(!force && !isStale('metals',4)){
-    applyMetals(priceCache['metals'].d); return;
-  }
+  if(!force && !isStale('metals',4)){ applyMetals(priceCache['metals'].d); return; }
   try {
-    const r = await fetch(`https://goldpricez.com/api/rates/currency/usd`, {
-      headers: { 'x-access-token': KEY_GOLDPRICEZ }
-    });
+    const r = await fetch(`https://goldpricez.com/api/rates/currency/usd`,{headers:{'x-access-token':KEY_GOLDPRICEZ}});
     const j = await r.json();
-    if(j && (j.gold_price_usd || j.gold || j['XAU'])){
-      priceCache['metals'] = {d:j, ts:Date.now()};
-      saveCache(); applyMetals(j);
-    } else {
-      // Fallback to Metals.dev (25/month backup)
-      await fetchMetalsFallback();
-    }
+    if(j && (j.gold_price_usd||j.gold||j['XAU'])){ priceCache['metals']={d:j,ts:Date.now()}; saveCache(); applyMetals(j); }
+    else await fetchMetalsFallback();
   } catch(e){ await fetchMetalsFallback(); }
 }
 async function fetchMetalsFallback(){
   try {
     const r = await fetch(`https://api.metals.dev/v1/latest?api_key=${KEY_METALS_DEV}&currency=USD&unit=troy_oz`);
     const j = await r.json();
-    if(j && j.metals){
-      priceCache['metals'] = {d:{_fallback:true, gold:j.metals.gold, silver:j.metals.silver, copper:j.metals.copper}, ts:Date.now()};
-      saveCache(); applyMetals(priceCache['metals'].d);
-    } else { errCard('GOLD','No data'); errCard('SILVER','No data'); errCard('COPPER','No data'); }
+    if(j && j.metals){ priceCache['metals']={d:{_fallback:true,gold:j.metals.gold,silver:j.metals.silver,copper:j.metals.copper},ts:Date.now()}; saveCache(); applyMetals(priceCache['metals'].d); }
+    else { errCard('GOLD','No data'); errCard('SILVER','No data'); errCard('COPPER','No data'); }
   } catch(e){ errCard('GOLD','API error'); errCard('SILVER','API error'); errCard('COPPER','API error'); }
 }
 function applyMetals(d){
-  const ts = priceCache['metals']?.ts || Date.now();
-  const src = d._fallback ? 'Metals.Dev (backup)' : 'GoldPriceZ';
-  // GoldPriceZ possible keys
-  const goldVal = d.gold_price_usd || d.gold_price || d.gold || d['XAU'] || d['gold'];
-  const silverVal = d.silver_price_usd || d.silver_price || d.silver || d['XAG'] || d['silver'];
-  const copperVal = d.copper_price_usd || d.copper_price || d.copper || d['copper'];
-  if(goldVal){ fillCard('GOLD','$'+parseFloat(goldVal).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / troy oz',null,null,src,ts); }
-  else { errCard('GOLD','No gold data'); }
-  if(silverVal){ fillCard('SILVER','$'+parseFloat(silverVal).toFixed(3),'USD / troy oz',null,null,src,ts); }
-  else { errCard('SILVER','No silver data'); }
-  if(copperVal){
-    // If per troy oz, convert to per MT
-    const raw = parseFloat(copperVal);
-    const perMT = raw < 1 ? (raw*32150.7).toFixed(0) : raw.toFixed(2);
-    fillCard('COPPER','$'+Number(perMT).toLocaleString(),'USD / metric ton',null,null,src,ts);
-  } else { errCard('COPPER','No copper data'); }
+  const ts=priceCache['metals']?.ts||Date.now();
+  const src=d._fallback?'Metals.Dev (backup)':'GoldPriceZ';
+  const gv=d.gold_price_usd||d.gold_price||d.gold||d['XAU']||d['gold'];
+  const sv=d.silver_price_usd||d.silver_price||d.silver||d['XAG']||d['silver'];
+  const cv=d.copper_price_usd||d.copper_price||d.copper||d['copper'];
+  if(gv) fillCard('GOLD','$'+parseFloat(gv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / troy oz',null,null,src,ts);
+  else errCard('GOLD','No gold data');
+  if(sv) fillCard('SILVER','$'+parseFloat(sv).toFixed(3),'USD / troy oz',null,null,src,ts);
+  else errCard('SILVER','No silver data');
+  if(cv){ const raw=parseFloat(cv); const pmt=raw<1?(raw*32150.7).toFixed(0):raw.toFixed(2); fillCard('COPPER','$'+Number(pmt).toLocaleString(),'USD / metric ton',null,null,src,ts); }
+  else errCard('COPPER','No copper data');
 }
 
-// ============================================================
-// FETCH OIL — EIA US Government (free, unlimited)
-// ============================================================
 async function fetchOil(force){
-  if(!force && !isStale('oil',6)){
-    applyOil(priceCache['oil'].d); return;
-  }
+  if(!force && !isStale('oil',6)){ applyOil(priceCache['oil'].d); return; }
   try {
-    // Brent: series PET.RBRTE.D — WTI: series PET.RWTC.D
-    const [bRes, wRes] = await Promise.all([
+    const [bRes,wRes] = await Promise.all([
       fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RBRTE`),
       fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RWTC`)
     ]);
-    const bj = await bRes.json();
-    const wj = await wRes.json();
-    const brent = bj?.response?.data?.[0];
-    const wti   = wj?.response?.data?.[0];
-    if(brent || wti){
-      priceCache['oil'] = {d:{brent, wti}, ts:Date.now()};
-      saveCache(); applyOil({brent, wti});
-    } else {
-      errCard('BRENT','No EIA data'); errCard('WTI','No EIA data');
-    }
+    const bj=await bRes.json(), wj=await wRes.json();
+    const brent=bj?.response?.data?.[0], wti=wj?.response?.data?.[0];
+    if(brent||wti){ priceCache['oil']={d:{brent,wti},ts:Date.now()}; saveCache(); applyOil({brent,wti}); }
+    else { errCard('BRENT','No EIA data'); errCard('WTI','No EIA data'); }
   } catch(e){ errCard('BRENT','EIA error'); errCard('WTI','EIA error'); }
 }
 function applyOil(d){
-  const ts = priceCache['oil']?.ts || Date.now();
-  if(d.brent && d.brent.value){
-    fillCard('BRENT','$'+parseFloat(d.brent.value).toFixed(2),'USD / barrel · '+d.brent.period,null,null,'EIA (US Gov)',ts);
-  } else { errCard('BRENT','No EIA data'); }
-  if(d.wti && d.wti.value){
-    fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
-  } else { errCard('WTI','No EIA data'); }
+  const ts=priceCache['oil']?.ts||Date.now();
+  if(d.brent?.value) fillCard('BRENT','$'+parseFloat(d.brent.value).toFixed(2),'USD / barrel · '+d.brent.period,null,null,'EIA (US Gov)',ts);
+  else errCard('BRENT','No EIA data');
+  if(d.wti?.value) fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
+  else errCard('WTI','No EIA data');
 }
 
-// ============================================================
-// FETCH ALL
-// ============================================================
 async function fetchAllPrices(force){
-  const msg = document.getElementById('priceMsg');
-  if(msg) msg.textContent = 'Fetching prices...';
+  const msg=document.getElementById('priceMsg');
+  if(msg) msg.textContent='Fetching prices...';
   renderPriceGrids();
-  await Promise.all([ fetchCurrencies(force), fetchMetals(force), fetchOil(force) ]);
-  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  if(msg) msg.textContent = 'Prices loaded.';
-  const pt = document.getElementById('priceTime');
-  if(pt) pt.textContent = 'Last refresh: '+now;
+  await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force)]);
+  const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(msg) msg.textContent='Prices loaded.';
+  const pt=document.getElementById('priceTime'); if(pt) pt.textContent='Last refresh: '+now;
   buildTicker();
 }
 
-// ============================================================
-// TICKER
-// ============================================================
 function buildTicker(){
-  const items = [];
-  const cur = priceCache['cur'];
-  if(cur?.d){
-    items.push({n:'EUR/USD', p:(1/cur.d.EUR).toFixed(4), ch:null});
-    items.push({n:'USD/ZAR', p:cur.d.ZAR.toFixed(2), ch:null});
-  }
-  const met = priceCache['metals'];
+  const items=[];
+  const cur=priceCache['cur'];
+  if(cur?.d){ items.push({n:'EUR/USD',p:(1/cur.d.EUR).toFixed(4)}); items.push({n:'USD/ZAR',p:cur.d.ZAR.toFixed(2)}); }
+  const met=priceCache['metals'];
   if(met?.d){
-    const gv = met.d.gold_price_usd||met.d.gold_price||met.d.gold||met.d['XAU']||met.d['gold'];
-    const sv = met.d.silver_price_usd||met.d.silver_price||met.d.silver||met.d['XAG']||met.d['silver'];
-    if(gv) items.push({n:'GOLD', p:'$'+parseFloat(gv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}), ch:null});
-    if(sv) items.push({n:'SILVER', p:'$'+parseFloat(sv).toFixed(3), ch:null});
+    const gv=met.d.gold_price_usd||met.d.gold_price||met.d.gold||met.d['XAU']||met.d['gold'];
+    const sv=met.d.silver_price_usd||met.d.silver_price||met.d.silver||met.d['XAG']||met.d['silver'];
+    if(gv) items.push({n:'GOLD',p:'$'+parseFloat(gv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
+    if(sv) items.push({n:'SILVER',p:'$'+parseFloat(sv).toFixed(3)});
   }
-  const oil = priceCache['oil'];
+  const oil=priceCache['oil'];
   if(oil?.d){
-    if(oil.d.brent?.value) items.push({n:'BRENT', p:'$'+parseFloat(oil.d.brent.value).toFixed(2), ch:null});
-    if(oil.d.wti?.value)   items.push({n:'WTI',   p:'$'+parseFloat(oil.d.wti.value).toFixed(2), ch:null});
+    if(oil.d.brent?.value) items.push({n:'BRENT',p:'$'+parseFloat(oil.d.brent.value).toFixed(2)});
+    if(oil.d.wti?.value) items.push({n:'WTI',p:'$'+parseFloat(oil.d.wti.value).toFixed(2)});
   }
-  if(!items.length){
-    document.getElementById('tickerTrack').innerHTML = '<div class="ticker-item"><span class="t-name">No price data yet</span><span class="t-price">Go to Prices → Refresh</span></div>';
-    return;
-  }
-  const all = [...items,...items]; // duplicate for seamless loop
-  document.getElementById('tickerTrack').innerHTML = all.map(i=>
-    `<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`
-  ).join('');
-  document.getElementById('tickerTime').textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(!items.length){ document.getElementById('tickerTrack').innerHTML='<div class="ticker-item"><span class="t-name">No price data yet</span><span class="t-price">Go to Prices → Refresh</span></div>'; return; }
+  const all=[...items,...items];
+  document.getElementById('tickerTrack').innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
 }
 
-// ============================================================
-// BROKER QUOTES
-// ============================================================
-let brokerQuotes = JSON.parse(localStorage.getItem('jericho_broker_quotes')) || [];
+let brokerQuotes=JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
 function showAddQuote(){ document.getElementById('addQuoteForm').style.display='block'; }
 function hideAddQuote(){ document.getElementById('addQuoteForm').style.display='none'; }
 function saveQuote(){
-  const c = document.getElementById('qCommodity').value;
-  if(!c){ alert('Please select a commodity'); return; }
-  brokerQuotes.push({ id:Date.now(), commodity:c,
-    price:document.getElementById('qPrice').value,
-    origin:document.getElementById('qOrigin').value,
-    terms:document.getElementById('qTerms').value,
-    qty:document.getElementById('qQty').value,
-    source:document.getElementById('qSource').value,
-    date:document.getElementById('qDate').value,
-    direction:document.getElementById('qDirection').value,
-    notes:document.getElementById('qNotes').value,
-    logged:new Date().toLocaleDateString('en-GB')
-  });
-  localStorage.setItem('jericho_broker_quotes', JSON.stringify(brokerQuotes));
-  renderQuotes(); hideAddQuote();
+  const c=document.getElementById('qCommodity').value; if(!c){alert('Please select a commodity');return;}
+  brokerQuotes.push({id:Date.now(),commodity:c,price:document.getElementById('qPrice').value,origin:document.getElementById('qOrigin').value,terms:document.getElementById('qTerms').value,qty:document.getElementById('qQty').value,source:document.getElementById('qSource').value,date:document.getElementById('qDate').value,direction:document.getElementById('qDirection').value,notes:document.getElementById('qNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));renderQuotes();hideAddQuote();
   ['qPrice','qOrigin','qTerms','qQty','qSource','qNotes'].forEach(id=>document.getElementById(id).value='');
 }
-function deleteQuote(id){
-  if(!confirm('Delete this quote?')) return;
-  brokerQuotes = brokerQuotes.filter(q=>q.id!==id);
-  localStorage.setItem('jericho_broker_quotes', JSON.stringify(brokerQuotes));
-  renderQuotes();
-}
+function deleteQuote(id){ if(!confirm('Delete this quote?'))return; brokerQuotes=brokerQuotes.filter(q=>q.id!==id); localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes)); renderQuotes(); }
 function renderQuotes(){
-  const tb = document.getElementById('quotesBody');
-  if(!tb) return;
-  if(!brokerQuotes.length){ tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>'; return; }
+  const tb=document.getElementById('quotesBody'); if(!tb)return;
+  if(!brokerQuotes.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>';return;}
   const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
-  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr>
-    <td><strong>${q.commodity}</strong></td>
-    <td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td>
-    <td>${q.origin||'-'}</td><td>${q.terms||'-'}</td>
-    <td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td>
-    <td>${q.source||'-'}</td><td>${q.date||'-'}</td>
-    <td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td>
-    <td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td>
-  </tr>`).join('');
+  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${q.commodity}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td><td>${q.origin||'-'}</td><td>${q.terms||'-'}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td><td>${q.source||'-'}</td><td>${q.date||'-'}</td><td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
 }
 
-// ============================================================
-// NAVIGATION
-// ============================================================
-function showSection(s, btn){
+function showSection(s,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section',
-   'commissions-section','commslog-section','documents-section','prices-section',
-   'relationships-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
-  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',
-    contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',
-    commslog:'commslog-section',documents:'documents-section',prices:'prices-section',
-    relationships:'relationships-section',backup:'backup-section'};
+  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
+  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',backup:'backup-section'};
   document.getElementById(map[s]).style.display='block';
   if(s==='dashboard') updateDashboard();
   else if(s==='leads') renderLeads();
@@ -804,18 +667,13 @@ function showSection(s, btn){
   else if(s==='backup') updateBackupStats();
 }
 
-// ============================================================
-// LEADS
-// ============================================================
-let leads = JSON.parse(localStorage.getItem('jericho_leads'))||[];
-function showAddLead(){ document.getElementById('addLeadForm').style.display='block'; }
-function hideAddLead(){ document.getElementById('addLeadForm').style.display='none'; }
+let leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
+function showAddLead(){document.getElementById('addLeadForm').style.display='block';}
+function hideAddLead(){document.getElementById('addLeadForm').style.display='none';}
 function saveLead(){
-  const name=document.getElementById('leadName').value;
-  if(!name){alert('Please enter a name');return;}
+  const name=document.getElementById('leadName').value; if(!name){alert('Please enter a name');return;}
   leads.push({id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:document.getElementById('leadCommodity').value,notes:document.getElementById('leadNotes').value,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_leads',JSON.stringify(leads));
-  renderLeads(); hideAddLead();
+  localStorage.setItem('jericho_leads',JSON.stringify(leads)); renderLeads(); hideAddLead();
   ['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id=>document.getElementById(id).value='');
 }
 function renderLeads(q=''){
@@ -827,54 +685,34 @@ function renderLeads(q=''){
 }
 function deleteLead(i){if(confirm('Delete this lead?')){leads.splice(i,1);localStorage.setItem('jericho_leads',JSON.stringify(leads));renderLeads();}}
 
-// ============================================================
-// PIPELINE
-// ============================================================
 let pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
 const stages=['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
 function showAddDeal(){document.getElementById('addDealForm').style.display='block';}
 function hideAddDeal(){document.getElementById('addDealForm').style.display='none';}
 function saveDeal(){
-  const commodity=document.getElementById('dealCommodity').value;
-  if(!commodity){alert('Please enter a commodity');return;}
+  const commodity=document.getElementById('dealCommodity').value; if(!commodity){alert('Please enter a commodity');return;}
   pipeline.push({id:Date.now(),commodity,broker:document.getElementById('dealBroker').value,buyer:document.getElementById('dealBuyer').value,seller:document.getElementById('dealSeller').value,quantity:document.getElementById('dealQuantity').value,unit:document.getElementById('dealUnit').value,price:document.getElementById('dealPrice').value,origin:document.getElementById('dealOrigin').value,stage:document.getElementById('dealStage').value,trust:document.getElementById('dealTrust').value,notes:document.getElementById('dealNotes').value,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));
-  renderPipeline(); hideAddDeal();
+  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline)); renderPipeline(); hideAddDeal();
   ['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id=>document.getElementById(id).value='');
 }
 function getTrustColor(t){return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';}
 function moveDeal(id,ns){const d=pipeline.find(d=>d.id===id);if(d)d.stage=ns;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();}
 function deleteDeal(id){if(confirm('Delete this deal?')){pipeline=pipeline.filter(d=>d.id!==id);localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();}}
 function renderPipeline(){
-  const board=document.getElementById('pipelineBoard');if(!board)return;
+  const board=document.getElementById('pipelineBoard'); if(!board)return;
   board.innerHTML=stages.map(stage=>{
     const deals=pipeline.filter(d=>d.stage===stage);
-    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;">
-      <div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>
-      ${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}
-      ${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};">
-        <div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div>
-        <div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div>
-        <div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div>
-        <div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div>
-        <div style="margin-top:7px;">
-          <select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select>
-          <button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button>
-        </div></div>`).join('')}
-    </div>`;
+    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;"><div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};"><div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div><div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div><div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div><div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div><div style="margin-top:7px;"><select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select><button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button></div></div>`).join('')}</div>`;
   }).join('');
 }
 
-// ============================================================
-// CONTACTS
-// ============================================================
 let contacts=JSON.parse(localStorage.getItem('jericho_contacts'))||[];
 function showAddContact(){document.getElementById('addContactForm').style.display='block';}
 function hideAddContact(){document.getElementById('addContactForm').style.display='none';}
 function saveContact(){
-  const name=document.getElementById('contactName').value;if(!name){alert('Please enter a name');return;}
+  const name=document.getElementById('contactName').value; if(!name){alert('Please enter a name');return;}
   contacts.push({id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:document.getElementById('contactCommodity').value,introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();hideAddContact();
+  localStorage.setItem('jericho_contacts',JSON.stringify(contacts)); renderContacts(); hideAddContact();
   ['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');
 }
 function renderContacts(_,q=''){
@@ -888,16 +726,13 @@ function renderContacts(_,q=''){
 }
 function deleteContact(i){if(confirm('Delete this contact?')){contacts.splice(i,1);localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();}}
 
-// ============================================================
-// TASKS
-// ============================================================
 let tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
 function showAddTask(){document.getElementById('addTaskForm').style.display='block';}
 function hideAddTask(){document.getElementById('addTaskForm').style.display='none';}
 function saveTask(){
-  const title=document.getElementById('taskTitle').value;if(!title){alert('Please enter a task description');return;}
+  const title=document.getElementById('taskTitle').value; if(!title){alert('Please enter a task description');return;}
   tasks.push({id:Date.now(),title,priority:document.getElementById('taskPriority').value,due:document.getElementById('taskDue').value,assigned:document.getElementById('taskAssigned').value,category:document.getElementById('taskCategory').value,linked:document.getElementById('taskLinked').value,notes:document.getElementById('taskNotes').value,completed:false,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();hideAddTask();
+  localStorage.setItem('jericho_tasks',JSON.stringify(tasks)); renderTasks(); hideAddTask();
   ['taskTitle','taskLinked','taskNotes'].forEach(id=>document.getElementById(id).value='');
   checkReminders();
 }
@@ -905,15 +740,7 @@ function completeTask(id){const t=tasks.find(t=>t.id===id);if(t){t.completed=tru
 function deleteTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(t=>t.id!==id);localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();updateDashboard();}}
 function taskCard(t){
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-    <div style="flex:1;min-width:180px;">
-      <div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div>
-      <div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>
-      ${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}
-      ${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}
-    </div>
-    <div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div>
-  </div>`;
+  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div style="flex:1;min-width:180px;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div><div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}</div><div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div></div>`;
 }
 function renderTasks(){
   const sf=document.getElementById('filterTaskStatus').value,pf=document.getElementById('filterTaskPriority').value,cf=document.getElementById('filterTaskCategory').value;
@@ -939,17 +766,14 @@ function checkReminders(){
 }
 setInterval(checkReminders,3600000); checkReminders();
 
-// ============================================================
-// COMMISSIONS
-// ============================================================
 let commissions=JSON.parse(localStorage.getItem('jericho_commissions'))||[];
 function showAddCommission(){document.getElementById('addCommissionForm').style.display='block';}
 function hideAddCommission(){document.getElementById('addCommissionForm').style.display='none';}
 function saveCommission(){
-  const deal=document.getElementById('commDeal').value;if(!deal){alert('Please enter a deal name');return;}
+  const deal=document.getElementById('commDeal').value; if(!deal){alert('Please enter a deal name');return;}
   commissions.push({id:Date.now(),deal,currency:document.getElementById('commCurrency').value,total:parseFloat(document.getElementById('commTotal').value)||0,jerichoPercent:parseFloat(document.getElementById('commJerichoPercent').value)||0,jerichoAmount:parseFloat(document.getElementById('commJerichoAmount').value)||0,broker:document.getElementById('commBroker').value,brokerPercent:parseFloat(document.getElementById('commBrokerPercent').value)||0,brokerAmount:parseFloat(document.getElementById('commBrokerAmount').value)||0,status:document.getElementById('commStatus').value,received:parseFloat(document.getElementById('commReceived').value)||0,expectedDate:document.getElementById('commExpectedDate').value,actualDate:document.getElementById('commActualDate').value,notes:document.getElementById('commNotes').value,date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();hideAddCommission();
-  document.getElementById('commDeal').value='';document.getElementById('commNotes').value='';
+  localStorage.setItem('jericho_commissions',JSON.stringify(commissions)); renderCommissions(); hideAddCommission();
+  document.getElementById('commDeal').value=''; document.getElementById('commNotes').value='';
 }
 function deleteCommission(id){if(confirm('Delete this record?')){commissions=commissions.filter(c=>c.id!==id);localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();updateDashboard();}}
 function renderCommissions(){
@@ -964,9 +788,6 @@ function renderCommissions(){
   tb.innerHTML=commissions.map(c=>`<tr><td><strong>${c.deal}</strong></td><td>${c.currency}</td><td>${c.currency} ${c.total.toLocaleString()}</td><td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td><td>${c.broker||'-'}</td><td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td><td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td><td>${c.currency} ${c.received.toLocaleString()}</td><td>${c.expectedDate||'-'}</td><td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td></tr>`).join('');
 }
 
-// ============================================================
-// COMMS LOG
-// ============================================================
 let commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
 function showAddComm(){document.getElementById('addCommForm').style.display='block';}
 function hideAddComm(){document.getElementById('addCommForm').style.display='none';}
@@ -974,7 +795,7 @@ function saveComm(){
   const contact=document.getElementById('commLogContact').value,summary=document.getElementById('commLogSummary').value;
   if(!contact||!summary){alert('Please enter contact and summary');return;}
   commsLog.push({id:Date.now(),contact,type:document.getElementById('commLogType').value,date:document.getElementById('commLogDate').value||today,direction:document.getElementById('commLogDirection').value,linked:document.getElementById('commLogLinked').value,followup:document.getElementById('commLogFollowup').value,followupDate:document.getElementById('commLogFollowupDate').value,outcome:document.getElementById('commLogOutcome').value,summary,logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();hideAddComm();
+  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog)); renderComms(); hideAddComm();
   ['commLogContact','commLogLinked','commLogSummary'].forEach(id=>document.getElementById(id).value='');
 }
 function deleteComm(id){if(confirm('Delete this log entry?')){commsLog=commsLog.filter(c=>c.id!==id);localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();}}
@@ -984,27 +805,16 @@ function renderComms(q=''){
   data=[...data].reverse();
   if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No communications logged yet.</div>';return;}
   const oc={'Positive':'#27ae60','Neutral':'#3498db','Negative':'#e74c3c','Waiting':'#e8a020'};
-  container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
-      <div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div>
-      <div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span><span style="font-size:11px;color:#999;">${c.direction} · ${c.date}</span></div>
-      ${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}
-      <div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>
-      ${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${c.followupDate||'date not set'}</div>`:''}</div>
-      <button class="btn-danger" onclick="deleteComm(${c.id})">✕</button>
-    </div></div>`).join('');
+  container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;"><div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div><div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span><span style="font-size:11px;color:#999;">${c.direction} · ${c.date}</span></div>${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}<div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${c.followupDate||'date not set'}</div>`:''}</div><button class="btn-danger" onclick="deleteComm(${c.id})">✕</button></div></div>`).join('');
 }
 
-// ============================================================
-// DOCUMENTS
-// ============================================================
 let documents=JSON.parse(localStorage.getItem('jericho_documents'))||[];
 function showAddDoc(){document.getElementById('addDocForm').style.display='block';}
 function hideAddDoc(){document.getElementById('addDocForm').style.display='none';}
 function saveDoc(){
-  const name=document.getElementById('docName').value;if(!name){alert('Please enter a document name');return;}
+  const name=document.getElementById('docName').value; if(!name){alert('Please enter a document name');return;}
   documents.push({id:Date.now(),name,type:document.getElementById('docType').value,party:document.getElementById('docParty').value,linked:document.getElementById('docLinked').value,date:document.getElementById('docDate').value,status:document.getElementById('docStatus').value,location:document.getElementById('docLocation').value,expiry:document.getElementById('docExpiry').value,notes:document.getElementById('docNotes').value,logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();hideAddDoc();
+  localStorage.setItem('jericho_documents',JSON.stringify(documents)); renderDocs(); hideAddDoc();
   ['docName','docParty','docLinked','docLocation','docNotes'].forEach(id=>document.getElementById(id).value='');
 }
 function deleteDoc(id){if(confirm('Delete this document record?')){documents=documents.filter(d=>d.id!==id);localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();}}
@@ -1017,9 +827,6 @@ function renderDocs(q=''){
   tb.innerHTML=data.map(d=>`<tr><td><strong>${d.name}</strong></td><td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td><td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td><td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td><td style="font-size:12px;">${d.location||'-'}</td><td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td><td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td></tr>`).join('');
 }
 
-// ============================================================
-// RELATIONSHIPS
-// ============================================================
 let relationships=JSON.parse(localStorage.getItem('jericho_relationships'))||[];
 function showAddRel(){document.getElementById('addRelForm').style.display='block';}
 function hideAddRel(){document.getElementById('addRelForm').style.display='none';}
@@ -1027,7 +834,7 @@ function saveRel(){
   const from=document.getElementById('relFrom').value,to=document.getElementById('relTo').value;
   if(!from||!to){alert('Please fill in both parties');return;}
   relationships.push({id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,commission:document.getElementById('relCommission').value,notes:document.getElementById('relNotes').value,logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();hideAddRel();
+  localStorage.setItem('jericho_relationships',JSON.stringify(relationships)); renderRelationships(); hideAddRel();
   ['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
 }
 function deleteRel(id){if(confirm('Delete this relationship?')){relationships=relationships.filter(r=>r.id!==id);localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();}}
@@ -1039,9 +846,6 @@ function renderRelationships(q=''){
   container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''} ${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
 }
 
-// ============================================================
-// BACKUP
-// ============================================================
 function exportData(){
   const data={version:'3.0',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commissions,commsLog,documents,brokerQuotes,relationships};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -1087,9 +891,6 @@ function updateBackupStats(){
   document.getElementById('bkQuotes').textContent=brokerQuotes.length;
 }
 
-// ============================================================
-// DASHBOARD
-// ============================================================
 function updateDashboard(){
   document.getElementById('leadCount').textContent=leads.length;
   document.getElementById('proposalCount').textContent=pipeline.length;
@@ -1113,13 +914,8 @@ function updateDashboard(){
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
-// ============================================================
-// STARTUP
-// ============================================================
 updateDashboard();
-// Load currencies silently on start for ticker (no quota used)
 fetchCurrencies(false).then(()=>buildTicker());
 </script>
-
 </body>
 </html>
