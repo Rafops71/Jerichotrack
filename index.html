@@ -12,6 +12,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .header-right { text-align: right; }
 .header-right .hdate { font-size: 12px; opacity: 0.7; display: block; }
 .header-right .hclock { font-size: 15px; font-weight: bold; opacity: 0.9; display: block; margin-top: 2px; letter-spacing: 1px; }
+
+/* TICKER */
 .ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
 .ticker-wrap { overflow: hidden; }
 .ticker-track { display: inline-flex; animation: tickerScroll 40s linear infinite; white-space: nowrap; }
@@ -20,6 +22,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
 .ticker-item .t-price { color: white; font-weight: bold; }
 @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
 .nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
 .nav button { background: none; border: none; color: #aac4e0; padding: 12px 14px; cursor: pointer; font-size: 13px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .nav button.active, .nav button:hover { color: white; border-bottom: 3px solid #e8a020; }
@@ -50,8 +53,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .table-box { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; margin-bottom: 20px; }
 table { width: 100%; border-collapse: collapse; min-width: 500px; }
 thead tr { background: #1a2e4a; color: white; }
-th { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; cursor: pointer; user-select: none; }
-th:hover { background: #22395e; }
+th { padding: 11px 12px; text-align: left; font-size: 13px; white-space: nowrap; }
 td { padding: 11px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
 tr:hover td { background: #fafbfc; }
 .badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; color: white; display: inline-block; white-space: nowrap; }
@@ -87,6 +89,8 @@ tr:hover td { background: #fafbfc; }
 .price-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 18px; }
 .price-bar button { background: #1a2e4a; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; }
 .sec-div { font-size: 14px; font-weight: bold; color: #444; margin: 22px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #ddd; }
+
+/* TOAST */
 .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
 .toast { background: #1a2e4a; color: white; padding: 12px 20px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s ease; max-width: 300px; }
 .toast.show { opacity: 1; transform: translateY(0); }
@@ -94,16 +98,11 @@ tr:hover td { background: #fafbfc; }
 .toast.error { border-left: 4px solid #e74c3c; }
 .toast.info { border-left: 4px solid #3498db; }
 .toast.warning { border-left: 4px solid #e8a020; }
-.global-search-wrap { padding: 8px 20px; background: #152540; position: relative; }
-.global-search-wrap input { width: 100%; padding: 8px 14px; border-radius: 20px; border: none; font-size: 14px; background: rgba(255,255,255,0.12); color: white; outline: none; }
-.global-search-wrap input::placeholder { color: rgba(255,255,255,0.45); }
-.global-search-results { position: absolute; background: white; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); width: calc(100% - 40px); z-index: 200; margin-top: 4px; max-height: 300px; overflow-y: auto; }
-.gsr-item { padding: 10px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 13px; }
-.gsr-item:hover { background: #f8f9fa; }
-.gsr-type { font-size: 10px; background: #1a2e4a; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 6px; }
 </style>
 </head>
 <body>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <div class="header">
   <h1>⚡ JERICHO OPERATIONS CENTER</h1>
@@ -113,17 +112,13 @@ tr:hover td { background: #fafbfc; }
   </div>
 </div>
 
+<!-- TICKER -->
 <div class="ticker-bar">
   <div class="ticker-wrap">
     <div class="ticker-track" id="tickerTrack">
-      <div class="ticker-item"><span class="t-name">Loading...</span><span class="t-price">Go to Prices → Refresh</span></div>
+      <div class="ticker-item"><span class="t-name">Loading market data...</span><span class="t-price">Click Prices → Refresh</span></div>
     </div>
   </div>
-</div>
-
-<div class="global-search-wrap">
-  <input type="text" id="globalSearch" placeholder="🔍 Search everything — leads, contacts, deals, tasks, documents..." oninput="globalSearchFn(this.value)" autocomplete="off">
-  <div class="global-search-results" id="globalResults" style="display:none;"></div>
 </div>
 
 <div class="nav">
@@ -139,8 +134,6 @@ tr:hover td { background: #fafbfc; }
   <button onclick="showSection('relationships',this)">Relationships</button>
   <button onclick="showSection('backup',this)">Backup</button>
 </div>
-
-<div class="toast-container" id="toastContainer"></div>
 
 <!-- DASHBOARD -->
 <div class="content" id="mainContent">
@@ -205,7 +198,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 <input type="text" class="search-bar" placeholder="🔍 Search leads..." oninput="renderLeads(this.value)">
 <div class="table-box"><table>
-  <thead><tr><th onclick="sortLeads('name')">Name ↕</th><th onclick="sortLeads('company')">Company ↕</th><th>Type</th><th onclick="sortLeads('country')">Country ↕</th><th>Introduced By</th><th onclick="sortLeads('status')">Status ↕</th><th onclick="sortLeads('followup')">Follow-up ↕</th><th>Action</th></tr></thead>
+  <thead><tr><th>Name</th><th>Company</th><th>Type</th><th>Country</th><th>Introduced By</th><th>Status</th><th>Follow-up</th><th>Action</th></tr></thead>
   <tbody id="leadsBody"><tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads yet.</td></tr></tbody>
 </table></div>
 </div>
@@ -263,14 +256,14 @@ tr:hover td { background: #fafbfc; }
   <button class="btn-cancel" onclick="hideAddContact()">Cancel</button>
 </div>
 </div>
-<input type="text" class="search-bar" placeholder="🔍 Search contacts..." oninput="renderContacts('',this.value)">
+<input type="text" class="search-bar" placeholder="🔍 Search contacts..." oninput="renderContacts(this.value)">
 <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
   <select id="filterType" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Types</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Trading House</option><option>Other</option></select>
   <select id="filterTrust" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All Trust</option><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select>
   <select id="filterKyc" onchange="renderContacts()" style="padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;"><option value="">All KYC</option><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select>
 </div>
 <div class="table-box"><table>
-  <thead><tr><th onclick="sortContacts('name')">Name ↕</th><th onclick="sortContacts('company')">Company ↕</th><th>Role</th><th onclick="sortContacts('country')">Country ↕</th><th>Commodity</th><th>Introduced By</th><th>Trust</th><th>KYC</th><th onclick="sortContacts('followup')">Follow-up ↕</th><th>Action</th></tr></thead>
+  <thead><tr><th>Name</th><th>Company</th><th>Role</th><th>Country</th><th>Commodity</th><th>Introduced By</th><th>Trust</th><th>KYC</th><th>Follow-up</th><th>Action</th></tr></thead>
   <tbody id="contactsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts yet.</td></tr></tbody>
 </table></div>
 </div>
@@ -412,7 +405,7 @@ tr:hover td { background: #fafbfc; }
   <span id="priceTime" style="margin-left:auto;font-size:11px;color:#aaa;"></span>
 </div>
 <div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#856404;">
-  ⚠️ Gold &amp; Silver: GoldPriceZ (displayed per kg). Oil: EIA US Government (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium, Antimony: manual broker quote entry only — no free public API exists for these commodities.
+  ⚠️ Gold &amp; Silver: GoldPriceZ (per kg). Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium, Antimony: manual entry only — no free public API exists for these.
 </div>
 <div class="sec-div">💱 Currencies — Live</div>
 <div class="live-grid" id="gridCurrency"></div>
@@ -420,8 +413,8 @@ tr:hover td { background: #fafbfc; }
 <div class="live-grid" id="gridMetals"></div>
 <div class="sec-div">🛢️ Energy — Crude Oil</div>
 <div class="live-grid" id="gridEnergy"></div>
-<div class="sec-div">📋 Broker Quotes — Chrome · Manganese · Ferrochrome · Lithium · Iron Ore · Antimony</div>
-<div style="background:#f0f4f8;border-radius:6px;padding:10px 14px;margin-bottom:15px;font-size:12px;color:#555;">No free API exists for these commodities. Enter quotes received from brokers, Fastmarkets, CRU, or Metal Bulletin. All entries are stored with source, grade, and date.</div>
+<div class="sec-div">📋 Broker Quotes — Chrome Ore · Manganese · Ferrochrome · Lithium · Iron Ore · Antimony</div>
+<div style="background:#f0f4f8;border-radius:6px;padding:10px 14px;margin-bottom:15px;font-size:12px;color:#555;">No free API exists for these. Enter quotes from your brokers, Fastmarkets references, or CRU reports.</div>
 <button class="btn-primary" onclick="showAddQuote()">+ Add Broker Quote</button>
 <div id="addQuoteForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Broker Quote / Manual Price</h3>
@@ -477,7 +470,7 @@ tr:hover td { background: #fafbfc; }
 <div class="section-title">Data Backup & Restore</div>
 <div class="backup-box">
   <h3>📥 Export Your Data</h3>
-  <p>Download all your data as a backup file. Do this after every major session. Save to Google Drive.</p>
+  <p>Download all your data as a backup file. Do this after every major session.</p>
   <button class="btn-success" onclick="exportData()">⬇ Download Backup File</button>
 </div>
 <div class="backup-box">
@@ -507,293 +500,355 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <script>
-const KEY_GOLDPRICEZ='a0287c10549de17fca6c786e1350e1e7a0287c10';
-const KEY_EIA='1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
-const KEY_METALS_DEV='UKWP4CPKJC1AR0PNFDUJ503PNFDUJ';
+// ─── API KEYS ────────────────────────────────────────────────────────────────
+const KEY_GOLDPRICEZ = 'a0287c10549de17fca6c786e1350e1e7a0287c10';
+const KEY_EIA        = '1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
+const KEY_METALS_DEV = 'UKWP4CPKJC1AR0PNFDUJ503PNFDUJ';
+const TROY_OZ_PER_KG = 32.1507; // 1 kg = 32.1507 troy oz
 
-// DATE + CLOCK
-document.getElementById('currentDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-function updateClock(){document.getElementById('currentTime').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-updateClock();setInterval(updateClock,1000);
-const today=new Date().toISOString().split('T')[0];
+// ─── DATE + CLOCK ────────────────────────────────────────────────────────────
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+function updateClock(){
+  document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+const today = new Date().toISOString().split('T')[0];
 if('Notification' in window) Notification.requestPermission();
 
-// TOAST
-function toast(msg,type='info',duration=3500){
-  const c=document.getElementById('toastContainer');
-  const t=document.createElement('div');
-  t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);
-  setTimeout(()=>t.classList.add('show'),10);
-  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},duration);
+// ─── TOAST NOTIFICATIONS ─────────────────────────────────────────────────────
+function toast(msg, type='info', duration=3500){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>t.classList.add('show'), 10);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, duration);
 }
 
-// GLOBAL SEARCH
-let leads=[],pipeline=[],contacts=[],tasks=[],commissions=[],commsLog=[],documents=[],brokerQuotes=[],relationships=[];
-function loadAll(){
-  leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
-  pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
-  contacts=JSON.parse(localStorage.getItem('jericho_contacts'))||[];
-  tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
-  commissions=JSON.parse(localStorage.getItem('jericho_commissions'))||[];
-  commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
-  documents=JSON.parse(localStorage.getItem('jericho_documents'))||[];
-  brokerQuotes=JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
-  relationships=JSON.parse(localStorage.getItem('jericho_relationships'))||[];
-}
-loadAll();
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+const ALL_SECTIONS = ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'];
+const SECTION_MAP = {dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',backup:'backup-section'};
 
-function globalSearchFn(q){
-  const res=document.getElementById('globalResults');
-  if(!q||q.length<2){res.style.display='none';return;}
-  const ql=q.toLowerCase();
-  const items=[];
-  leads.forEach(l=>{if((l.name+l.company+l.country+(l.notes||'')).toLowerCase().includes(ql))items.push({type:'Lead',label:l.name+(l.company?' — '+l.company:''),section:'leads'});});
-  contacts.forEach(c=>{if((c.name+c.company+c.country+(c.notes||'')).toLowerCase().includes(ql))items.push({type:'Contact',label:c.name+(c.company?' — '+c.company:''),section:'contacts'});});
-  pipeline.forEach(d=>{if((d.commodity+d.buyer+d.seller+d.broker+(d.notes||'')).toLowerCase().includes(ql))items.push({type:'Deal',label:d.commodity+(d.buyer?' → '+d.buyer:''),section:'pipeline'});});
-  tasks.forEach(t=>{if((t.title+(t.linked||')+(t.notes||'')).toLowerCase().includes(ql))items.push({type:'Task',label:t.title,section:'tasks'});});
-  documents.forEach(d=>{if((d.name+(d.party||'')+(d.linked||'')).toLowerCase().includes(ql))items.push({type:'Doc',label:d.name,section:'documents'});});
-  commsLog.forEach(c=>{if((c.contact+c.summary+(c.linked||'')).toLowerCase().includes(ql))items.push({type:'Comms',label:c.contact+': '+c.summary.substring(0,40),section:'commslog'});});
-  if(!items.length){res.innerHTML='<div class="gsr-item" style="color:#999;">No results found.</div>';res.style.display='block';return;}
-  res.innerHTML=items.slice(0,12).map(i=>`<div class="gsr-item" onclick="goToSection('${i.section}')"><span class="gsr-type">${i.type}</span>${i.label}</div>`).join('');
-  res.style.display='block';
+function showSection(s, btn){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ALL_SECTIONS.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const targetId = SECTION_MAP[s];
+  if(targetId){ const el=document.getElementById(targetId); if(el) el.style.display='block'; }
+  if(s==='dashboard') updateDashboard();
+  else if(s==='leads') renderLeads();
+  else if(s==='pipeline') renderPipeline();
+  else if(s==='contacts') renderContacts();
+  else if(s==='tasks') renderTasks();
+  else if(s==='commissions') renderCommissions();
+  else if(s==='commslog') renderComms();
+  else if(s==='documents') renderDocs();
+  else if(s==='prices'){ renderPriceGrids(); renderQuotes(); fetchAllPrices(false); }
+  else if(s==='relationships') renderRelationships();
+  else if(s==='backup') updateBackupStats();
 }
-function goToSection(s){
-  document.getElementById('globalResults').style.display='none';
-  document.getElementById('globalSearch').value='';
-  const btn=[...document.querySelectorAll('.nav button')].find(b=>(b.getAttribute('onclick')||'').includes("'"+s+"'"));
-  if(btn)btn.click();
-}
-document.addEventListener('click',e=>{if(!e.target.closest('.global-search-wrap'))document.getElementById('globalResults').style.display='none';});
 
-// SORT
-let sortDir={};
-function doSort(arr,field){
-  const k=field;sortDir[k]=sortDir[k]==='asc'?'desc':'asc';
-  const d=sortDir[k]==='asc'?1:-1;
-  arr.sort((a,b)=>{const av=(a[field]||'').toString().toLowerCase(),bv=(b[field]||'').toString().toLowerCase();return av<bv?-d:av>bv?d:0;});
+// ─── PRICE CACHE ─────────────────────────────────────────────────────────────
+let priceCache = JSON.parse(localStorage.getItem('jericho_price_cache')) || {};
+function saveCache(){ localStorage.setItem('jericho_price_cache', JSON.stringify(priceCache)); }
+function isStale(key, maxHours){
+  if(!priceCache[key] || !priceCache[key].ts) return true;
+  return (Date.now() - priceCache[key].ts) > maxHours * 3600000;
 }
-function sortLeads(f){doSort(leads,f);renderLeads();}
-function sortContacts(f){doSort(contacts,f);renderContacts();}
 
-// PRICE CACHE
-let priceCache=JSON.parse(localStorage.getItem('jericho_price_cache'))||{};
-function saveCache(){localStorage.setItem('jericho_price_cache',JSON.stringify(priceCache));}
-function isStale(key,maxHours){if(!priceCache[key]||!priceCache[key].ts)return true;return(Date.now()-priceCache[key].ts)>maxHours*3600000;}
-function makeCard(id,label,cssClass){return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}"><h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;}
-function fillCard(id,price,unit,change,pct,source,ts){
-  const el=document.getElementById('card_'+id);if(!el)return;
-  const label=el.dataset.label||id;
-  const dir=change>0?'up':change<0?'down':'flat';
-  const arrow=dir==='up'?'▲':dir==='down'?'▼':'—';
-  const chg=(change!==null&&change!==undefined)?`<span class="lc-${dir}">${arrow} ${Math.abs(change).toFixed(2)}${pct?' ('+Math.abs(pct).toFixed(2)+'%)':''}</span>`:'';
-  const time=ts?new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
-  el.innerHTML=`<h4>${label}</h4><div class="lc-price">${price}</div><div class="lc-unit">${unit}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
+// ─── PRICE CARDS ─────────────────────────────────────────────────────────────
+function makeCard(id, label, cssClass){
+  return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}"><h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;
 }
-function errCard(id,msg){const el=document.getElementById('card_'+id);if(!el)return;const label=el.dataset.label||id;el.innerHTML=`<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;}
+function fillCard(id, price, unit, change, pct, source, ts){
+  const el = document.getElementById('card_'+id); if(!el) return;
+  const label = el.dataset.label || id;
+  const dir = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+  const arrow = dir==='up'?'▲':dir==='down'?'▼':'—';
+  const chg = (change!==null && change!==undefined) ? `<span class="lc-${dir}">${arrow} ${Math.abs(change).toFixed(2)}${pct?' ('+Math.abs(pct).toFixed(2)+'%)':''}</span>` : '';
+  const time = ts ? new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+  el.innerHTML = `<h4>${label}</h4><div class="lc-price">${price}</div><div class="lc-unit">${unit}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
+}
+function errCard(id, msg){
+  const el = document.getElementById('card_'+id); if(!el) return;
+  const label = el.dataset.label || id;
+  el.innerHTML = `<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;
+}
 function renderPriceGrids(){
-  document.getElementById('gridCurrency').innerHTML=makeCard('EURUSD','EUR / USD','currency')+makeCard('USDZAR','USD / ZAR','currency')+makeCard('EURZAR','EUR / ZAR','currency');
-  document.getElementById('gridMetals').innerHTML=makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal');
-  document.getElementById('gridEnergy').innerHTML=makeCard('BRENT','Brent Crude','energy')+makeCard('WTI','WTI Crude','energy');
+  document.getElementById('gridCurrency').innerHTML = makeCard('EURUSD','EUR / USD','currency')+makeCard('USDZAR','USD / ZAR','currency')+makeCard('EURZAR','EUR / ZAR','currency');
+  document.getElementById('gridMetals').innerHTML = makeCard('GOLD','Gold (per kg)','metal')+makeCard('SILVER','Silver (per kg)','metal')+makeCard('COPPER','Copper','metal');
+  document.getElementById('gridEnergy').innerHTML = makeCard('BRENT','Brent Crude','energy')+makeCard('WTI','WTI Crude','energy');
 }
+
+// ─── FETCH CURRENCIES ────────────────────────────────────────────────────────
 async function fetchCurrencies(force){
-  if(!force&&!isStale('cur',1)){applyCur(priceCache['cur'].d);return;}
-  try{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();if(j&&j.rates){priceCache['cur']={d:{EUR:j.rates.EUR,ZAR:j.rates.ZAR},ts:Date.now()};saveCache();applyCur(priceCache['cur'].d);}}
-  catch(e){errCard('EURUSD','No connection');errCard('USDZAR','No connection');errCard('EURZAR','No connection');}
+  if(!force && !isStale('cur',1)){ applyCur(priceCache['cur'].d); return; }
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const j = await r.json();
+    if(j && j.rates){ priceCache['cur']={d:{EUR:j.rates.EUR,ZAR:j.rates.ZAR},ts:Date.now()}; saveCache(); applyCur(priceCache['cur'].d); }
+  } catch(e){ errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
 }
 function applyCur(d){
-  const ts=priceCache['cur']?.ts||Date.now();
-  if(d.EUR)fillCard('EURUSD',(1/d.EUR).toFixed(4),'1 EUR in USD',null,null,'ExchangeRate-API',ts);
-  if(d.ZAR){fillCard('USDZAR',d.ZAR.toFixed(2),'1 USD in ZAR',null,null,'ExchangeRate-API',ts);if(d.EUR)fillCard('EURZAR',(d.ZAR/d.EUR).toFixed(2),'1 EUR in ZAR',null,null,'ExchangeRate-API',ts);}
+  const ts = priceCache['cur']?.ts||Date.now();
+  if(d.EUR) fillCard('EURUSD',(1/d.EUR).toFixed(4),'1 EUR in USD',null,null,'ExchangeRate-API',ts);
+  if(d.ZAR){ fillCard('USDZAR',d.ZAR.toFixed(2),'1 USD in ZAR',null,null,'ExchangeRate-API',ts); if(d.EUR) fillCard('EURZAR',(d.ZAR/d.EUR).toFixed(2),'1 EUR in ZAR',null,null,'ExchangeRate-API',ts); }
 }
+
+// ─── FETCH METALS (Gold & Silver in USD/kg) ───────────────────────────────────
 async function fetchMetals(force){
-  if(!force&&!isStale('metals',4)){applyMetals(priceCache['metals'].d);return;}
-  try{
-    const r=await fetch('https://goldpricez.com/api/rates/currency/usd',{headers:{'x-access-token':KEY_GOLDPRICEZ}});
-    const j=await r.json();
-    if(j&&(j.gold_price_usd||j.gold||j['XAU'])){priceCache['metals']={d:j,ts:Date.now()};saveCache();applyMetals(j);}
+  if(!force && !isStale('metals',4)){ applyMetals(priceCache['metals'].d); return; }
+  try {
+    const r = await fetch(`https://goldpricez.com/api/rates/currency/usd`,{headers:{'x-access-token':KEY_GOLDPRICEZ}});
+    const j = await r.json();
+    if(j && (j.gold_price_usd||j.gold||j['XAU'])){ priceCache['metals']={d:j,ts:Date.now()}; saveCache(); applyMetals(j); }
     else await fetchMetalsFallback();
-  }catch(e){await fetchMetalsFallback();}
+  } catch(e){ await fetchMetalsFallback(); }
 }
 async function fetchMetalsFallback(){
-  try{
-    const r=await fetch(`https://api.metals.dev/v1/latest?api_key=${KEY_METALS_DEV}&currency=USD&unit=troy_oz`);
-    const j=await r.json();
-    if(j&&j.metals){priceCache['metals']={d:{_fallback:true,gold:j.metals.gold,silver:j.metals.silver,copper:j.metals.copper},ts:Date.now()};saveCache();applyMetals(priceCache['metals'].d);}
-    else{errCard('GOLD','No data');errCard('SILVER','No data');errCard('COPPER','No data');}
-  }catch(e){errCard('GOLD','API error');errCard('SILVER','API error');errCard('COPPER','API error');}
+  try {
+    const r = await fetch(`https://api.metals.dev/v1/latest?api_key=${KEY_METALS_DEV}&currency=USD&unit=troy_oz`);
+    const j = await r.json();
+    if(j && j.metals){ priceCache['metals']={d:{_fallback:true,gold:j.metals.gold,silver:j.metals.silver,copper:j.metals.copper},ts:Date.now()}; saveCache(); applyMetals(priceCache['metals'].d); }
+    else { errCard('GOLD','No data'); errCard('SILVER','No data'); errCard('COPPER','No data'); }
+  } catch(e){ errCard('GOLD','API error'); errCard('SILVER','API error'); errCard('COPPER','API error'); }
 }
 function applyMetals(d){
-  const ts=priceCache['metals']?.ts||Date.now();
-  const src=d._fallback?'Metals.Dev (backup)':'GoldPriceZ';
-  const gv=d.gold_price_usd||d.gold_price||d.gold||d['XAU']||d['gold'];
-  const sv=d.silver_price_usd||d.silver_price||d.silver||d['XAG']||d['silver'];
-  const cv=d.copper_price_usd||d.copper_price||d.copper||d['copper'];
-  if(gv){const gkg=(parseFloat(gv)/0.0311035).toFixed(2);fillCard('GOLD','$'+Number(gkg).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / kg',null,null,src,ts);}
+  const ts = priceCache['metals']?.ts||Date.now();
+  const src = d._fallback?'Metals.Dev (backup)':'GoldPriceZ';
+  const gv = d.gold_price_usd||d.gold_price||d.gold||d['XAU']||d['gold'];
+  const sv = d.silver_price_usd||d.silver_price||d.silver||d['XAG']||d['silver'];
+  const cv = d.copper_price_usd||d.copper_price||d.copper||d['copper'];
+  // Convert troy oz price to per kg: price_per_kg = price_per_troy_oz * TROY_OZ_PER_KG
+  if(gv){ const gkg = (parseFloat(gv)*TROY_OZ_PER_KG); fillCard('GOLD','$'+gkg.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / kg',null,null,src,ts); }
   else errCard('GOLD','No gold data');
-  if(sv){const skg=(parseFloat(sv)/0.0311035).toFixed(2);fillCard('SILVER','$'+Number(skg).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / kg',null,null,src,ts);}
+  if(sv){ const skg = (parseFloat(sv)*TROY_OZ_PER_KG); fillCard('SILVER','$'+skg.toFixed(2),'USD / kg',null,null,src,ts); }
   else errCard('SILVER','No silver data');
-  if(cv){const raw=parseFloat(cv);const pmt=raw<1?(raw*32150.7).toFixed(0):raw.toFixed(2);fillCard('COPPER','$'+Number(pmt).toLocaleString(),'USD / metric ton',null,null,src,ts);}
+  if(cv){ const raw=parseFloat(cv); const pmt=raw<1?(raw*32150.7).toFixed(0):raw.toFixed(2); fillCard('COPPER','$'+Number(pmt).toLocaleString(),'USD / metric ton',null,null,src,ts); }
   else errCard('COPPER','No copper data');
 }
+
+// ─── FETCH OIL ───────────────────────────────────────────────────────────────
 async function fetchOil(force){
-  if(!force&&!isStale('oil',6)){applyOil(priceCache['oil'].d);return;}
-  try{
-    const[bRes,wRes]=await Promise.all([
+  if(!force && !isStale('oil',6)){ applyOil(priceCache['oil'].d); return; }
+  try {
+    const [bRes,wRes] = await Promise.all([
       fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RBRTE`),
       fetch(`https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${KEY_EIA}&frequency=daily&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=1&facets[series][]=RWTC`)
     ]);
-    const bj=await bRes.json(),wj=await wRes.json();
-    const brent=bj?.response?.data?.[0],wti=wj?.response?.data?.[0];
-    if(brent||wti){priceCache['oil']={d:{brent,wti},ts:Date.now()};saveCache();applyOil({brent,wti});}
-    else{errCard('BRENT','No EIA data');errCard('WTI','No EIA data');}
-  }catch(e){errCard('BRENT','EIA error');errCard('WTI','EIA error');}
+    const bj=await bRes.json(), wj=await wRes.json();
+    const brent=bj?.response?.data?.[0], wti=wj?.response?.data?.[0];
+    if(brent||wti){ priceCache['oil']={d:{brent,wti},ts:Date.now()}; saveCache(); applyOil({brent,wti}); }
+    else { errCard('BRENT','No EIA data'); errCard('WTI','No EIA data'); }
+  } catch(e){ errCard('BRENT','EIA error'); errCard('WTI','EIA error'); }
 }
 function applyOil(d){
-  const ts=priceCache['oil']?.ts||Date.now();
-  if(d.brent?.value)fillCard('BRENT','$'+parseFloat(d.brent.value).toFixed(2),'USD / barrel · '+d.brent.period,null,null,'EIA (US Gov)',ts);
+  const ts = priceCache['oil']?.ts||Date.now();
+  if(d.brent?.value) fillCard('BRENT','$'+parseFloat(d.brent.value).toFixed(2),'USD / barrel · '+d.brent.period,null,null,'EIA (US Gov)',ts);
   else errCard('BRENT','No EIA data');
-  if(d.wti?.value)fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
+  if(d.wti?.value) fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
   else errCard('WTI','No EIA data');
 }
+
 async function fetchAllPrices(force){
-  const msg=document.getElementById('priceMsg');
-  if(msg)msg.textContent='Fetching prices...';
+  const msg = document.getElementById('priceMsg');
+  if(msg) msg.textContent='Fetching prices...';
   renderPriceGrids();
   await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force)]);
-  const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  if(msg)msg.textContent='Prices loaded.';
-  const pt=document.getElementById('priceTime');if(pt)pt.textContent='Last refresh: '+now;
+  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  if(msg) msg.textContent='Prices loaded.';
+  const pt = document.getElementById('priceTime'); if(pt) pt.textContent='Last refresh: '+now;
   buildTicker();
 }
+
 function buildTicker(){
   const items=[];
   const cur=priceCache['cur'];
-  if(cur?.d){items.push({n:'EUR/USD',p:(1/cur.d.EUR).toFixed(4)});items.push({n:'USD/ZAR',p:cur.d.ZAR.toFixed(2)});}
+  if(cur?.d){ items.push({n:'EUR/USD',p:(1/cur.d.EUR).toFixed(4)}); items.push({n:'USD/ZAR',p:cur.d.ZAR.toFixed(2)}); }
   const met=priceCache['metals'];
   if(met?.d){
     const gv=met.d.gold_price_usd||met.d.gold_price||met.d.gold||met.d['XAU']||met.d['gold'];
     const sv=met.d.silver_price_usd||met.d.silver_price||met.d.silver||met.d['XAG']||met.d['silver'];
-    if(gv){const gkg=(parseFloat(gv)/0.0311035).toFixed(0);items.push({n:'GOLD/kg',p:'$'+Number(gkg).toLocaleString()});}
-    if(sv){const skg=(parseFloat(sv)/0.0311035).toFixed(2);items.push({n:'SILVER/kg',p:'$'+Number(skg).toLocaleString()});}
+    if(gv) items.push({n:'GOLD/kg',p:'$'+(parseFloat(gv)*TROY_OZ_PER_KG).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
+    if(sv) items.push({n:'SILVER/kg',p:'$'+(parseFloat(sv)*TROY_OZ_PER_KG).toFixed(2)});
   }
   const oil=priceCache['oil'];
   if(oil?.d){
-    if(oil.d.brent?.value)items.push({n:'BRENT',p:'$'+parseFloat(oil.d.brent.value).toFixed(2)});
-    if(oil.d.wti?.value)items.push({n:'WTI',p:'$'+parseFloat(oil.d.wti.value).toFixed(2)});
+    if(oil.d.brent?.value) items.push({n:'BRENT',p:'$'+parseFloat(oil.d.brent.value).toFixed(2)});
+    if(oil.d.wti?.value) items.push({n:'WTI',p:'$'+parseFloat(oil.d.wti.value).toFixed(2)});
   }
-  if(!items.length){document.getElementById('tickerTrack').innerHTML='<div class="ticker-item"><span class="t-name">No price data</span><span class="t-price">Go to Prices → Refresh</span></div>';return;}
+  if(!items.length){ document.getElementById('tickerTrack').innerHTML='<div class="ticker-item"><span class="t-name">No price data yet</span><span class="t-price">Go to Prices → Refresh</span></div>'; return; }
   const all=[...items,...items];
   document.getElementById('tickerTrack').innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
 }
 
-// NAVIGATION
-function showSection(s,btn){
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
-  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',backup:'backup-section'};
-  document.getElementById(map[s]).style.display='block';
-  if(s==='dashboard')updateDashboard();
-  else if(s==='leads')renderLeads();
-  else if(s==='pipeline')renderPipeline();
-  else if(s==='contacts')renderContacts();
-  else if(s==='tasks')renderTasks();
-  else if(s==='commissions')renderCommissions();
-  else if(s==='commslog')renderComms();
-  else if(s==='documents')renderDocs();
-  else if(s==='prices'){renderPriceGrids();renderQuotes();fetchAllPrices(false);}
-  else if(s==='relationships')renderRelationships();
-  else if(s==='backup')updateBackupStats();
+// ─── BROKER QUOTES ───────────────────────────────────────────────────────────
+let brokerQuotes = JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
+function showAddQuote(){ document.getElementById('addQuoteForm').style.display='block'; }
+function hideAddQuote(){ document.getElementById('addQuoteForm').style.display='none'; }
+function saveQuote(){
+  const c=document.getElementById('qCommodity').value;
+  if(!c){ toast('Please select a commodity','warning'); return; }
+  brokerQuotes.push({id:Date.now(),commodity:c,price:document.getElementById('qPrice').value,origin:document.getElementById('qOrigin').value,terms:document.getElementById('qTerms').value,qty:document.getElementById('qQty').value,source:document.getElementById('qSource').value,date:document.getElementById('qDate').value,direction:document.getElementById('qDirection').value,notes:document.getElementById('qNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));
+  renderQuotes(); hideAddQuote();
+  ['qPrice','qOrigin','qTerms','qQty','qSource','qNotes'].forEach(id=>document.getElementById(id).value='');
+  toast('Quote saved','success');
+}
+function deleteQuote(id){
+  if(!confirm('Delete this quote?')) return;
+  brokerQuotes=brokerQuotes.filter(q=>q.id!==id);
+  localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));
+  renderQuotes();
+  toast('Quote deleted','info');
+}
+function renderQuotes(){
+  const tb=document.getElementById('quotesBody'); if(!tb) return;
+  if(!brokerQuotes.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>';return;}
+  const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
+  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${q.commodity}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td><td>${q.origin||'-'}</td><td>${q.terms||'-'}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td><td>${q.source||'-'}</td><td>${q.date||'-'}</td><td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
 }
 
-// LEADS
-function showAddLead(){document.getElementById('addLeadForm').style.display='block';}
-function hideAddLead(){document.getElementById('addLeadForm').style.display='none';}
+// ─── LEADS ───────────────────────────────────────────────────────────────────
+let leads = JSON.parse(localStorage.getItem('jericho_leads'))||[];
+function showAddLead(){ document.getElementById('addLeadForm').style.display='block'; }
+function hideAddLead(){ document.getElementById('addLeadForm').style.display='none'; }
 function saveLead(){
-  const name=document.getElementById('leadName').value;if(!name){toast('Please enter a name','error');return;}
-  leads.push({id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:document.getElementById('leadCommodity').value,notes:document.getElementById('leadNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_leads',JSON.stringify(leads));renderLeads();hideAddLead();
+  const name=document.getElementById('leadName').value;
+  if(!name){ toast('Please enter a name','warning'); return; }
+  leads.push({id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:document.getElementById('leadCommodity').value,notes:document.getElementById('leadNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_leads',JSON.stringify(leads));
+  renderLeads(); hideAddLead();
   ['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id=>document.getElementById(id).value='');
   toast('Lead saved','success');
 }
+function deleteLead(id){
+  if(!confirm('Delete this lead?')) return;
+  leads=leads.filter(l=>l.id!==id);
+  localStorage.setItem('jericho_leads',JSON.stringify(leads));
+  renderLeads();
+  toast('Lead deleted','info');
+}
 function renderLeads(q=''){
   const tb=document.getElementById('leadsBody');
-  let data=q?leads.filter(l=>(l.name+l.company+l.country+l.type+(l.introBy||'')+(l.commodity||'')).toLowerCase().includes(q.toLowerCase())):leads;
+  let data=q?leads.filter(l=>(l.name+l.company+l.country+l.type+(l.introBy||'')).toLowerCase().includes(q.toLowerCase())):leads;
   if(!data.length){tb.innerHTML='<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>';return;}
   const sc={'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
   tb.innerHTML=data.map(l=>`<tr><td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td><td>${l.introBy||'-'}</td><td><span class="badge" style="background:${sc[l.status]||'#999'}">${l.status}</span></td><td>${l.followup||'-'}</td><td><button class="btn-danger" onclick="deleteLead(${l.id})">Delete</button></td></tr>`).join('');
 }
-function deleteLead(id){if(confirm('Delete this lead?')){leads=leads.filter(l=>l.id!==id);localStorage.setItem('jericho_leads',JSON.stringify(leads));renderLeads();toast('Lead deleted','info');}}
 
-// PIPELINE
+// ─── PIPELINE ────────────────────────────────────────────────────────────────
+let pipeline = JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
 const stages=['New','Waiting Documents','Waiting Financials','Negotiation','Final SPA','Closed Won','Closed Not Monetized','Lost'];
-function showAddDeal(){document.getElementById('addDealForm').style.display='block';}
-function hideAddDeal(){document.getElementById('addDealForm').style.display='none';}
+function showAddDeal(){ document.getElementById('addDealForm').style.display='block'; }
+function hideAddDeal(){ document.getElementById('addDealForm').style.display='none'; }
 function saveDeal(){
-  const commodity=document.getElementById('dealCommodity').value;if(!commodity){toast('Please enter a commodity','error');return;}
-  pipeline.push({id:Date.now(),commodity,broker:document.getElementById('dealBroker').value,buyer:document.getElementById('dealBuyer').value,seller:document.getElementById('dealSeller').value,quantity:document.getElementById('dealQuantity').value,unit:document.getElementById('dealUnit').value,price:document.getElementById('dealPrice').value,origin:document.getElementById('dealOrigin').value,stage:document.getElementById('dealStage').value,trust:document.getElementById('dealTrust').value,notes:document.getElementById('dealNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();hideAddDeal();
+  const commodity=document.getElementById('dealCommodity').value;
+  if(!commodity){ toast('Please enter a commodity','warning'); return; }
+  pipeline.push({id:Date.now(),commodity,broker:document.getElementById('dealBroker').value,buyer:document.getElementById('dealBuyer').value,seller:document.getElementById('dealSeller').value,quantity:document.getElementById('dealQuantity').value,unit:document.getElementById('dealUnit').value,price:document.getElementById('dealPrice').value,origin:document.getElementById('dealOrigin').value,stage:document.getElementById('dealStage').value,trust:document.getElementById('dealTrust').value,notes:document.getElementById('dealNotes').value,date:new Date().toLocaleDateString('en-GB'),createdAt:new Date().toISOString()});
+  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));
+  renderPipeline(); hideAddDeal();
   ['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id=>document.getElementById(id).value='');
   toast('Deal saved','success');
 }
-function getTrustColor(t){return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';}
-function moveDeal(id,ns){const d=pipeline.find(d=>d.id===id);if(d){d.stage=ns;localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();toast('Moved to '+ns,'info');}}
-function deleteDeal(id){if(confirm('Delete this deal?')){pipeline=pipeline.filter(d=>d.id!==id);localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));renderPipeline();toast('Deal deleted','info');}}
+function getTrustColor(t){ return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc'; }
+function moveDeal(id,ns){
+  const d=pipeline.find(d=>d.id===id);
+  if(d) d.stage=ns;
+  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));
+  renderPipeline();
+}
+function deleteDeal(id){
+  if(!confirm('Delete this deal?')) return;
+  pipeline=pipeline.filter(d=>d.id!==id);
+  localStorage.setItem('jericho_pipeline',JSON.stringify(pipeline));
+  renderPipeline();
+  toast('Deal deleted','info');
+}
+function getDealAge(d){
+  if(!d.createdAt) return '';
+  const days=Math.floor((Date.now()-new Date(d.createdAt))/(1000*60*60*24));
+  return `<div style="font-size:10px;color:#aaa;margin-top:2px;">Age: ${days}d</div>`;
+}
 function renderPipeline(){
-  const board=document.getElementById('pipelineBoard');if(!board)return;
-  const daysOld=d=>d.createdAt?Math.floor((Date.now()-new Date(d.createdAt))/86400000):0;
+  const board=document.getElementById('pipelineBoard'); if(!board) return;
   board.innerHTML=stages.map(stage=>{
     const deals=pipeline.filter(d=>d.stage===stage);
-    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;"><div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};"><div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div><div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div><div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div><div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div><div style="font-size:10px;color:#bbb;">Age: ${daysOld(d)} days</div><div style="margin-top:7px;"><select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select><button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button></div></div>`).join('')}</div>`;
+    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;"><div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};"><div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div><div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div><div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div><div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div>${getDealAge(d)}<div style="margin-top:7px;"><select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select><button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button></div></div>`).join('')}</div>`;
   }).join('');
 }
 
-// CONTACTS
-function showAddContact(){document.getElementById('addContactForm').style.display='block';}
-function hideAddContact(){document.getElementById('addContactForm').style.display='none';}
+// ─── CONTACTS ────────────────────────────────────────────────────────────────
+let contacts = JSON.parse(localStorage.getItem('jericho_contacts'))||[];
+function showAddContact(){ document.getElementById('addContactForm').style.display='block'; }
+function hideAddContact(){ document.getElementById('addContactForm').style.display='none'; }
 function saveContact(){
-  const name=document.getElementById('contactName').value;if(!name){toast('Please enter a name','error');return;}
-  contacts.push({id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:document.getElementById('contactCommodity').value,introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();hideAddContact();
+  const name=document.getElementById('contactName').value;
+  if(!name){ toast('Please enter a name','warning'); return; }
+  contacts.push({id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:document.getElementById('contactCommodity').value,introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_contacts',JSON.stringify(contacts));
+  renderContacts(); hideAddContact();
   ['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');
   toast('Contact saved','success');
 }
-function renderContacts(_,q=''){
+function deleteContact(id){
+  if(!confirm('Delete this contact?')) return;
+  contacts=contacts.filter(c=>c.id!==id);
+  localStorage.setItem('jericho_contacts',JSON.stringify(contacts));
+  renderContacts();
+  toast('Contact deleted','info');
+}
+function renderContacts(q=''){
   const tb=document.getElementById('contactsBody');
-  const tf=document.getElementById('filterType').value,trf=document.getElementById('filterTrust').value,kf=document.getElementById('filterKyc').value;
+  const tf=document.getElementById('filterType').value;
+  const trf=document.getElementById('filterTrust').value;
+  const kf=document.getElementById('filterKyc').value;
   let data=contacts.filter(c=>(!tf||c.type===tf)&&(!trf||c.trust===trf)&&(!kf||c.kyc===kf)&&(!q||(c.name+c.company+c.country+(c.commodity||'')+(c.introBy||'')).toLowerCase().includes(q.toLowerCase())));
   if(!data.length){tb.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>';return;}
   const tC={'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
   const kC={'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
   tb.innerHTML=data.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td><td>${c.commodity||'-'}</td><td>${c.introBy||'-'}</td><td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td><td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td><td>${c.followup||'-'}</td><td><button class="btn-danger" onclick="deleteContact(${c.id})">Delete</button></td></tr>`).join('');
 }
-function deleteContact(id){if(confirm('Delete this contact?')){contacts=contacts.filter(c=>c.id!==id);localStorage.setItem('jericho_contacts',JSON.stringify(contacts));renderContacts();toast('Contact deleted','info');}}
-function sortContacts(f){doSort(contacts,f);renderContacts();}
-function doSort(arr,field){
-  const k=field;sortDir[k]=sortDir[k]==='asc'?'desc':'asc';
-  const d=sortDir[k]==='asc'?1:-1;
-  arr.sort((a,b)=>{const av=(a[field]||'').toString().toLowerCase(),bv=(b[field]||'').toString().toLowerCase();return av<bv?-d:av>bv?d:0;});
-}
-let sortDir={};
 
-// TASKS
-function showAddTask(){document.getElementById('addTaskForm').style.display='block';}
-function hideAddTask(){document.getElementById('addTaskForm').style.display='none';}
+// ─── TASKS ───────────────────────────────────────────────────────────────────
+let tasks = JSON.parse(localStorage.getItem('jericho_tasks'))||[];
+function showAddTask(){ document.getElementById('addTaskForm').style.display='block'; }
+function hideAddTask(){ document.getElementById('addTaskForm').style.display='none'; }
 function saveTask(){
-  const title=document.getElementById('taskTitle').value;if(!title){toast('Please enter a task description','error');return;}
-  tasks.push({id:Date.now(),title,priority:document.getElementById('taskPriority').value,due:document.getElementById('taskDue').value,assigned:document.getElementById('taskAssigned').value,category:document.getElementById('taskCategory').value,linked:document.getElementById('taskLinked').value,notes:document.getElementById('taskNotes').value,completed:false,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();hideAddTask();
+  const title=document.getElementById('taskTitle').value;
+  if(!title){ toast('Please enter a task description','warning'); return; }
+  tasks.push({id:Date.now(),title,priority:document.getElementById('taskPriority').value,due:document.getElementById('taskDue').value,assigned:document.getElementById('taskAssigned').value,category:document.getElementById('taskCategory').value,linked:document.getElementById('taskLinked').value,notes:document.getElementById('taskNotes').value,completed:false,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));
+  renderTasks(); hideAddTask();
   ['taskTitle','taskLinked','taskNotes'].forEach(id=>document.getElementById(id).value='');
-  checkReminders();toast('Task saved','success');
+  toast('Task saved','success');
+  checkReminders();
 }
-function completeTask(id){const t=tasks.find(t=>t.id===id);if(t){t.completed=true;t.completedDate=new Date().toLocaleDateString('en-GB');}localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();updateDashboard();toast('Task completed ✓','success');}
-function deleteTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(t=>t.id!==id);localStorage.setItem('jericho_tasks',JSON.stringify(tasks));renderTasks();updateDashboard();toast('Task deleted','info');}}
+function completeTask(id){
+  const t=tasks.find(t=>t.id===id);
+  if(t){ t.completed=true; t.completedDate=new Date().toLocaleDateString('en-GB'); }
+  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));
+  renderTasks(); updateDashboard();
+  toast('Task completed ✓','success');
+}
+function deleteTask(id){
+  if(!confirm('Delete this task?')) return;
+  tasks=tasks.filter(t=>t.id!==id);
+  localStorage.setItem('jericho_tasks',JSON.stringify(tasks));
+  renderTasks(); updateDashboard();
+  toast('Task deleted','info');
+}
 function taskCard(t){
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div style="flex:1;min-width:180px;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div><div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}</div><div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div></div>`;
+  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div style="flex:1;min-width:180px;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div><div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''} ${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}</div><div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div></div>`;
 }
 function renderTasks(){
-  const sf=document.getElementById('filterTaskStatus').value,pf=document.getElementById('filterTaskPriority').value,cf=document.getElementById('filterTaskCategory').value;
+  const sf=document.getElementById('filterTaskStatus').value;
+  const pf=document.getElementById('filterTaskPriority').value;
+  const cf=document.getElementById('filterTaskCategory').value;
   let data=tasks.filter(t=>(!pf||t.priority===pf)&&(!cf||t.category===cf));
   const ov=data.filter(t=>!t.completed&&t.due&&t.due<today);
   const dt=data.filter(t=>!t.completed&&t.due===today);
@@ -803,32 +858,50 @@ function renderTasks(){
   document.getElementById('todayTasksList').innerHTML=dt.length?dt.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No tasks due today.</div>';
   document.getElementById('upcomingTasksList').innerHTML=up.length?up.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No upcoming tasks.</div>';
   document.getElementById('completedTasksList').innerHTML=co.length?co.map(taskCard).join(''):'<div style="color:#ccc;padding:8px;">No completed tasks.</div>';
-  if(sf==='completed'){['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('completedTasksBox').style.display='block';}
-  else if(sf==='all'){['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id=>document.getElementById(id).style.display='block');}
-  else{['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='block');document.getElementById('completedTasksBox').style.display='none';}
+  if(sf==='completed'){
+    ['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('completedTasksBox').style.display='block';
+  } else if(sf==='all'){
+    ['overdueTasksBox','todayTasksBox','upcomingTasksBox','completedTasksBox'].forEach(id=>document.getElementById(id).style.display='block');
+  } else {
+    ['overdueTasksBox','todayTasksBox','upcomingTasksBox'].forEach(id=>document.getElementById(id).style.display='block');
+    document.getElementById('completedTasksBox').style.display='none';
+  }
 }
 function checkReminders(){
-  if(Notification.permission!=='granted')return;
+  if(Notification.permission!=='granted') return;
   const ov=tasks.filter(t=>!t.completed&&t.due&&t.due<today);
   const dt=tasks.filter(t=>!t.completed&&t.due===today);
-  if(ov.length>0)new Notification('⚠️ Jericho Operations',{body:`You have ${ov.length} overdue task(s)!`});
-  else if(dt.length>0)new Notification('📅 Jericho Operations',{body:`You have ${dt.length} task(s) due today.`});
+  if(ov.length>0) new Notification('⚠️ Jericho Operations',{body:`You have ${ov.length} overdue task(s)!`});
+  else if(dt.length>0) new Notification('📅 Jericho Operations',{body:`You have ${dt.length} task(s) due today.`});
 }
-setInterval(checkReminders,3600000);checkReminders();
+setInterval(checkReminders, 3600000);
+checkReminders();
 
-// COMMISSIONS
-function showAddCommission(){document.getElementById('addCommissionForm').style.display='block';}
-function hideAddCommission(){document.getElementById('addCommissionForm').style.display='none';}
+// ─── COMMISSIONS ─────────────────────────────────────────────────────────────
+let commissions = JSON.parse(localStorage.getItem('jericho_commissions'))||[];
+function showAddCommission(){ document.getElementById('addCommissionForm').style.display='block'; }
+function hideAddCommission(){ document.getElementById('addCommissionForm').style.display='none'; }
 function saveCommission(){
-  const deal=document.getElementById('commDeal').value;if(!deal){toast('Please enter a deal name','error');return;}
-  commissions.push({id:Date.now(),deal,currency:document.getElementById('commCurrency').value,total:parseFloat(document.getElementById('commTotal').value)||0,jerichoPercent:parseFloat(document.getElementById('commJerichoPercent').value)||0,jerichoAmount:parseFloat(document.getElementById('commJerichoAmount').value)||0,broker:document.getElementById('commBroker').value,brokerPercent:parseFloat(document.getElementById('commBrokerPercent').value)||0,brokerAmount:parseFloat(document.getElementById('commBrokerAmount').value)||0,status:document.getElementById('commStatus').value,received:parseFloat(document.getElementById('commReceived').value)||0,expectedDate:document.getElementById('commExpectedDate').value,actualDate:document.getElementById('commActualDate').value,notes:document.getElementById('commNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();hideAddCommission();
-  document.getElementById('commDeal').value='';document.getElementById('commNotes').value='';
+  const deal=document.getElementById('commDeal').value;
+  if(!deal){ toast('Please enter a deal name','warning'); return; }
+  commissions.push({id:Date.now(),deal,currency:document.getElementById('commCurrency').value,total:parseFloat(document.getElementById('commTotal').value)||0,jerichoPercent:parseFloat(document.getElementById('commJerichoPercent').value)||0,jerichoAmount:parseFloat(document.getElementById('commJerichoAmount').value)||0,broker:document.getElementById('commBroker').value,brokerPercent:parseFloat(document.getElementById('commBrokerPercent').value)||0,brokerAmount:parseFloat(document.getElementById('commBrokerAmount').value)||0,status:document.getElementById('commStatus').value,received:parseFloat(document.getElementById('commReceived').value)||0,expectedDate:document.getElementById('commExpectedDate').value,actualDate:document.getElementById('commActualDate').value,notes:document.getElementById('commNotes').value,date:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_commissions',JSON.stringify(commissions));
+  renderCommissions(); hideAddCommission();
+  document.getElementById('commDeal').value=''; document.getElementById('commNotes').value='';
   toast('Commission record saved','success');
 }
-function deleteCommission(id){if(confirm('Delete this record?')){commissions=commissions.filter(c=>c.id!==id);localStorage.setItem('jericho_commissions',JSON.stringify(commissions));renderCommissions();updateDashboard();toast('Record deleted','info');}}
+function deleteCommission(id){
+  if(!confirm('Delete this record?')) return;
+  commissions=commissions.filter(c=>c.id!==id);
+  localStorage.setItem('jericho_commissions',JSON.stringify(commissions));
+  renderCommissions(); updateDashboard();
+  toast('Record deleted','info');
+}
 function renderCommissions(){
-  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
+  const tE=commissions.reduce((s,c)=>s+c.total,0);
+  const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+  const tR=commissions.reduce((s,c)=>s+c.received,0);
   document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
   document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
   document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
@@ -839,18 +912,27 @@ function renderCommissions(){
   tb.innerHTML=commissions.map(c=>`<tr><td><strong>${c.deal}</strong></td><td>${c.currency}</td><td>${c.currency} ${c.total.toLocaleString()}</td><td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td><td>${c.broker||'-'}</td><td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td><td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td><td>${c.currency} ${c.received.toLocaleString()}</td><td>${c.expectedDate||'-'}</td><td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td></tr>`).join('');
 }
 
-// COMMS LOG
-function showAddComm(){document.getElementById('addCommForm').style.display='block';}
-function hideAddComm(){document.getElementById('addCommForm').style.display='none';}
+// ─── COMMS LOG ───────────────────────────────────────────────────────────────
+let commsLog = JSON.parse(localStorage.getItem('jericho_commslog'))||[];
+function showAddComm(){ document.getElementById('addCommForm').style.display='block'; }
+function hideAddComm(){ document.getElementById('addCommForm').style.display='none'; }
 function saveComm(){
-  const contact=document.getElementById('commLogContact').value,summary=document.getElementById('commLogSummary').value;
-  if(!contact||!summary){toast('Please enter contact and summary','error');return;}
-  commsLog.push({id:Date.now(),contact,type:document.getElementById('commLogType').value,date:document.getElementById('commLogDate').value||today,direction:document.getElementById('commLogDirection').value,linked:document.getElementById('commLogLinked').value,followup:document.getElementById('commLogFollowup').value,followupDate:document.getElementById('commLogFollowupDate').value,outcome:document.getElementById('commLogOutcome').value,summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();hideAddComm();
+  const contact=document.getElementById('commLogContact').value;
+  const summary=document.getElementById('commLogSummary').value;
+  if(!contact||!summary){ toast('Please enter contact and summary','warning'); return; }
+  commsLog.push({id:Date.now(),contact,type:document.getElementById('commLogType').value,date:document.getElementById('commLogDate').value||today,direction:document.getElementById('commLogDirection').value,linked:document.getElementById('commLogLinked').value,followup:document.getElementById('commLogFollowup').value,followupDate:document.getElementById('commLogFollowupDate').value,outcome:document.getElementById('commLogOutcome').value,summary,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));
+  renderComms(); hideAddComm();
   ['commLogContact','commLogLinked','commLogSummary'].forEach(id=>document.getElementById(id).value='');
   toast('Communication logged','success');
 }
-function deleteComm(id){if(confirm('Delete this log entry?')){commsLog=commsLog.filter(c=>c.id!==id);localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));renderComms();toast('Entry deleted','info');}}
+function deleteComm(id){
+  if(!confirm('Delete this log entry?')) return;
+  commsLog=commsLog.filter(c=>c.id!==id);
+  localStorage.setItem('jericho_commslog',JSON.stringify(commsLog));
+  renderComms();
+  toast('Log entry deleted','info');
+}
 function renderComms(q=''){
   const container=document.getElementById('commsLogList');
   let data=q?commsLog.filter(c=>(c.contact+c.summary+(c.linked||'')).toLowerCase().includes(q.toLowerCase())):commsLog;
@@ -860,56 +942,56 @@ function renderComms(q=''){
   container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;"><div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div><div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span><span style="font-size:11px;color:#999;">${c.direction} · ${c.date}</span></div>${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}<div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${c.followupDate||'date not set'}</div>`:''}</div><button class="btn-danger" onclick="deleteComm(${c.id})">✕</button></div></div>`).join('');
 }
 
-// DOCUMENTS
-function showAddDoc(){document.getElementById('addDocForm').style.display='block';}
-function hideAddDoc(){document.getElementById('addDocForm').style.display='none';}
+// ─── DOCUMENTS ───────────────────────────────────────────────────────────────
+let documents = JSON.parse(localStorage.getItem('jericho_documents'))||[];
+function showAddDoc(){ document.getElementById('addDocForm').style.display='block'; }
+function hideAddDoc(){ document.getElementById('addDocForm').style.display='none'; }
 function saveDoc(){
-  const name=document.getElementById('docName').value;if(!name){toast('Please enter a document name','error');return;}
-  documents.push({id:Date.now(),name,type:document.getElementById('docType').value,party:document.getElementById('docParty').value,linked:document.getElementById('docLinked').value,date:document.getElementById('docDate').value,status:document.getElementById('docStatus').value,location:document.getElementById('docLocation').value,expiry:document.getElementById('docExpiry').value,notes:document.getElementById('docNotes').value,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();hideAddDoc();
+  const name=document.getElementById('docName').value;
+  if(!name){ toast('Please enter a document name','warning'); return; }
+  documents.push({id:Date.now(),name,type:document.getElementById('docType').value,party:document.getElementById('docParty').value,linked:document.getElementById('docLinked').value,date:document.getElementById('docDate').value,status:document.getElementById('docStatus').value,location:document.getElementById('docLocation').value,expiry:document.getElementById('docExpiry').value,notes:document.getElementById('docNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_documents',JSON.stringify(documents));
+  renderDocs(); hideAddDoc();
   ['docName','docParty','docLinked','docLocation','docNotes'].forEach(id=>document.getElementById(id).value='');
-  toast('Document record saved','success');
+  toast('Document saved','success');
 }
-function deleteDoc(id){if(confirm('Delete this document record?')){documents=documents.filter(d=>d.id!==id);localStorage.setItem('jericho_documents',JSON.stringify(documents));renderDocs();toast('Document deleted','info');}}
+function deleteDoc(id){
+  if(!confirm('Delete this document record?')) return;
+  documents=documents.filter(d=>d.id!==id);
+  localStorage.setItem('jericho_documents',JSON.stringify(documents));
+  renderDocs();
+  toast('Document deleted','info');
+}
 function renderDocs(q=''){
   const tb=document.getElementById('docsBody');
-  const tf=document.getElementById('filterDocType').value,sf=document.getElementById('filterDocStatus').value;
+  const tf=document.getElementById('filterDocType').value;
+  const sf=document.getElementById('filterDocStatus').value;
   let data=documents.filter(d=>(!tf||d.type===tf)&&(!sf||d.status===sf)&&(!q||(d.name+(d.party||'')+(d.linked||'')+d.type).toLowerCase().includes(q.toLowerCase())));
   if(!data.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents found.</td></tr>';return;}
   const sC={'Received':'trust-green','Sent':'trust-yellow','Pending':'trust-grey','Signed':'kyc-yes','Expired':'trust-red'};
   tb.innerHTML=data.map(d=>`<tr><td><strong>${d.name}</strong></td><td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td><td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td><td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td><td style="font-size:12px;">${d.location||'-'}</td><td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td><td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td></tr>`).join('');
 }
 
-// BROKER QUOTES
-function showAddQuote(){document.getElementById('addQuoteForm').style.display='block';}
-function hideAddQuote(){document.getElementById('addQuoteForm').style.display='none';}
-function saveQuote(){
-  const c=document.getElementById('qCommodity').value;if(!c){toast('Please select a commodity','error');return;}
-  brokerQuotes.push({id:Date.now(),commodity:c,price:document.getElementById('qPrice').value,origin:document.getElementById('qOrigin').value,terms:document.getElementById('qTerms').value,qty:document.getElementById('qQty').value,source:document.getElementById('qSource').value,date:document.getElementById('qDate').value,direction:document.getElementById('qDirection').value,notes:document.getElementById('qNotes').value,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));renderQuotes();hideAddQuote();
-  ['qPrice','qOrigin','qTerms','qQty','qSource','qNotes'].forEach(id=>document.getElementById(id).value='');
-  toast('Quote saved','success');
-}
-function deleteQuote(id){if(!confirm('Delete this quote?'))return;brokerQuotes=brokerQuotes.filter(q=>q.id!==id);localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));renderQuotes();toast('Quote deleted','info');}
-function renderQuotes(){
-  const tb=document.getElementById('quotesBody');if(!tb)return;
-  if(!brokerQuotes.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>';return;}
-  const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
-  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${q.commodity}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td><td>${q.origin||'-'}</td><td>${q.terms||'-'}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td><td>${q.source||'-'}</td><td>${q.date||'-'}</td><td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
-}
-
-// RELATIONSHIPS
-function showAddRel(){document.getElementById('addRelForm').style.display='block';}
-function hideAddRel(){document.getElementById('addRelForm').style.display='none';}
+// ─── RELATIONSHIPS ───────────────────────────────────────────────────────────
+let relationships = JSON.parse(localStorage.getItem('jericho_relationships'))||[];
+function showAddRel(){ document.getElementById('addRelForm').style.display='block'; }
+function hideAddRel(){ document.getElementById('addRelForm').style.display='none'; }
 function saveRel(){
-  const from=document.getElementById('relFrom').value,to=document.getElementById('relTo').value;
-  if(!from||!to){toast('Please fill in both parties','error');return;}
-  relationships.push({id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,commission:document.getElementById('relCommission').value,notes:document.getElementById('relNotes').value,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')});
-  localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();hideAddRel();
+  const from=document.getElementById('relFrom').value, to=document.getElementById('relTo').value;
+  if(!from||!to){ toast('Please fill in both parties','warning'); return; }
+  relationships.push({id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,commission:document.getElementById('relCommission').value,notes:document.getElementById('relNotes').value,logged:new Date().toLocaleDateString('en-GB')});
+  localStorage.setItem('jericho_relationships',JSON.stringify(relationships));
+  renderRelationships(); hideAddRel();
   ['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
   toast('Relationship saved','success');
 }
-function deleteRel(id){if(confirm('Delete this relationship?')){relationships=relationships.filter(r=>r.id!==id);localStorage.setItem('jericho_relationships',JSON.stringify(relationships));renderRelationships();toast('Relationship deleted','info');}}
+function deleteRel(id){
+  if(!confirm('Delete this relationship?')) return;
+  relationships=relationships.filter(r=>r.id!==id);
+  localStorage.setItem('jericho_relationships',JSON.stringify(relationships));
+  renderRelationships();
+  toast('Relationship deleted','info');
+}
 function renderRelationships(q=''){
   const container=document.getElementById('relList');
   let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
@@ -918,18 +1000,19 @@ function renderRelationships(q=''){
   container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''} ${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
 }
 
-// BACKUP
+// ─── BACKUP ──────────────────────────────────────────────────────────────────
 function exportData(){
-  const data={version:'4.0',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commissions,commsLog,documents,brokerQuotes,relationships};
+  const data={version:'3.0',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commissions,commsLog,documents,brokerQuotes,relationships};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='jericho-backup-'+today+'.json';a.click();URL.revokeObjectURL(url);
+  const a=document.createElement('a'); a.href=url; a.download='jericho-backup-'+today+'.json'; a.click();
+  URL.revokeObjectURL(url);
   toast('Backup downloaded','success');
 }
 function importData(){
   const file=document.getElementById('restoreFile').files[0];
-  if(!file){toast('Please select a backup file first','error');return;}
-  if(!confirm('This will replace all current data. Are you sure?'))return;
+  if(!file){ toast('Please select a backup file first','warning'); return; }
+  if(!confirm('This will replace all current data. Are you sure?')) return;
   const reader=new FileReader();
   reader.onload=function(e){
     try{
@@ -943,16 +1026,19 @@ function importData(){
       if(d.documents){documents=d.documents;localStorage.setItem('jericho_documents',JSON.stringify(documents));}
       if(d.brokerQuotes){brokerQuotes=d.brokerQuotes;localStorage.setItem('jericho_broker_quotes',JSON.stringify(brokerQuotes));}
       if(d.relationships){relationships=d.relationships;localStorage.setItem('jericho_relationships',JSON.stringify(relationships));}
-      toast('✅ Data restored successfully!','success');updateBackupStats();updateDashboard();
-    }catch(err){toast('Error reading backup file','error');}
-  };reader.readAsText(file);
+      toast('Data restored successfully ✓','success');
+      updateBackupStats(); updateDashboard();
+    }catch(err){ toast('Error reading backup file','error'); }
+  };
+  reader.readAsText(file);
 }
 function clearAllData(){
-  if(!confirm('DELETE ALL DATA? This cannot be undone!'))return;
-  if(!confirm('Are you absolutely sure?'))return;
+  if(!confirm('DELETE ALL DATA? This cannot be undone!')) return;
+  if(!confirm('Are you absolutely sure?')) return;
   leads=[];pipeline=[];contacts=[];tasks=[];commissions=[];commsLog=[];documents=[];brokerQuotes=[];relationships=[];
   ['jericho_leads','jericho_pipeline','jericho_contacts','jericho_tasks','jericho_commissions','jericho_commslog','jericho_documents','jericho_broker_quotes','jericho_relationships','jericho_price_cache'].forEach(k=>localStorage.removeItem(k));
-  toast('All data cleared','warning');updateBackupStats();updateDashboard();
+  toast('All data cleared','info');
+  updateBackupStats(); updateDashboard();
 }
 function updateBackupStats(){
   document.getElementById('bkLeads').textContent=leads.length;
@@ -965,7 +1051,7 @@ function updateBackupStats(){
   document.getElementById('bkQuotes').textContent=brokerQuotes.length;
 }
 
-// DASHBOARD
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function updateDashboard(){
   document.getElementById('leadCount').textContent=leads.length;
   document.getElementById('proposalCount').textContent=pipeline.length;
@@ -979,7 +1065,9 @@ function updateDashboard(){
   const dt=tasks.filter(t=>!t.completed&&t.due===today);
   document.getElementById('overdueCount').textContent=ov.length;
   document.getElementById('tasksTodayCount').textContent=dt.length;
-  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
+  const tE=commissions.reduce((s,c)=>s+c.total,0);
+  const jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0);
+  const tR=commissions.reduce((s,c)=>s+c.received,0);
   document.getElementById('totalExpected').textContent='$'+tE.toLocaleString();
   document.getElementById('jerichoExpected').textContent='$'+jE.toLocaleString();
   document.getElementById('totalReceived').textContent='$'+tR.toLocaleString();
@@ -989,6 +1077,7 @@ function updateDashboard(){
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
+// ─── INIT ────────────────────────────────────────────────────────────────────
 updateDashboard();
 fetchCurrencies(false).then(()=>buildTicker());
 </script>
