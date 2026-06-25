@@ -16,7 +16,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 /* TICKER */
 .ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
 .ticker-wrap { overflow: hidden; }
-.ticker-track { display: inline-flex; animation: tickerScroll 40s linear infinite; white-space: nowrap; }
+.ticker-track { display: inline-flex; animation: tickerScroll 30s linear infinite; white-space: nowrap; }
 .ticker-bar:hover .ticker-track { animation-play-state: paused; }
 .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 13px; border-right: 1px solid #2a3f5a; }
 .ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
@@ -405,7 +405,7 @@ tr:hover td { background: #fafbfc; }
   <span id="priceTime" style="margin-left:auto;font-size:11px;color:#aaa;"></span>
 </div>
 <div style="background:#fff3cd;border:1px solid #e8a020;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#856404;">
-  ⚠️ Gold &amp; Silver: GoldPriceZ (per kg). Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium, Antimony: manual entry only — no free public API exists for these.
+  ⚠️ Gold &amp; Silver: GoldPriceZ. Oil: EIA US Government data (daily). Currencies: ExchangeRate-API (live). Chrome, Manganese, Ferrochrome, Lithium, Antimony: manual entry only — no free public API exists for these.
 </div>
 <div class="sec-div">💱 Currencies — Live</div>
 <div class="live-grid" id="gridCurrency"></div>
@@ -504,7 +504,7 @@ tr:hover td { background: #fafbfc; }
 const KEY_GOLDPRICEZ = 'a0287c10549de17fca6c786e1350e1e7a0287c10';
 const KEY_EIA        = '1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
 const KEY_METALS_DEV = 'UKWP4CPKJC1AR0PNFDUJ503PNFDUJ';
-const TROY_OZ_PER_KG = 32.1507; // 1 kg = 32.1507 troy oz
+
 
 // ─── DATE + CLOCK ────────────────────────────────────────────────────────────
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -622,10 +622,9 @@ function applyMetals(d){
   const gv = d.gold_price_usd||d.gold_price||d.gold||d['XAU']||d['gold'];
   const sv = d.silver_price_usd||d.silver_price||d.silver||d['XAG']||d['silver'];
   const cv = d.copper_price_usd||d.copper_price||d.copper||d['copper'];
-  // Convert troy oz price to per kg: price_per_kg = price_per_troy_oz * TROY_OZ_PER_KG
-  if(gv){ const gkg = (parseFloat(gv)*TROY_OZ_PER_KG); fillCard('GOLD','$'+gkg.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / kg',null,null,src,ts); }
+  if(gv) fillCard('GOLD','$'+(parseFloat(gv)/0.0311035).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),'USD / kg',null,null,src,ts);
   else errCard('GOLD','No gold data');
-  if(sv){ const skg = (parseFloat(sv)*TROY_OZ_PER_KG); fillCard('SILVER','$'+skg.toFixed(2),'USD / kg',null,null,src,ts); }
+  if(sv) fillCard('SILVER','$'+(parseFloat(sv)/0.0311035).toFixed(2),'USD / kg',null,null,src,ts);
   else errCard('SILVER','No silver data');
   if(cv){ const raw=parseFloat(cv); const pmt=raw<1?(raw*32150.7).toFixed(0):raw.toFixed(2); fillCard('COPPER','$'+Number(pmt).toLocaleString(),'USD / metric ton',null,null,src,ts); }
   else errCard('COPPER','No copper data');
@@ -672,8 +671,8 @@ function buildTicker(){
   if(met?.d){
     const gv=met.d.gold_price_usd||met.d.gold_price||met.d.gold||met.d['XAU']||met.d['gold'];
     const sv=met.d.silver_price_usd||met.d.silver_price||met.d.silver||met.d['XAG']||met.d['silver'];
-    if(gv) items.push({n:'GOLD/kg',p:'$'+(parseFloat(gv)*TROY_OZ_PER_KG).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
-    if(sv) items.push({n:'SILVER/kg',p:'$'+(parseFloat(sv)*TROY_OZ_PER_KG).toFixed(2)});
+    if(gv) items.push({n:'GOLD/kg',p:'$'+(parseFloat(gv)/0.0311035).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
+    if(sv) items.push({n:'SILVER/kg',p:'$'+(parseFloat(sv)/0.0311035).toFixed(2)});
   }
   const oil=priceCache['oil'];
   if(oil?.d){
