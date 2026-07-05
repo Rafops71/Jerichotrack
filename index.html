@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -16,12 +17,13 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 /* TICKER */
 .ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
 .ticker-wrap { overflow: hidden; }
-.ticker-track { display: inline-flex; animation: tickerScroll 30s linear infinite; white-space: nowrap; }
+.ticker-track { display: inline-flex; animation: tickerScroll 20s linear infinite; white-space: nowrap; }
 .ticker-bar:hover .ticker-track { animation-play-state: paused; }
 .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 13px; border-right: 1px solid #2a3f5a; }
 .ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
 .ticker-item .t-price { color: white; font-weight: bold; }
-@keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes tickerScroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
+.ticker-wrap { overflow: hidden; width: 100%; }
 
 .nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
 .nav button { background: none; border: none; color: #aac4e0; padding: 12px 14px; cursor: pointer; font-size: 13px; border-bottom: 3px solid transparent; white-space: nowrap; }
@@ -99,6 +101,7 @@ tr:hover td { background: #fafbfc; }
 .toast.info { border-left: 4px solid #3498db; }
 .toast.warning { border-left: 4px solid #e8a020; }
 </style>
+
 </head>
 <body>
 
@@ -113,6 +116,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- TICKER -->
+
 <div class="ticker-bar">
   <div class="ticker-wrap">
     <div class="ticker-track" id="tickerTrack">
@@ -136,6 +140,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- DASHBOARD -->
+
 <div class="content" id="mainContent">
 <div class="section-title">Today's Overview</div>
 <div class="dashboard-grid">
@@ -173,6 +178,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- LEADS -->
+
 <div id="leads-section" style="display:none;" class="content">
 <div class="section-title">Lead Management</div>
 <button class="btn-primary" onclick="showAddLead()">+ Add New Lead</button>
@@ -204,6 +210,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- PIPELINE -->
+
 <div id="pipeline-section" style="display:none;" class="content">
 <div class="section-title">Deal Pipeline</div>
 <button class="btn-primary" onclick="showAddDeal()">+ Add New Deal</button>
@@ -231,6 +238,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- CONTACTS -->
+
 <div id="contacts-section" style="display:none;" class="content">
 <div class="section-title">Contacts & Broker Management</div>
 <button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
@@ -242,7 +250,7 @@ tr:hover td { background: #fafbfc; }
   <div class="form-group"><label>Role / Type</label><select id="contactType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading House</option><option>End User</option><option>Other</option></select></div>
   <div class="form-group"><label>Country</label><input id="contactCountry" type="text" placeholder="Country"></div>
   <div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
-  <div class="form-group"><label>Email</label><input id="contactEmail" type="text" placeholder="email@example.com"></div>
+  <div class="form-group"><label>Email</label><div style="display:flex;gap:8px;align-items:center;"><input id="contactEmail" type="text" placeholder="email@example.com" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:14px;"><button type="button" onclick="verifyEmail()" style="background:#e8a020;color:white;border:none;padding:10px 12px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;">🔍 Verify</button></div><div id="hunterResult" style="font-size:12px;margin-top:4px;"></div></div>
   <div class="form-group"><label>Commodity Focus</label><input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
   <div class="form-group"><label>Introduced By</label><input id="contactIntroBy" type="text" placeholder="Who introduced this contact?"></div>
   <div class="form-group"><label>Trust Level</label><select id="contactTrust"><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select></div>
@@ -269,6 +277,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- TASKS -->
+
 <div id="tasks-section" style="display:none;" class="content">
 <div class="section-title">Tasks & Follow-up Center</div>
 <button class="btn-primary" onclick="showAddTask()">+ Add New Task</button>
@@ -300,6 +309,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- COMMISSIONS -->
+
 <div id="commissions-section" style="display:none;" class="content">
 <div class="section-title">Commission Tracking</div>
 <button class="btn-primary" onclick="showAddCommission()">+ Add Commission Record</button>
@@ -338,6 +348,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- COMMS LOG -->
+
 <div id="commslog-section" style="display:none;" class="content">
 <div class="section-title">Communication History</div>
 <button class="btn-primary" onclick="showAddComm()">+ Log Communication</button>
@@ -364,6 +375,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- DOCUMENTS -->
+
 <div id="documents-section" style="display:none;" class="content">
 <div class="section-title">Document Management</div>
 <button class="btn-primary" onclick="showAddDoc()">+ Add Document Record</button>
@@ -397,6 +409,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- PRICES -->
+
 <div id="prices-section" style="display:none;" class="content">
 <div class="section-title">Market Intelligence — Live Prices</div>
 <div class="price-bar">
@@ -442,6 +455,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- RELATIONSHIPS -->
+
 <div id="relationships-section" style="display:none;" class="content">
 <div class="section-title">Relationship Mapping</div>
 <button class="btn-primary" onclick="showAddRel()">+ Add Relationship</button>
@@ -466,6 +480,7 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- BACKUP -->
+
 <div id="backup-section" style="display:none;" class="content">
 <div class="section-title">Data Backup & Restore</div>
 <div class="backup-box">
@@ -589,8 +604,17 @@ async function fetchCurrencies(force){
   try {
     const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const j = await r.json();
-    if(j && j.rates){ priceCache['cur']={d:{EUR:j.rates.EUR,ZAR:j.rates.ZAR},ts:Date.now()}; saveCache(); applyCur(priceCache['cur'].d); }
-  } catch(e){ errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
+    if(j && j.rates){ priceCache['cur']={d:{EUR:j.rates.EUR,ZAR:j.rates.ZAR},ts:Date.now()}; saveCache(); applyCur(priceCache['cur'].d); return; }
+    throw new Error('No rates');
+  } catch(e){
+    // Silent fallback to Frankfurter API
+    try {
+      const r2 = await fetch('https://api.frankfurter.app/latest?from=USD&to=EUR,ZAR');
+      const j2 = await r2.json();
+      if(j2 && j2.rates){ priceCache['cur']={d:{EUR:j2.rates.EUR,ZAR:j2.rates.ZAR},ts:Date.now()}; saveCache(); applyCur(priceCache['cur'].d); }
+      else { errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
+    } catch(e2){ errCard('EURUSD','No connection'); errCard('USDZAR','No connection'); errCard('EURZAR','No connection'); }
+  }
 }
 function applyCur(d){
   const ts = priceCache['cur']?.ts||Date.now();
@@ -709,6 +733,31 @@ function renderQuotes(){
   if(!brokerQuotes.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>';return;}
   const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
   tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${q.commodity}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td><td>${q.origin||'-'}</td><td>${q.terms||'-'}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td><td>${q.source||'-'}</td><td>${q.date||'-'}</td><td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
+}
+
+// ─── HUNTER.IO EMAIL VERIFY ──────────────────────────────────────────────────
+const HUNTER_KEY = ''; // Free tier: sign up at hunter.io to get your key
+async function verifyEmail(){
+  const email = document.getElementById('contactEmail').value.trim();
+  const result = document.getElementById('hunterResult');
+  if(!email){ result.innerHTML='<span style="color:#e74c3c;">Please enter an email first.</span>'; return; }
+  if(!HUNTER_KEY){ 
+    // No key yet — open Hunter.io verification page manually
+    result.innerHTML='<span style="color:#e8a020;">Opening Hunter.io to verify manually...</span>';
+    window.open('https://hunter.io/email-verifier/'+encodeURIComponent(email),'_blank');
+    return;
+  }
+  result.innerHTML='<span style="color:#999;">Verifying...</span>';
+  try {
+    const r = await fetch(`https://api.hunter.io/v2/email-verifier?email=${encodeURIComponent(email)}&api_key=${HUNTER_KEY}`);
+    const j = await r.json();
+    if(j && j.data){
+      const s = j.data.status;
+      const score = j.data.score;
+      const color = s==='valid'?'#27ae60':s==='risky'?'#e8a020':'#e74c3c';
+      result.innerHTML=`<span style="color:${color};font-weight:bold;">● ${s.toUpperCase()} (Score: ${score}/100)</span>`;
+    } else { result.innerHTML='<span style="color:#e74c3c;">Could not verify.</span>'; }
+  } catch(e){ result.innerHTML='<span style="color:#e74c3c;">Verification failed.</span>'; }
 }
 
 // ─── LEADS ───────────────────────────────────────────────────────────────────
@@ -1080,5 +1129,6 @@ function updateDashboard(){
 updateDashboard();
 fetchCurrencies(false).then(()=>buildTicker());
 </script>
+
 </body>
 </html>
