@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jericho">
+<title>Jericho Companion</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #1a2e4a; padding-bottom: 90px; }
+.header { background: #1a2e4a; color: white; padding: 16px 18px 14px 18px; }
+.header h1 { margin: 0; font-size: 19px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.sync-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; display: inline-block; margin-top: 8px; }
+.sync-pill.online { background: rgba(39,174,96,0.25); color: #8ee0ab; }
+.sync-pill.offline { background: rgba(231,76,60,0.25); color: #f5a89f; }
+.sync-pill.syncing { background: rgba(232,160,32,0.25); color: #f5d090; }
+
+.screen { display: none; padding: 16px; }
+.screen.active { display: block; }
+
+/* Home screen upcoming strip */
+.upcoming-card { background: white; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+.upcoming-card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin: 0 0 10px 0; }
+.upcoming-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f2f2f2; }
+.upcoming-row:last-child { border-bottom: none; }
+.upcoming-time { background: #1a2e4a; color: white; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; white-space: nowrap; }
+.upcoming-info { flex: 1; min-width: 0; }
+.upcoming-info .u-title { font-size: 14px; font-weight: 600; color: #1a2e4a; }
+.upcoming-info .u-sub { font-size: 12px; color: #999; margin-top: 1px; }
+.empty-note { color: #bbb; font-size: 13px; padding: 6px 0; }
+
+/* Quick action tiles */
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.tile { background: white; border: none; border-radius: 14px; padding: 18px 14px; text-align: left; box-shadow: 0 1px 6px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
+.tile .tile-icon { font-size: 22px; }
+.tile .tile-label { font-size: 14px; font-weight: 600; color: #1a2e4a; }
+.tile.primary { background: #1a2e4a; }
+.tile.primary .tile-label { color: white; }
+
+/* Section title */
+.sec-h { font-size: 13px; font-weight: 700; color: #1a2e4a; margin: 18px 0 10px 0; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* Follow-up items */
+.item-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #1a2e4a; }
+.item-card.overdue { border-left-color: #e74c3c; }
+.item-card.today { border-left-color: #e8a020; }
+.item-card.nodate { border-left-color: #bbb; }
+.item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.item-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; color: white; background: #1a2e4a; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.3px; }
+.item-title { font-size: 14px; font-weight: 600; margin-top: 6px; color: #1a2e4a; }
+.item-sub { font-size: 12px; color: #888; margin-top: 3px; }
+.item-note { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.4; }
+.item-due { font-size: 11px; color: #999; margin-top: 5px; }
+.item-actions { display: flex; gap: 8px; margin-top: 10px; }
+.btn-done { background: #27ae60; color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+.btn-del { background: #f0f0f0; color: #999; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; }
+
+/* Pipeline quick view */
+.pipe-row { display: flex; align-items: center; gap: 10px; background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+.pipe-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pipe-info { flex: 1; min-width: 0; }
+.pipe-title { font-size: 13px; font-weight: 600; color: #1a2e4a; }
+.pipe-stage { font-size: 11px; color: #999; margin-top: 2px; }
+
+/* Bottom nav */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #eee; padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px)) 4px; z-index: 100; }
+.bottom-nav button { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; color: #aaa; font-size: 10px; }
+.bottom-nav button.active { color: #1a2e4a; }
+.bottom-nav button .nav-icon { font-size: 19px; }
+
+/* Modal / sheet */
+.sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; }
+.sheet-overlay.show { display: block; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #f0f2f5; border-radius: 20px 20px 0 0; z-index: 201; max-height: 88vh; overflow-y: auto; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px)) 18px; transform: translateY(100%); transition: transform 0.25s ease; }
+.sheet.show { transform: translateY(0); }
+.sheet-handle { width: 40px; height: 4px; background: #ddd; border-radius: 3px; margin: 0 auto 14px auto; }
+.sheet h3 { margin: 0 0 16px 0; font-size: 17px; color: #1a2e4a; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: #777; margin-bottom: 5px; }
+.field input, .field select, .field textarea { width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; }
+.field textarea { height: 70px; resize: vertical; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+.sheet-actions { display: flex; gap: 10px; margin-top: 16px; }
+.sheet-actions button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; }
+.btn-sheet-save { background: #1a2e4a; color: white; }
+.btn-sheet-cancel { background: #e5e5e5; color: #666; }
+
+/* Attendee chips */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { background: #e8edf3; color: #1a2e4a; font-size: 12px; padding: 5px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px; }
+.chip .chip-x { cursor: pointer; color: #999; font-weight: bold; }
+.quick-loc-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; margin-bottom: 8px; }
+.quick-loc { background: white; border: 1px solid #ddd; font-size: 12px; padding: 6px 10px; border-radius: 10px; }
+.loc-results { background: white; border: 1px solid #ddd; border-radius: 10px; margin-top: 4px; max-height: 160px; overflow-y: auto; display: none; }
+.loc-result-item { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #f2f2f2; }
+
+.toast-container { position: fixed; top: 16px; left: 16px; right: 16px; z-index: 999; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast { background: #1a2e4a; color: white; padding: 11px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-10px); transition: all 0.3s ease; max-width: 90%; text-align: center; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #27ae60; }
+.toast.error { background: #e74c3c; }
+
+.tag-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tag-opt { background: white; border: 1.5px solid #ddd; color: #666; font-size: 12px; padding: 7px 12px; border-radius: 10px; }
+.tag-opt.selected { background: #1a2e4a; border-color: #1a2e4a; color: white; }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Jericho Companion</h1>
+  <span class="sync-pill syncing" id="syncPill">🔄 Connecting...</span>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- HOME -->
+
+<div class="screen active" id="screen-home">
+  <div class="upcoming-card">
+    <h2>📅 Upcoming Calls</h2>
+    <div id="upcomingList"><div class="empty-note">No calls scheduled.</div></div>
+  </div>
+
+  <div class="tile-grid">
+    <button class="tile primary" onclick="openActionSheet()">
+      <span class="tile-icon">➕</span>
+      <span class="tile-label">Add Action</span>
+    </button>
+    <button class="tile" onclick="openMeetingSheet()">
+      <span class="tile-icon">🕒</span>
+      <span class="tile-label">New Call / Zoom</span>
+    </button>
+    <button class="tile" onclick="openLeadSheet()">
+      <span class="tile-icon">👤</span>
+      <span class="tile-label">Quick Add Lead</span>
+    </button>
+    <button class="tile" onclick="openNoteSheet()">
+      <span class="tile-icon">📝</span>
+      <span class="tile-label">Quick Note</span>
+    </button>
+  </div>
+
+  <div class="sec-h">Today &amp; Overdue</div>
+  <div id="homeFollowups"><div class="empty-note">Nothing due. ✅</div></div>
+</div>
+
+<!-- FOLLOW-UPS (full list) -->
+
+<div class="screen" id="screen-followups">
+  <div class="sec-h" style="margin-top:4px;">All Follow-ups</div>
+  <div id="fullFollowups"><div class="empty-note">Nothing here yet.</div></div>
+</div>
+
+<!-- PIPELINE -->
+
+<div class="screen" id="screen-pipeline">
+  <div class="sec-h" style="margin-top:4px;">Pipeline — Quick View</div>
+  <div id="pipelineQuickList"><div class="empty-note">No deals yet.</div></div>
+</div>
+
+<!-- NOTES -->
+
+<div class="screen" id="screen-notes">
+  <div class="sec-h" style="margin-top:4px;">Notes</div>
+  <div id="notesList"><div class="empty-note">No notes yet.</div></div>
+</div>
+
+<div class="bottom-nav">
+  <button class="active" onclick="showScreen('home',this)"><span class="nav-icon">🏠</span>Home</button>
+  <button onclick="showScreen('followups',this)"><span class="nav-icon">✅</span>Follow-ups</button>
+  <button onclick="showScreen('pipeline',this)"><span class="nav-icon">📊</span>Pipeline</button>
+  <button onclick="showScreen('notes',this)"><span class="nav-icon">📝</span>Notes</button>
+</div>
+
+<!-- ACTION SHEET (Add Action) -->
+
+<div class="sheet-overlay" id="actionOverlay" onclick="closeActionSheet()"></div>
+<div class="sheet" id="actionSheet">
+  <div class="sheet-handle"></div>
+  <h3>Add Action</h3>
+  <div class="field">
+    <label>Type</label>
+    <div class="tag-picker" id="actionTagPicker">
+      <div class="tag-opt selected" data-tag="Follow-up">Follow-up</div>
+      <div class="tag-opt" data-tag="New Lead">New Lead</div>
+      <div class="tag-opt" data-tag="Introduction Call">Introduction Call</div>
+      <div class="tag-opt" data-tag="Document Needed">Document Needed</div>
+      <div class="tag-opt" data-tag="Note">Note</div>
+      <div class="tag-opt" data-tag="Custom">Custom...</div>
+    </div>
+    <input id="actionTagCustom" type="text" placeholder="Type your own tag" style="margin-top:8px;display:none;">
+  </div>
+  <div class="field">
+    <label>Title *</label>
+    <input id="actionTitle" type="text" placeholder="">
+  </div>
+  <div class="field">
+    <label>Note (optional)</label>
+    <textarea id="actionNote" placeholder="Details, terms, who's involved..."></textarea>
+  </div>
+  <div class="field">
+    <label>Follow-up date (optional)</label>
+    <input id="actionDate" type="date">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeActionSheet()">Cancel</button>
+    <button class="btn-sheet-save" onclick="saveAction()">Save</button>
+  </div>
+</div>
+
+<!-- LEAD SHEET (structured quick add) -->
+
+<div class="sheet-overlay" id="leadOverlay" onclick="closeLeadSheet()"></div>
+<div class="sheet" id="leadSheet">
+  <div class="sheet-handle"></div>
+  <h3>Quick Add Lead</h3>
+  <div class="field">
+    <label>Name *</label>
+    <input id="qlName" type="text" placeholder="Full name">
+  </div>
+  <div class="field">
+    <label>Company</label>
+    <input id="qlCompany" type="text" placeholder="Company name">
+  </div>
+  <div class="field">
+    <label>Note</label>
+    <textarea id="qlNote" placeholder="Commodity interest, how you met..."></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeLeadSheet()">Cancel</button>
+    <button class="btn-sheet-save" onclick="saveQuickLead()">Save</button>
+  </div>
+</div>
+
+<!-- MEETING SHEET -->
+
+<div class="sheet-overlay" id="meetingOverlay" onclick="closeMeetingSheet()"></div>
+<div class="sheet" id="meetingSheet">
+  <div class="sheet-handle"></div>
+  <h3>New Call / Zoom</h3>
+  <div class="field">
+    <label>Purpose</label>
+    <div class="tag-picker" id="purposeTagPicker">
+      <div class="tag-opt selected" data-tag="Follow-up">Follow-up</div>
+      <div class="tag-opt" data-tag="Introduction Call">Introduction Call</div>
+      <div class="tag-opt" data-tag="Custom">Custom...</div>
+    </div>
+    <input id="meetingPurposeCustom" type="text" placeholder="Type purpose..." style="margin-top:8px;display:none;">
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label>Date</label>
+      <input id="meetingDate" type="date">
+    </div>
+    <div class="field">
+      <label>Time (24h) — your local time</label>
+      <input id="meetingTime" type="time">
+    </div>
+  </div>
+  <div class="field">
+    <label>Your location right now</label>
+    <div class="quick-loc-row" id="myQuickLocs"></div>
+    <input id="myLocSearch" type="text" placeholder="Search a country..." autocomplete="off">
+    <div class="loc-results" id="myLocResults"></div>
+    <select id="mySubCitySelect" style="display:none;margin-top:8px;"></select>
+    <div class="chip-row" id="myLocChip"></div>
+  </div>
+  <div class="field">
+    <label>Who's joining</label>
+    <div class="chip-row" id="attendeeChips"></div>
+    <input id="attendeeNameInput" type="text" placeholder="Participant's name" style="margin-bottom:8px;">
+    <div class="quick-loc-row" id="attendeeQuickLocs"></div>
+    <input id="attendeeLocSearch" type="text" placeholder="Search a country..." autocomplete="off">
+    <div class="loc-results" id="attendeeLocResults"></div>
+    <select id="attendeeSubCitySelect" style="display:none;margin-top:8px;"></select>
+  </div>
+  <div class="field" id="calcPreview" style="display:none;">
+    <label>Local times</label>
+    <div id="calcPreviewList" style="background:white;border-radius:10px;padding:10px 12px;font-size:13px;"></div>
+    <button type="button" onclick="shareMeetingWhatsApp()" style="width:100%;margin-top:10px;background:#25d366;color:white;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:600;">📱 Share via WhatsApp</button>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeMeetingSheet()">Cancel</button>
+    <button class="btn-sheet-save" onclick="saveMeeting()">Save</button>
+  </div>
+</div>
+
+<!-- NOTE SHEET -->
+
+<div class="sheet-overlay" id="noteOverlay" onclick="closeNoteSheet()"></div>
+<div class="sheet" id="noteSheet">
+  <div class="sheet-handle"></div>
+  <h3>Quick Note</h3>
+  <div class="field">
+    <label>Note</label>
+    <textarea id="noteText" placeholder="Type anything..." style="height:110px;"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeNoteSheet()">Cancel</button>
+    <button class="btn-sheet-save" onclick="saveNote()">Save</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot,
+  enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzcOYuhKN2bSZ_rOIJPwBJcamjNiTd9Mo",
+  authDomain: "jericho-operation.firebaseapp.com",
+  projectId: "jericho-operation",
+  storageBucket: "jericho-operation.firebasestorage.app",
+  messagingSenderId: "347478150117",
+  appId: "1:347478150117:web:31ee97e47582d7e85c3d0c"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+enableIndexedDbPersistence(db).catch((err) => console.warn('Offline persistence not enabled:', err.code));
+
+// Same collections as JerichoTrack — companion writes leads/tasks into the SAME
+// jericho_leads / jericho_tasks collections so everything shows up on the main app too.
+// Meetings and notes are new collections specific to companion but still shared/synced.
+const SYNCED_COLLECTIONS = {
+  leads: 'jericho_leads',
+  tasks: 'jericho_tasks',
+  pipeline: 'jericho_pipeline',
+  meetings: 'jericho_meetings',
+  notes: 'jericho_companion_notes'
+};
+
+window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, SYNCED_COLLECTIONS };
+window._fbReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<script>
+// ============================================================
+// COUNTRY / TIMEZONE DATA — expanded to genuinely global coverage
+// Most countries = one default timezone.
+// US, Mexico, India, Canada, Russia, Australia, Brazil = span multiple internal
+// zones, so these get a city/region sub-picker.
+// ============================================================
+const COUNTRIES = [
+  // Europe
+  {country:"Belgium",tz:"Europe/Brussels"},
+  {country:"Netherlands",tz:"Europe/Amsterdam"},
+  {country:"Spain",tz:"Europe/Madrid"},
+  {country:"UK",tz:"Europe/London"},
+  {country:"Ireland",tz:"Europe/Dublin"},
+  {country:"France",tz:"Europe/Paris"},
+  {country:"Germany",tz:"Europe/Berlin"},
+  {country:"Switzerland",tz:"Europe/Zurich"},
+  {country:"Austria",tz:"Europe/Vienna"},
+  {country:"Italy",tz:"Europe/Rome"},
+  {country:"Portugal",tz:"Europe/Lisbon"},
+  {country:"Greece",tz:"Europe/Athens"},
+  {country:"Poland",tz:"Europe/Warsaw"},
+  {country:"Sweden",tz:"Europe/Stockholm"},
+  {country:"Norway",tz:"Europe/Oslo"},
+  {country:"Denmark",tz:"Europe/Copenhagen"},
+  {country:"Finland",tz:"Europe/Helsinki"},
+  {country:"Ukraine",tz:"Europe/Kyiv"},
+  {country:"Turkey",tz:"Europe/Istanbul"},
+  // Americas
+  {country:"Mexico",tz:"America/Mexico_City",hasSubCities:true},
+  {country:"USA",tz:"America/New_York",hasSubCities:true},
+  {country:"Canada",tz:"America/Toronto",hasSubCities:true},
+  {country:"Peru",tz:"America/Lima"},
+  {country:"Bolivia",tz:"America/La_Paz"},
+  {country:"Chile",tz:"America/Santiago"},
+  {country:"Colombia",tz:"America/Bogota"},
+  {country:"Venezuela",tz:"America/Caracas"},
+  {country:"Ecuador",tz:"America/Guayaquil"},
+  {country:"Brazil",tz:"America/Sao_Paulo",hasSubCities:true},
+  {country:"Argentina",tz:"America/Argentina/Buenos_Aires"},
+  {country:"Uruguay",tz:"America/Montevideo"},
+  {country:"Panama",tz:"America/Panama"},
+  {country:"Costa Rica",tz:"America/Costa_Rica"},
+  {country:"Dominican Republic",tz:"America/Santo_Domingo"},
+  // Africa
+  {country:"South Africa",tz:"Africa/Johannesburg"},
+  {country:"Zimbabwe",tz:"Africa/Harare"},
+  {country:"Nigeria",tz:"Africa/Lagos"},
+  {country:"Zambia",tz:"Africa/Lusaka"},
+  {country:"Mozambique",tz:"Africa/Maputo"},
+  {country:"Namibia",tz:"Africa/Windhoek"},
+  {country:"Kenya",tz:"Africa/Nairobi"},
+  {country:"Egypt",tz:"Africa/Cairo"},
+  {country:"Morocco",tz:"Africa/Casablanca"},
+  {country:"Ghana",tz:"Africa/Accra"},
+  {country:"DR Congo",tz:"Africa/Lubumbashi"},
+  // Middle East
+  {country:"UAE",tz:"Asia/Dubai"},
+  {country:"Israel",tz:"Asia/Jerusalem"},
+  {country:"Saudi Arabia",tz:"Asia/Riyadh"},
+  {country:"Qatar",tz:"Asia/Qatar"},
+  {country:"Oman",tz:"Asia/Muscat"},
+  // Asia
+  {country:"India",tz:"Asia/Kolkata",hasSubCities:true},
+  {country:"Sri Lanka",tz:"Asia/Colombo"},
+  {country:"Pakistan",tz:"Asia/Karachi"},
+  {country:"Bangladesh",tz:"Asia/Dhaka"},
+  {country:"Singapore",tz:"Asia/Singapore"},
+  {country:"Hong Kong",tz:"Asia/Hong_Kong"},
+  {country:"China",tz:"Asia/Shanghai"},
+  {country:"Japan",tz:"Asia/Tokyo"},
+  {country:"South Korea",tz:"Asia/Seoul"},
+  {country:"Thailand",tz:"Asia/Bangkok"},
+  {country:"Vietnam",tz:"Asia/Ho_Chi_Minh"},
+  {country:"Indonesia",tz:"Asia/Jakarta"},
+  {country:"Malaysia",tz:"Asia/Kuala_Lumpur"},
+  {country:"Philippines",tz:"Asia/Manila"},
+  {country:"Russia",tz:"Europe/Moscow",hasSubCities:true},
+  // Oceania
+  {country:"Australia",tz:"Australia/Sydney",hasSubCities:true},
+  {country:"New Zealand",tz:"Pacific/Auckland"}
+];
+// Sub-cities/regions only for countries spanning multiple time zones
+const SUB_CITIES = {
+  "Mexico":[
+    {city:"Mexico City",tz:"America/Mexico_City"},
+    {city:"Cancun",tz:"America/Cancun"},
+    {city:"Tijuana",tz:"America/Tijuana"}
+  ],
+  "USA":[
+    {city:"New York",tz:"America/New_York"},
+    {city:"Chicago / Houston",tz:"America/Chicago"},
+    {city:"Denver",tz:"America/Denver"},
+    {city:"Los Angeles",tz:"America/Los_Angeles"}
+  ],
+  "India":[
+    {city:"Mumbai",tz:"Asia/Kolkata"},
+    {city:"Delhi",tz:"Asia/Kolkata"},
+    {city:"Bangalore",tz:"Asia/Kolkata"}
+  ],
+  "Canada":[
+    {city:"Toronto",tz:"America/Toronto"},
+    {city:"Vancouver",tz:"America/Vancouver"},
+    {city:"Calgary",tz:"America/Edmonton"},
+    {city:"Winnipeg",tz:"America/Winnipeg"}
+  ],
+  "Brazil":[
+    {city:"Sao Paulo / Rio",tz:"America/Sao_Paulo"},
+    {city:"Manaus",tz:"America/Manaus"}
+  ],
+  "Russia":[
+    {city:"Moscow",tz:"Europe/Moscow"},
+    {city:"Yekaterinburg",tz:"Asia/Yekaterinburg"},
+    {city:"Novosibirsk",tz:"Asia/Novosibirsk"},
+    {city:"Vladivostok",tz:"Asia/Vladivostok"}
+  ],
+  "Australia":[
+    {city:"Sydney / Melbourne",tz:"Australia/Sydney"},
+    {city:"Perth",tz:"Australia/Perth"},
+    {city:"Brisbane",tz:"Australia/Brisbane"},
+    {city:"Adelaide",tz:"Australia/Adelaide"}
+  ]
+};
+const QUICK_LOCS = ["Mexico","Peru","Spain","Netherlands","Belgium","Dubai","South Africa","UK"];
+
+function searchCountries(q){
+  if(!q||q.length<1)return[];
+  const ql=q.toLowerCase();
+  return COUNTRIES.filter(c=>c.country.toLowerCase().includes(ql)).slice(0,8);
+}
+// Returns the UTC offset (in hours) that applies to a given timezone ON A SPECIFIC DATE.
+// This correctly handles daylight saving — e.g. a meeting in July uses summer-time offsets,
+// a meeting in December uses winter-time offsets, even if today's date is different.
+function tzOffsetForDate(tz,dateStr){
+  try{
+    const refDate=dateStr?new Date(dateStr+'T12:00:00Z'):new Date();
+    const utcDate=new Date(refDate.toLocaleString('en-US',{timeZone:'UTC'}));
+    const tzDate=new Date(refDate.toLocaleString('en-US',{timeZone:tz}));
+    return (tzDate-utcDate)/3600000;
+  }catch(e){return 0;}
+}
+function convertTime(dateStr,timeStr,fromTz,toTz){
+  try{
+    const [h,m]=timeStr.split(':').map(Number);
+    const fromOffset=tzOffsetForDate(fromTz,dateStr);
+    const toOffset=tzOffsetForDate(toTz,dateStr);
+    const diff=toOffset-fromOffset;
+    let totalMin=h*60+m+diff*60;
+    let dayShift=0;
+    while(totalMin<0){totalMin+=1440;dayShift--;}
+    while(totalMin>=1440){totalMin-=1440;dayShift++;}
+    const nh=Math.floor(totalMin/60),nm=Math.round(totalMin%60);
+    const timeLabel=String(nh).padStart(2,'0')+':'+String(nm).padStart(2,'0');
+    const dayLabel=dayShift===0?'':dayShift>0?' (+1 day)':' (-1 day)';
+    return timeLabel+dayLabel;
+  }catch(e){return '--:--';}
+}
+
+// TOAST
+function toast(msg,type='success',duration=2500){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},duration);
+}
+
+function setSyncPill(state){
+  const el=document.getElementById('syncPill');
+  el.classList.remove('online','offline','syncing');
+  if(state==='online'){el.classList.add('online');el.textContent='✅ Synced';}
+  else if(state==='offline'){el.classList.add('offline');el.textContent='⚠️ Offline';}
+  else{el.classList.add('syncing');el.textContent='🔄 Connecting...';}
+}
+window.addEventListener('online',()=>setSyncPill('online'));
+window.addEventListener('offline',()=>setSyncPill('offline'));
+
+// ============================================================
+// DATA
+// ============================================================
+let leads=[],tasks=[],pipeline=[],meetings=[],notes=[];
+const today=new Date().toISOString().split('T')[0];
+
+const LS_KEYS={leads:'jericho_leads',tasks:'jericho_tasks',pipeline:'jericho_pipeline',meetings:'jericho_meetings',notes:'jericho_companion_notes'};
+
+function loadLocal(){
+  leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
+  tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
+  pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
+  meetings=JSON.parse(localStorage.getItem('jericho_meetings'))||[];
+  notes=JSON.parse(localStorage.getItem('jericho_companion_notes'))||[];
+}
+loadLocal();
+
+function persistLocal(key,arr){localStorage.setItem(LS_KEYS[key],JSON.stringify(arr));}
+
+async function saveToCloud(key,item){
+  if(!window._fbReady)return;
+  try{
+    const {db,collection,doc,setDoc,SYNCED_COLLECTIONS}=window._fb;
+    await setDoc(doc(collection(db,SYNCED_COLLECTIONS[key]),String(item.id)),item);
+    setSyncPill('online');
+  }catch(e){console.warn('Cloud save failed, saved locally:',e);setSyncPill('offline');}
+}
+async function deleteFromCloud(key,id){
+  if(!window._fbReady)return;
+  try{
+    const {db,collection,doc,deleteDoc,SYNCED_COLLECTIONS}=window._fb;
+    await deleteDoc(doc(collection(db,SYNCED_COLLECTIONS[key]),String(id)));
+    setSyncPill('online');
+  }catch(e){console.warn('Cloud delete failed:',e);setSyncPill('offline');}
+}
+
+function startSync(){
+  if(!window._fbReady)return;
+  const {db,collection,onSnapshot,SYNCED_COLLECTIONS}=window._fb;
+  setSyncPill('syncing');
+  Object.entries(SYNCED_COLLECTIONS).forEach(([key,colName])=>{
+    onSnapshot(collection(db,colName),(snapshot)=>{
+      const items=[];
+      snapshot.forEach(d=>items.push(d.data()));
+      if(key==='leads')leads=items;
+      else if(key==='tasks')tasks=items;
+      else if(key==='pipeline')pipeline=items;
+      else if(key==='meetings')meetings=items;
+      else if(key==='notes')notes=items;
+      persistLocal(key,items);
+      renderAll();
+      setSyncPill('online');
+    },(err)=>{console.warn('Sync error '+colName,err);setSyncPill('offline');});
+  });
+}
+window.addEventListener('firebase-ready',startSync);
+if(window._fbReady)startSync();
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  renderAll();
+}
+
+// ============================================================
+// RENDER: HOME - upcoming calls
+// ============================================================
+function relativeTimeLabel(dateStr,timeStr){
+  try{
+    const [h,m]=timeStr.split(':').map(Number);
+    const target=new Date(dateStr+'T00:00:00');
+    target.setHours(h,m,0,0);
+    const now=new Date();
+    const diffMs=target-now;
+    const diffMin=Math.round(diffMs/60000);
+    if(diffMin<0)return 'In progress / passed';
+    if(diffMin<60)return `Starts in ${diffMin} min`;
+    const diffHrs=diffMin/60;
+    if(diffHrs<24&&target.toDateString()===now.toDateString())return `Starts in ${Math.round(diffHrs)} hr`;
+    const startOfToday=new Date(now);startOfToday.setHours(0,0,0,0);
+    const dayDiff=Math.round((target-startOfToday)/86400000);
+    if(dayDiff===0)return 'Today';
+    if(dayDiff===1)return 'Tomorrow';
+    if(dayDiff>1&&dayDiff<=7)return `In ${dayDiff} days`;
+    return null; // fall back to date label for anything further out
+  }catch(e){return null;}
+}
+function renderUpcoming(){
+  const list=document.getElementById('upcomingList');
+  const upcoming=[...meetings].filter(m=>m.date>=today).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5);
+  if(!upcoming.length){list.innerHTML='<div class="empty-note">No calls scheduled.</div>';return;}
+  list.innerHTML=upcoming.map(m=>{
+    const relLabel=relativeTimeLabel(m.date,m.time);
+    const dateLabel=m.date===today?'Today':new Date(m.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    const dayLabel=relLabel||dateLabel;
+    return `<div class="upcoming-row"><span class="upcoming-time">${m.time}</span><div class="upcoming-info"><div class="u-title">${m.purpose||'Call'}</div><div class="u-sub">${dayLabel} · ${(m.attendees||[]).map(a=>a.name).join(', ')||'No attendees added'}</div></div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// RENDER: Follow-ups (tasks with type tags, home = today+overdue, full = everything)
+// ============================================================
+function taskCardHTML(t){
+  let cls='nodate';
+  if(t.due&&t.due<today)cls='overdue';
+  else if(t.due===today)cls='today';
+  const dueLabel=t.due?(t.due<today?'Overdue — was due '+t.due:t.due===today?'Due today':'Due '+t.due):'No date set';
+  return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${t.category||t.actionType||'Follow-up'}</span></div><div class="item-title">${t.title}</div>${t.notes?`<div class="item-note">${t.notes}</div>`:''}<div class="item-due">${dueLabel}</div><div class="item-actions"><button class="btn-done" onclick="completeAction(${t.id})">✓ Done</button><button class="btn-del" onclick="deleteAction(${t.id})">Delete</button></div></div>`;
+}
+function renderFollowups(){
+  const activeCompanionTasks=tasks.filter(t=>!t.completed&&t.fromCompanion);
+  const homeList=activeCompanionTasks.filter(t=>!t.due||t.due<=today);
+  const homeEl=document.getElementById('homeFollowups');
+  homeEl.innerHTML=homeList.length?homeList.map(taskCardHTML).join(''):'<div class="empty-note">Nothing due. ✅</div>';
+  const fullEl=document.getElementById('fullFollowups');
+  fullEl.innerHTML=activeCompanionTasks.length?activeCompanionTasks.map(taskCardHTML).join(''):'<div class="empty-note">Nothing here yet.</div>';
+}
+function completeAction(id){
+  const t=tasks.find(x=>x.id===id);
+  if(t){t.completed=true;t.completedDate=new Date().toLocaleDateString('en-GB');persistLocal('tasks',tasks);saveToCloud('tasks',t);renderAll();toast('Marked done ✓');}
+}
+function deleteAction(id){
+  tasks=tasks.filter(x=>x.id!==id);persistLocal('tasks',tasks);deleteFromCloud('tasks',id);renderAll();toast('Deleted','error');
+}
+
+// ============================================================
+// RENDER: Pipeline quick view
+// ============================================================
+const stageColors={'New':'#3498db','Waiting Documents':'#e8a020','Waiting Financials':'#e8a020','Negotiation':'#9b59b6','Final SPA':'#2ecc71','Closed Won':'#27ae60','Closed Not Monetized':'#999','Lost':'#e74c3c'};
+function renderPipelineQuick(){
+  const el=document.getElementById('pipelineQuickList');
+  const active=pipeline.filter(d=>d.stage!=='Closed Won'&&d.stage!=='Lost'&&d.stage!=='Closed Not Monetized');
+  if(!active.length){el.innerHTML='<div class="empty-note">No active deals.</div>';return;}
+  el.innerHTML=active.map(d=>`<div class="pipe-row"><span class="pipe-dot" style="background:${stageColors[d.stage]||'#999'}"></span><div class="pipe-info"><div class="pipe-title">${d.commodity}${d.buyer?' — '+d.buyer:''}</div><div class="pipe-stage">${d.stage}</div></div></div>`).join('');
+}
+
+// ============================================================
+// RENDER: Notes
+// ============================================================
+function renderNotes(){
+  const el=document.getElementById('notesList');
+  const sorted=[...notes].sort((a,b)=>b.id-a.id);
+  if(!sorted.length){el.innerHTML='<div class="empty-note">No notes yet.</div>';return;}
+  el.innerHTML=sorted.map(n=>`<div class="item-card"><div class="item-note" style="margin-top:0;">${n.text}</div><div class="item-due">${n.dateLabel||''}</div><div class="item-actions"><button class="btn-del" onclick="deleteNote(${n.id})">Delete</button></div></div>`).join('');
+}
+function deleteNote(id){notes=notes.filter(n=>n.id!==id);persistLocal('notes',notes);deleteFromCloud('notes',id);renderAll();toast('Note deleted','error');}
+
+function renderAll(){
+  renderUpcoming();
+  renderFollowups();
+  renderPipelineQuick();
+  renderNotes();
+}
+
+// ============================================================
+// ACTION SHEET (Add Action)
+// ============================================================
+let selectedActionTag='Follow-up';
+document.getElementById('actionTagPicker').addEventListener('click',e=>{
+  const opt=e.target.closest('.tag-opt');if(!opt)return;
+  document.querySelectorAll('#actionTagPicker .tag-opt').forEach(o=>o.classList.remove('selected'));
+  opt.classList.add('selected');selectedActionTag=opt.dataset.tag;
+  document.getElementById('actionTagCustom').style.display=selectedActionTag==='Custom'?'block':'none';
+});
+function openActionSheet(){
+  document.getElementById('actionOverlay').classList.add('show');
+  document.getElementById('actionSheet').classList.add('show');
+}
+function closeActionSheet(){
+  document.getElementById('actionOverlay').classList.remove('show');
+  document.getElementById('actionSheet').classList.remove('show');
+}
+function saveAction(){
+  const title=document.getElementById('actionTitle').value.trim();
+  if(!title){toast('Please enter a title','error');return;}
+  const category=selectedActionTag==='Custom'?(document.getElementById('actionTagCustom').value.trim()||'Custom'):selectedActionTag;
+  const item={id:Date.now(),title,category,notes:document.getElementById('actionNote').value.trim(),due:document.getElementById('actionDate').value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  tasks.push(item);persistLocal('tasks',tasks);saveToCloud('tasks',item);
+  document.getElementById('actionTitle').value='';
+  document.getElementById('actionNote').value='';
+  document.getElementById('actionDate').value='';
+  document.getElementById('actionTagCustom').value='';
+  closeActionSheet();renderAll();toast('Action saved ✓');
+}
+
+// LEAD SHEET
+function openLeadSheet(){
+  document.getElementById('leadOverlay').classList.add('show');
+  document.getElementById('leadSheet').classList.add('show');
+}
+function closeLeadSheet(){
+  document.getElementById('leadOverlay').classList.remove('show');
+  document.getElementById('leadSheet').classList.remove('show');
+}
+function saveQuickLead(){
+  const name=document.getElementById('qlName').value.trim();
+  if(!name){toast('Please enter a name','error');return;}
+  const item={id:Date.now(),name,company:document.getElementById('qlCompany').value.trim(),type:'',country:'',phone:'',email:'',introBy:'',status:'New',followup:'',commodity:'',notes:document.getElementById('qlNote').value.trim(),createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  leads.push(item);persistLocal('leads',leads);saveToCloud('leads',item);
+  document.getElementById('qlName').value='';document.getElementById('qlCompany').value='';document.getElementById('qlNote').value='';
+  closeLeadSheet();renderAll();toast('Lead saved ✓');
+}
+
+// NOTE SHEET
+function openNoteSheet(){
+  document.getElementById('noteOverlay').classList.add('show');
+  document.getElementById('noteSheet').classList.add('show');
+}
+function closeNoteSheet(){
+  document.getElementById('noteOverlay').classList.remove('show');
+  document.getElementById('noteSheet').classList.remove('show');
+}
+function saveNote(){
+  const text=document.getElementById('noteText').value.trim();
+  if(!text){toast('Please type a note','error');return;}
+  const item={id:Date.now(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString()};
+  notes.push(item);persistLocal('notes',notes);saveToCloud('notes',item);
+  document.getElementById('noteText').value='';
+  closeNoteSheet();renderAll();toast('Note saved ✓');
+}
+
+// ============================================================
+// MEETING SHEET
+// ============================================================
+let myLocation=null;
+let attendeeLocations=[];
+let selectedPurpose='Follow-up';
+
+document.getElementById('purposeTagPicker').addEventListener('click',e=>{
+  const opt=e.target.closest('.tag-opt');if(!opt)return;
+  document.querySelectorAll('#purposeTagPicker .tag-opt').forEach(o=>o.classList.remove('selected'));
+  opt.classList.add('selected');selectedPurpose=opt.dataset.tag;
+  document.getElementById('meetingPurposeCustom').style.display=selectedPurpose==='Custom'?'block':'none';
+});
+
+function buildQuickLocButtons(containerId,onClickFn){
+  const el=document.getElementById(containerId);
+  el.innerHTML=QUICK_LOCS.map(c=>`<button type="button" class="quick-loc" data-country="${c}">${c}</button>`).join('');
+  el.querySelectorAll('.quick-loc').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const countryData=COUNTRIES.find(x=>x.country===btn.dataset.country);
+      if(countryData)onClickFn(countryData);
+    });
+  });
+}
+buildQuickLocButtons('myQuickLocs',(c)=>{selectCountry(c,'my');});
+buildQuickLocButtons('attendeeQuickLocs',(c)=>{selectCountry(c,'attendee');});
+
+// When a country is picked, if it has sub-cities (US/Mexico/India), show a dropdown
+// to pick the exact city/zone. Otherwise, use the country's single default timezone directly.
+function selectCountry(countryData,target){
+  if(countryData.hasSubCities){
+    const selectEl=document.getElementById(target==='my'?'mySubCitySelect':'attendeeSubCitySelect');
+    const cities=SUB_CITIES[countryData.country];
+    selectEl.innerHTML=cities.map((c,i)=>`<option value="${i}">${countryData.country} — ${c.city}</option>`).join('');
+    selectEl.style.display='block';
+    selectEl.dataset.country=countryData.country;
+    selectEl.onchange=()=>{
+      const chosen=cities[parseInt(selectEl.value)];
+      const finalLoc={country:countryData.country,city:chosen.city,tz:chosen.tz};
+      if(target==='my'){myLocation=finalLoc;renderMyLocChip();updateCalcPreview();}
+      else{addAttendee(finalLoc);}
+    };
+    // Auto-select first city so there's always a valid choice
+    selectEl.value='0';selectEl.onchange();
+  }else{
+    const finalLoc={country:countryData.country,city:'',tz:countryData.tz};
+    if(target==='my'){
+      document.getElementById('mySubCitySelect').style.display='none';
+      myLocation=finalLoc;renderMyLocChip();updateCalcPreview();
+    }else{
+      document.getElementById('attendeeSubCitySelect').style.display='none';
+      addAttendee(finalLoc);
+    }
+  }
+}
+
+function renderMyLocChip(){
+  const el=document.getElementById('myLocChip');
+  if(!myLocation){el.innerHTML='';return;}
+  const label=myLocation.city?myLocation.city+', '+myLocation.country:myLocation.country;
+  el.innerHTML=`<div class="chip">${label} <span class="chip-x" onclick="clearMyLoc()">✕</span></div>`;
+}
+function clearMyLoc(){myLocation=null;renderMyLocChip();updateCalcPreview();}
+function addAttendee(locData){
+  const nameInput=document.getElementById('attendeeNameInput');
+  const name=nameInput.value.trim();
+  if(!name){toast('Please enter the participant\'s name first','error');return;}
+  attendeeLocations.push({name,country:locData.country,city:locData.city,tz:locData.tz});
+  nameInput.value='';
+  document.getElementById('attendeeSubCitySelect').style.display='none';
+  renderAttendeeChips();updateCalcPreview();
+}
+function removeAttendee(idx){attendeeLocations.splice(idx,1);renderAttendeeChips();updateCalcPreview();}
+function renderAttendeeChips(){
+  const el=document.getElementById('attendeeChips');
+  el.innerHTML=attendeeLocations.map((a,i)=>{
+    const locLabel=a.city?a.city+', '+a.country:a.country;
+    return `<div class="chip">${a.name} — ${locLabel} <span class="chip-x" onclick="removeAttendee(${i})">✕</span></div>`;
+  }).join('');
+}
+
+document.getElementById('myLocSearch').addEventListener('input',function(){
+  const results=searchCountries(this.value);
+  const box=document.getElementById('myLocResults');
+  if(!results.length){box.style.display='none';return;}
+  box.innerHTML=results.map(c=>`<div class="loc-result-item" data-country="${c.country}">${c.country}</div>`).join('');
+  box.style.display='block';
+});
+document.getElementById('myLocResults').addEventListener('click',e=>{
+  const item=e.target.closest('.loc-result-item');if(!item)return;
+  const countryData=COUNTRIES.find(c=>c.country===item.dataset.country);
+  document.getElementById('myLocSearch').value='';
+  document.getElementById('myLocResults').style.display='none';
+  if(countryData)selectCountry(countryData,'my');
+});
+document.getElementById('attendeeLocSearch').addEventListener('input',function(){
+  const results=searchCountries(this.value);
+  const box=document.getElementById('attendeeLocResults');
+  if(!results.length){box.style.display='none';return;}
+  box.innerHTML=results.map(c=>`<div class="loc-result-item" data-country="${c.country}">${c.country}</div>`).join('');
+  box.style.display='block';
+});
+document.getElementById('attendeeLocResults').addEventListener('click',e=>{
+  const item=e.target.closest('.loc-result-item');if(!item)return;
+  const countryData=COUNTRIES.find(c=>c.country===item.dataset.country);
+  document.getElementById('attendeeLocSearch').value='';
+  document.getElementById('attendeeLocResults').style.display='none';
+  if(countryData)selectCountry(countryData,'attendee');
+});
+
+function updateCalcPreview(){
+  const preview=document.getElementById('calcPreview');
+  const list=document.getElementById('calcPreviewList');
+  const date=document.getElementById('meetingDate').value;
+  const time=document.getElementById('meetingTime').value;
+  if(!myLocation||!time||!attendeeLocations.length){preview.style.display='none';return;}
+  const rows=attendeeLocations.map(a=>{
+    const converted=convertTime(date,time,myLocation.tz,a.tz);
+    const label=a.city?a.city+', '+a.country:a.country;
+    return `<div style="padding:4px 0;">${label}: <strong>${converted}</strong></div>`;
+  }).join('');
+  const myLabel=myLocation.city?myLocation.city+', '+myLocation.country:myLocation.country;
+  list.innerHTML=`<div style="padding:4px 0;">${myLabel} (you): <strong>${time}</strong></div>`+rows;
+  preview.style.display='block';
+}
+['meetingDate','meetingTime'].forEach(id=>document.getElementById(id).addEventListener('input',updateCalcPreview));
+
+function openMeetingSheet(){
+  document.getElementById('meetingDate').value=today;
+  document.getElementById('meetingOverlay').classList.add('show');
+  document.getElementById('meetingSheet').classList.add('show');
+}
+function closeMeetingSheet(){
+  document.getElementById('meetingOverlay').classList.remove('show');
+  document.getElementById('meetingSheet').classList.remove('show');
+}
+function saveMeeting(){
+  const date=document.getElementById('meetingDate').value;
+  const time=document.getElementById('meetingTime').value;
+  if(!date||!time){toast('Please set date and time','error');return;}
+  if(!myLocation){toast('Please set your location','error');return;}
+  const purpose=selectedPurpose==='Custom'?(document.getElementById('meetingPurposeCustom').value.trim()||'Meeting'):selectedPurpose;
+  const attendeesWithTimes=attendeeLocations.map(a=>({name:a.name,city:a.city,country:a.country,tz:a.tz,localTime:convertTime(date,time,myLocation.tz,a.tz)}));
+  const item={id:Date.now(),date,time,purpose,myCity:myLocation.city,myCountry:myLocation.country,myTz:myLocation.tz,attendees:attendeesWithTimes,createdAt:new Date().toISOString()};
+  meetings.push(item);persistLocal('meetings',meetings);saveToCloud('meetings',item);
+  // Reset
+  myLocation=null;attendeeLocations=[];
+  renderMyLocChip();renderAttendeeChips();
+  document.getElementById('meetingTime').value='';
+  document.getElementById('mySubCitySelect').style.display='none';
+  document.getElementById('attendeeSubCitySelect').style.display='none';
+  document.getElementById('calcPreview').style.display='none';
+  closeMeetingSheet();renderAll();toast('Call scheduled ✓');
+}
+
+function shareMeetingWhatsApp(){
+  const date=document.getElementById('meetingDate').value;
+  const time=document.getElementById('meetingTime').value;
+  if(!date||!time||!myLocation){toast('Please fill in date, time and your location first','error');return;}
+  const purpose=selectedPurpose==='Custom'?(document.getElementById('meetingPurposeCustom').value.trim()||'Meeting'):selectedPurpose;
+  const dateLabel=new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const myLabel=myLocation.city?myLocation.city+', '+myLocation.country:myLocation.country;
+  let msg=`📅 ${purpose}\n${dateLabel}\n\n`;
+  msg+=`${myLabel}: ${time}\n`;
+  attendeeLocations.forEach(a=>{
+    const converted=convertTime(date,time,myLocation.tz,a.tz);
+    const locLabel=a.city?a.city+', '+a.country:a.country;
+    msg+=`${a.name} (${locLabel}): ${converted}\n`;
+  });
+  const url='https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+// Close location dropdowns on outside tap
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#myLocSearch')&&!e.target.closest('#myLocResults'))document.getElementById('myLocResults').style.display='none';
+  if(!e.target.closest('#attendeeLocSearch')&&!e.target.closest('#attendeeLocResults'))document.getElementById('attendeeLocResults').style.display='none';
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
