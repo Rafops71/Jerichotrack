@@ -55,7 +55,6 @@ z-index: 0;
 
 .app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
 
-/* header already defined above */
 .logo-block { display: flex; flex-direction: column; }
 .logo-name {
 font-family: ‘Playfair Display’, serif;
@@ -93,11 +92,9 @@ color: #ffffff;
 background: #0a1628;
 }
 
-/* Views */
 .view { display: none; }
 .view.active { display: block; }
 
-/* Search Panel */
 .search-panel {
 background: #ffffff !important;
 background-color: #ffffff !important;
@@ -193,7 +190,6 @@ margin-top: 24px;
 .run-btn:hover { background: #1a3a5c; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(10,22,40,0.3); }
 .run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-/* Progress */
 .progress-panel {
 background: #ffffff !important;
 background-color: #ffffff !important;
@@ -250,7 +246,6 @@ flex-shrink: 0;
 .step-item.active .step-dot { animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-/* Results */
 .results-panel { display: none; }
 .results-panel.active { display: block; }
 
@@ -302,7 +297,6 @@ margin-bottom: -1px;
 .result-section { display: none; }
 .result-section.active { display: block; }
 
-/* Red Flags */
 .red-flags-box {
 background: rgba(192,57,43,0.1);
 border: 1px solid rgba(192,57,43,0.4);
@@ -333,7 +327,6 @@ line-height: 1.5;
 .flag-item:last-child { border-bottom: none; }
 .flag-icon { color: var(–red-soft); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
 
-/* Conflict box */
 .conflict-box {
 background: rgba(212,134,26,0.08);
 border: 1px solid rgba(212,134,26,0.3);
@@ -355,7 +348,6 @@ margin-bottom: 8px;
 .conflict-claim span { color: var(–white); }
 .conflict-found { color: var(–amber); font-weight: 500; }
 
-/* Info cards */
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
 .info-card {
 background: #ffffff !important;
@@ -378,7 +370,33 @@ margin-bottom: 8px;
 .info-card-value.warn { color: #d4861a; }
 .info-card-value.bad { color: #c0392b; }
 
-/* Person cards */
+.confidence-badge {
+display: inline-block;
+font-family: ‘DM Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+padding: 2px 8px;
+border-radius: 2px;
+text-transform: uppercase;
+margin-left: 8px;
+vertical-align: middle;
+}
+.confidence-badge.verified { background: rgba(26,122,74,0.15); color: var(–green-soft); border: 1px solid rgba(26,122,74,0.3); }
+.confidence-badge.probable { background: rgba(212,134,26,0.15); color: var(–amber); border: 1px solid rgba(212,134,26,0.3); }
+.confidence-badge.unverified { background: rgba(138,155,176,0.15); color: var(–gray); border: 1px solid rgba(138,155,176,0.3); }
+.confidence-badge.notfound { background: rgba(192,57,43,0.1); color: #999; border: 1px solid rgba(153,153,153,0.3); }
+
+.evidence-trail {
+margin-top: 10px;
+padding: 10px 14px;
+background: rgba(10,22,40,0.03);
+border-left: 2px solid #cccccc;
+font-size: 12px;
+color: #666666;
+line-height: 1.6;
+}
+.evidence-trail .ev-source { color: #0a1628; font-weight: 600; }
+
 .person-card {
 background: #ffffff !important;
 background-color: #ffffff !important;
@@ -403,7 +421,6 @@ text-transform: uppercase;
 .check-badge.flagged { background: rgba(192,57,43,0.2); color: var(–red-soft); border: 1px solid rgba(192,57,43,0.3); }
 .check-badge.unknown { background: rgba(138,155,176,0.1); color: var(–gray); border: 1px solid rgba(138,155,176,0.2); }
 
-/* Raw dump */
 .raw-dump {
 background: #f0ede6 !important;
 background-color: #f0ede6 !important;
@@ -418,21 +435,10 @@ white-space: pre-wrap;
 max-height: 600px;
 overflow-y: auto;
 }
-border-radius: 4px;
-padding: 24px;
-font-family: ‘DM Mono’, monospace;
-font-size: 12px;
-line-height: 1.8;
-color: var(–gray-light);
-white-space: pre-wrap;
-max-height: 600px;
-overflow-y: auto;
-}
 .raw-dump::-webkit-scrollbar { width: 4px; }
 .raw-dump::-webkit-scrollbar-track { background: transparent; }
 .raw-dump::-webkit-scrollbar-thumb { background: var(–gold); border-radius: 2px; }
 
-/* Action buttons */
 .action-row { display: flex; gap: 12px; margin-top: 28px; }
 .action-btn {
 background: transparent;
@@ -473,7 +479,6 @@ text-transform: uppercase;
 }
 .small-btn:hover { border-color: #c9a84c; color: #c9a84c; }
 
-/* History */
 .history-list { display: flex; flex-direction: column; gap: 12px; }
 .history-item {
 background: #ffffff !important;
@@ -503,22 +508,7 @@ text-align: center;
 .score-pill.amber { color: var(–amber); }
 .score-pill.red { color: var(–red-soft); }
 .history-btns { display: flex; gap: 8px; }
-.small-btn {
-background: transparent;
-border: 1px solid var(–border);
-color: var(–gray);
-font-family: ‘DM Mono’, monospace;
-font-size: 10px;
-letter-spacing: 1px;
-padding: 6px 12px;
-cursor: pointer;
-border-radius: 2px;
-transition: all 0.2s;
-text-transform: uppercase;
-}
-.small-btn:hover { border-color: var(–gold); color: var(–gold); }
 
-/* Document upload */
 .doc-upload-area {
 border: 1px dashed rgba(201,168,76,0.3);
 border-radius: 4px;
@@ -544,7 +534,6 @@ font-size: 11px;
 color: var(–gray-light);
 }
 
-/* Section headers */
 .section-header {
 font-family: ‘DM Mono’, monospace;
 font-size: 10px;
@@ -559,7 +548,6 @@ border-bottom: 1px solid #dddddd;
 .prose { font-size: 14px; line-height: 1.8; color: #333333; margin-bottom: 20px; }
 .prose strong { color: #111111; }
 
-/* Empty state */
 .empty-state {
 text-align: center;
 padding: 60px 20px;
@@ -569,7 +557,6 @@ font-size: 12px;
 letter-spacing: 2px;
 }
 
-/* File input hidden */
 #fileInput { display: none; }
 
 .spinner {
@@ -583,7 +570,20 @@ vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Responsive */
+.setup-banner {
+background: rgba(212,134,26,0.1);
+border: 1px solid rgba(212,134,26,0.4);
+border-left: 4px solid var(–amber);
+border-radius: 4px;
+padding: 18px 24px;
+margin-bottom: 24px;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 13px;
+line-height: 1.6;
+color: #6b4a0a;
+}
+.setup-banner strong { color: #0a1628; }
+
 @media (max-width: 640px) {
 .form-grid { grid-template-columns: 1fr; }
 .info-grid { grid-template-columns: 1fr; }
@@ -602,11 +602,11 @@ vertical-align: middle;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v1.0</div>
+      <div class="logo-sub">Due Diligence Engine · v2.0</div>
     </div>
     <div class="header-right">
-      <button class="nav-btn active" onclick="showView('search')">New Research</button>
-      <button class="nav-btn" onclick="showView('history')">History</button>
+      <button class="nav-btn active" onclick="showView('search',this)">New Research</button>
+      <button class="nav-btn" onclick="showView('history',this)">History</button>
     </div>
   </div>
 
@@ -615,6 +615,14 @@ vertical-align: middle;
   <div class="view active" id="view-search">
 
 ```
+<div class="setup-banner" id="setupBanner">
+  <strong>⚠ One-time setup required:</strong> this tool needs a Worker URL to run research safely (your API key is never stored in this file). Enter it below once — it will be remembered on this device.
+  <div style="margin-top:10px;">
+    <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev" style="width:100%;max-width:420px;">
+    <button class="small-btn" style="margin-left:8px;" onclick="saveWorkerUrl()">Save</button>
+  </div>
+</div>
+
 <div class="search-panel">
   <div class="panel-title">Company Intelligence Request</div>
 
@@ -625,7 +633,8 @@ vertical-align: middle;
     </div>
     <div class="form-group">
       <label>Country of Registration *</label>
-      <input type="text" id="companyCountry" placeholder="e.g. Brazil, South Africa, DRC">
+      <input type="text" id="companyCountry" placeholder="e.g. Brazil, South Africa, DRC" oninput="checkManualRegistryLink()">
+      <div id="manualRegistryButtonBox" style="margin-top:8px;display:none;"></div>
     </div>
     <div class="form-group">
       <label>Website URL (optional)</label>
@@ -647,7 +656,7 @@ vertical-align: middle;
         <div class="sector-tag" onclick="toggleSector(this)">Lithium</div>
         <div class="sector-tag" onclick="toggleSector(this)">Fuels</div>
         <div class="sector-tag" onclick="toggleSector(this)">Gold</div>
-        <div class="sector-tag" onclick="toggleSector(this)">Diamonds</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Antimony</div>
         <div class="sector-tag" onclick="toggleSector(this)">Trading / Broker</div>
         <div class="sector-tag" onclick="toggleSector(this)">Other</div>
       </div>
@@ -678,12 +687,12 @@ vertical-align: middle;
   <div id="scoreBanner"></div>
 
   <div class="result-tabs">
-    <button class="result-tab active" onclick="showTab('summary')">Summary</button>
-    <button class="result-tab" onclick="showTab('redflags')">Red Flags</button>
-    <button class="result-tab" onclick="showTab('company')">Company</button>
-    <button class="result-tab" onclick="showTab('people')">People</button>
-    <button class="result-tab" onclick="showTab('mining')">Mining & Trade</button>
-    <button class="result-tab" onclick="showTab('raw')">Raw Dump</button>
+    <button class="result-tab active" onclick="showTab('summary',this)">Summary</button>
+    <button class="result-tab" onclick="showTab('redflags',this)">Red Flags</button>
+    <button class="result-tab" onclick="showTab('company',this)">Company</button>
+    <button class="result-tab" onclick="showTab('people',this)">People</button>
+    <button class="result-tab" onclick="showTab('mining',this)">Mining & Trade</button>
+    <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
   </div>
 
   <div class="result-content">
@@ -722,24 +731,74 @@ vertical-align: middle;
 // ── State ──────────────────────────────────────────────────────────────
 let currentResult = null;
 let researchHistory = JSON.parse(localStorage.getItem('jdd_history') || '[]');
+let WORKER_URL = localStorage.getItem('jdd_worker_url') || '';
+
+// ── One-time Worker URL setup ────────────────────────────────────────────
+function initSetupBanner() {
+  const banner = document.getElementById('setupBanner');
+  const input = document.getElementById('workerUrlInput');
+  if (WORKER_URL) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'block';
+  }
+  input.value = WORKER_URL;
+}
+function saveWorkerUrl() {
+  const val = document.getElementById('workerUrlInput').value.trim().replace(/\/$/, '');
+  if (!val) { alert('Please enter a Worker URL.'); return; }
+  WORKER_URL = val;
+  localStorage.setItem('jdd_worker_url', val);
+  document.getElementById('setupBanner').style.display = 'none';
+}
 
 // ── UI Navigation ───────────────────────────────────────────────────────
-function showView(name) {
+function showView(name, btn) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (name === 'history') renderHistory();
 }
 
-function showTab(name) {
+function showTab(name, btn) {
   document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.result-section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 function toggleSector(el) { el.classList.toggle('selected'); }
+
+// Same countries the Worker cannot reach via a free API - opens the correct
+// official government site directly in a new tab for a quick manual check.
+const MANUAL_REGISTRY_SITES = {
+  "south africa": { label: "Open CIPC (South Africa)", url: "https://eservices.cipc.co.za/Search.aspx" },
+  "zimbabwe": { label: "Zimbabwe Companies Office info", url: "https://www.google.com/search?q=Zimbabwe+Companies+and+Intellectual+Property+Office+company+search" },
+  "zambia": { label: "Open PACRA (Zambia)", url: "https://www.pacra.org.zm" },
+  "nigeria": { label: "Open CAC (Nigeria)", url: "https://search.cac.gov.ng" },
+  "uae": { label: "Open UAE National Economic Register", url: "https://ner.moec.gov.ae" },
+  "united arab emirates": { label: "Open UAE National Economic Register", url: "https://ner.moec.gov.ae" },
+  "drc": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
+  "democratic republic of congo": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
+  "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" }
+};
+
+function checkManualRegistryLink() {
+  const val = document.getElementById('companyCountry').value.toLowerCase().trim();
+  const box = document.getElementById('manualRegistryButtonBox');
+  let match = null;
+  for (const key in MANUAL_REGISTRY_SITES) {
+    if (val.indexOf(key) !== -1) { match = MANUAL_REGISTRY_SITES[key]; break; }
+  }
+  if (match) {
+    box.style.display = 'block';
+    box.innerHTML = `<button type="button" class="small-btn" onclick="window.open('${match.url}','_blank')" style="width:100%;">🔗 ${match.label} — no free automated check available, opens official site</button>`;
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
 
 // ── Research Runner ─────────────────────────────────────────────────────
 let timerInterval = null;
@@ -761,6 +820,11 @@ function stopTimer() {
 }
 
 async function runResearch() {
+  if (!WORKER_URL) {
+    alert('Please enter and save your Worker URL first (see the banner at the top of the page).');
+    return;
+  }
+
   const company = document.getElementById('companyName').value.trim();
   const country = document.getElementById('companyCountry').value.trim();
   if (!company || !country) { alert('Please enter at least a company name and country.'); return; }
@@ -776,29 +840,32 @@ async function runResearch() {
   document.getElementById('resultsPanel').classList.remove('active');
 
   const steps = [
-    'Accessing company website & extracting team data',
-    'Searching government corporate registries',
-    'Checking OFAC · EU · UN · World Bank sanctions lists',
-    'Scanning PEP & adverse media databases',
-    'Verifying registered addresses',
-    'Searching court records & litigation history',
-    'Checking Dun & Bradstreet & trade intelligence',
-    'Verifying mining concessions & land registries',
-    'Searching export records & customs data',
-    'Deep-diving individual board members',
-    'Cross-referencing all findings & scoring',
+    'Checking sanctions lists (OFAC, UN, EU, UK via OpenSanctions)',
+    'Searching independent corporate registries',
+    'Searching independent news and adverse media',
+    'Cross-referencing company website claims vs. independent sources',
+    'Verifying registered address and legal status',
+    'Checking directors and key persons individually',
+    'Identifying conflicts between claims and evidence',
+    'Assessing mining/trade-specific red flags',
+    'Scoring confidence per finding',
     'Compiling final report'
   ];
 
   renderProgressSteps(steps);
   startTimer();
 
-  // Run animation and API call in parallel
   const prompt = buildPrompt(company, country, website, keyPerson, sectors, notes);
-  const [raw] = await Promise.all([
-    callClaude(prompt),
-    animateProgress(steps)
-  ]);
+  let raw;
+  try {
+    const [result] = await Promise.all([
+      callWorker(prompt, company, country, keyPerson),
+      animateProgress(steps)
+    ]);
+    raw = result;
+  } catch (err) {
+    raw = { error: true, rawText: 'Request failed: ' + (err?.message || 'Unknown error') + '. Check that your Worker URL is correct and the Worker is deployed.' };
+  }
 
   stopTimer();
   currentResult = { company, country, website, keyPerson, sectors, notes, raw, date: new Date().toISOString() };
@@ -837,96 +904,115 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── Prompt Builder ──────────────────────────────────────────────────────
 function buildPrompt(company, country, website, keyPerson, sectors, notes) {
-  return `You are a world-class corporate intelligence and due diligence analyst specializing in commodities, mining, and international trade. Your task is to conduct a comprehensive due diligence report on the following company.
+  return `You are a rigorous due diligence analyst specializing in commodities, mining, and international trade counterparties. Your task is to conduct an evidence-based investigation of the following entity.
 
 COMPANY: ${company}
 COUNTRY: ${country}
-${website ? 'WEBSITE: ' + website : ''}
+${website ? 'WEBSITE (claimed by the company — see verification rules below): ' + website : ''}
 ${keyPerson ? 'KEY PERSON: ' + keyPerson : ''}
 ${sectors.length ? 'SECTOR: ' + sectors.join(', ') : ''}
 ${notes ? 'ADDITIONAL CONTEXT: ' + notes : ''}
 
-INSTRUCTIONS:
-1. Search for all available public information about this company and its principals.
-2. Visit their website if provided and extract team members, directors, addresses, claims — but present all website information as "claimed" vs. independently verified.
-3. Research in the native language of ${country} when searching local registries and databases.
-4. All output must be in English.
-5. Be extremely thorough. Flag every inconsistency, discrepancy, or gap as a potential red flag.
-6. Do NOT be lenient. Missing information is itself a red flag in commodity due diligence.
+CORE PRINCIPLE — THE ENTITY CANNOT PROVE ITSELF:
+The company's own website, press releases, and any company-controlled social media (LinkedIn, Facebook, Instagram, TikTok, YouTube) may ONLY be used as a source of CLAIMS to be independently verified. They must NEVER be treated as evidence of legitimacy, reputation, ownership, financial health, or trustworthiness. If the website says "25 years of experience" or "leading mining company," that is a claim, not a fact, until independently corroborated.
+
+SOURCE HIERARCHY (apply this when weighing every piece of evidence):
+- HIGHEST CONFIDENCE: government registries, regulators, official sanctions lists (OFAC/UN/EU/UK), court records, official public filings
+- MEDIUM CONFIDENCE: recognized news organizations, investigative journalism, NGO reports, industry publications
+- LOW CONFIDENCE: company websites, company blogs, press releases (claims only, never proof)
+- IGNORE FOR SCORING: LinkedIn, Facebook, Instagram, TikTok, YouTube, or any other company-controlled social media
+
+VERIFICATION RULES — CRITICAL:
+1. Search independently for company registration, directors, and ownership — do not rely on what the company claims about itself.
+2. Search in the native language of ${country} where relevant for local registries, news, or government sources. All output must be in English.
+3. For every finding, you must classify it as one of exactly four states:
+   - "verified": confirmed by at least one independent, authoritative source
+   - "probable": suggested by independent sources but not fully corroborated, or corroborated only by medium-confidence sources
+   - "unverified": only a claim exists (e.g. company website), with no independent confirmation found
+   - "not_found": you searched and found no information either way — this is itself meaningful and must be stated plainly, never silently omitted or filled with assumption
+4. Do NOT fill gaps with assumptions. If you cannot find something, say "not_found" — do not guess or infer based on similar companies or general patterns.
+5. Flag every inconsistency between what the company claims and what independent sources show as a "conflict."
+6. Be thorough but honest about the limits of what you found. Missing information is itself worth noting, not something to paper over with confident-sounding language.
+7. For every named finding, briefly note where it came from (e.g. "South African CIPC registry", "Reuters, March 2026", "company website — unverified claim") so the finding is traceable.
+8. If evidence is genuinely ambiguous or contradictory and you cannot responsibly resolve it into a clear verified/unverified judgment, do NOT force a confident-sounding conclusion. Instead, explicitly say the finding requires manual human review, and explain exactly what is unclear and what a human should check. It is always better to say "this needs a human to verify" than to guess and sound certain.
+
+Regarding the sanctions data provided to you below: this was retrieved directly from OpenSanctions, an authoritative database combining OFAC, UN, EU, UK and other official sanctions and PEP watchlists. Treat this data as ground truth for the sanctionsStatus and sanctionsSource fields — do not independently re-search for sanctions information, use exactly what is provided.
 
 Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) with exactly this structure:
 
 {
   "score": <integer 0-100>,
-  "scoreRationale": "<2-3 sentence explanation of the score>",
-  "executiveSummary": "<3-5 paragraph executive summary of findings, written with analytical precision>",
+  "scoreRationale": "<2-3 sentence explanation of the score, referencing the balance of verified vs. unverified vs. missing evidence>",
+  "executiveSummary": "<3-5 paragraph executive summary of findings, written with analytical precision, explicitly distinguishing verified facts from unverified claims from gaps>",
   "redFlags": [
-    { "severity": "high|medium|low", "category": "<category>", "description": "<detailed description of the red flag>" }
+    { "severity": "high|medium|low", "category": "<category>", "description": "<detailed description of the red flag>", "confidence": "verified|probable|unverified|not_found" }
   ],
   "conflicts": [
-    { "field": "<what is being compared>", "claimed": "<what company claims>", "found": "<what independent sources show>" }
+    { "field": "<what is being compared>", "claimed": "<what company claims>", "found": "<what independent sources show, or 'no independent information found'>" }
   ],
   "company": {
     "registrationStatus": "<active/inactive/not found/unclear>",
+    "registrationConfidence": "verified|probable|unverified|not_found",
+    "registrationSource": "<which registry or source, e.g. 'CIPC South Africa', 'not searched — no public registry identified'>",
     "incorporationDate": "<date or not found>",
     "registeredAddress": "<address>",
     "addressType": "<analysis: real office / virtual office / flexi desk / residential / unknown>",
     "legalForm": "<LLC/Ltd/SA/etc>",
-    "directors": "<names found in registries>",
-    "financialStatus": "<any public financial info>",
-    "litigation": "<any lawsuits, disputes, legal issues>",
+    "directors": "<names found in registries, noting source>",
+    "financialStatus": "<any public financial info, noting source>",
+    "litigation": "<any lawsuits, disputes, legal issues, noting source>",
     "sanctionsStatus": "<clear/flagged/not found>",
-    "blacklistStatus": "<clear/flagged/not found — check OFAC, EU, UN, World Bank debarment>",
-    "creditRating": "<D&B or equivalent if available>",
-    "tradeHistory": "<any export/import records found>",
-    "yearsInOperation": "<calculated from registration date>",
-    "additionalFindings": "<any other relevant company-level findings>"
+    "sanctionsSource": "<e.g. 'OpenSanctions (OFAC/UN/EU/UK consolidated)'>",
+    "blacklistStatus": "<clear/flagged/not found>",
+    "tradeHistory": "<any export/import records found, noting source>",
+    "yearsInOperation": "<calculated from verified registration date, or 'unknown — registration date not independently confirmed'>",
+    "additionalFindings": "<any other relevant company-level findings, each noting confidence level and source>"
   },
   "people": [
     {
       "name": "<person name>",
       "role": "<their role>",
       "source": "website|registry|both|other",
-      "verified": true|false,
+      "confidence": "verified|probable|unverified|not_found",
       "sanctionsCheck": "clear|flagged|not found",
       "pepCheck": "clear|flagged|not found",
       "courtRecords": "clear|flagged|not found",
       "bankruptcyCheck": "clear|flagged|not found",
       "fraudRegistry": "clear|flagged|not found",
       "adverseMedia": "clear|flagged|not found",
-      "notes": "<any specific findings about this person>"
+      "notes": "<any specific findings about this person, noting source>"
     }
   ],
   "miningAndTrade": {
     "concessionsClaimed": "<what company claims to hold>",
-    "concessionsVerified": "<what government registries show>",
+    "concessionsVerified": "<what government registries show, or 'no independent registry checked/available'>",
     "concessionsMatch": true|false|null,
     "miningArea": "<geographic area claimed>",
     "miningAreaStatus": "<verified active / belongs to another entity / no record / not applicable>",
-    "exportRecords": "<any customs or trade data found>",
+    "exportRecords": "<any customs or trade data found, noting source>",
     "tradeDataSources": "<which databases were checked>",
-    "governmentRegistriesChecked": "<list of registries searched in native language>",
-    "additionalFindings": "<any other mining/trade findings>"
+    "governmentRegistriesChecked": "<list of registries actually searched>",
+    "additionalFindings": "<any other mining/trade findings, each noting confidence level>"
   },
   "rawDump": "<complete unstructured dump of ALL raw findings, sources consulted, searches performed, and any other data collected — formatted as plain text with section headers>"
 }`;
 }
 
-// ── Claude API Call ─────────────────────────────────────────────────────
-async function callClaude(prompt) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+// ── Worker API Call (replaces direct Anthropic call — key is never exposed here) ──
+async function callWorker(prompt, companyName, companyCountry, keyPerson) {
+  const response = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: prompt }]
-    })
+    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson })
   });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error('Worker returned status ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+  }
+
   const data = await response.json();
 
-  // Extract text from all content blocks
   let text = '';
   if (data.content) {
     for (const block of data.content) {
@@ -934,26 +1020,38 @@ async function callClaude(prompt) {
     }
   }
 
-  // Strip markdown fences if present
   text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
   try {
     return JSON.parse(text);
   } catch (e) {
-    // Try to extract JSON from the text
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       try { return JSON.parse(match[0]); } catch (e2) {}
     }
-    return { error: true, rawText: text };
+    return { error: true, rawText: text || 'No content returned from Worker.' };
   }
 }
 
 // ── Render Results ──────────────────────────────────────────────────────
+function confBadge(conf) {
+  if (!conf) return '';
+  const map = {
+    verified: ['verified', 'Verified'],
+    probable: ['probable', 'Probable'],
+    unverified: ['unverified', 'Unverified'],
+    not_found: ['notfound', 'Not Found']
+  };
+  const [cls, label] = map[conf] || ['unverified', conf];
+  return `<span class="confidence-badge ${cls}">${label}</span>`;
+}
+
 function renderResults(result) {
   const r = result.raw;
   if (!r || r.error) {
-    document.getElementById('tab-summary').innerHTML = `<div class="prose">Research completed. The AI returned an unexpected response format. Raw content:<br><br>${r?.rawText || 'No data'}</div>`;
+    document.getElementById('tab-summary').innerHTML = `<div class="prose">Research completed, but the response could not be read as a structured report.<br><br><strong>Details:</strong><br>${r?.rawText || 'No data'}</div>`;
+    ['redflags','company','people','mining','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
+    document.getElementById('scoreBanner').innerHTML = '';
     return;
   }
 
@@ -961,7 +1059,6 @@ function renderResults(result) {
   const colorClass = score >= 76 ? 'green' : score >= 60 ? 'amber' : 'red';
   const colorLabel = score >= 76 ? 'LOW RISK' : score >= 60 ? 'MODERATE RISK' : 'HIGH RISK';
 
-  // Score banner
   document.getElementById('scoreBanner').innerHTML = `
     <div class="score-banner ${colorClass}">
       <div class="score-left">
@@ -975,7 +1072,6 @@ function renderResults(result) {
     </div>
   `;
 
-  // Summary tab
   document.getElementById('tab-summary').innerHTML = `
     <div class="section-header">Executive Summary</div>
     <div class="prose">${(r.executiveSummary || 'No summary available.').replace(/\n/g, '<br>')}</div>
@@ -983,7 +1079,6 @@ function renderResults(result) {
     <div class="prose">${r.scoreRationale || ''}</div>
   `;
 
-  // Red flags tab
   const flags = r.redFlags || [];
   const conflicts = r.conflicts || [];
   let rfHTML = '';
@@ -1018,12 +1113,11 @@ function renderResults(result) {
 
   document.getElementById('tab-redflags').innerHTML = rfHTML;
 
-  // Company tab
   const co = r.company || {};
   document.getElementById('tab-company').innerHTML = `
     <div class="section-header">Registration & Legal</div>
     <div class="info-grid">
-      ${infoCard('Registration Status', co.registrationStatus, statusColor(co.registrationStatus))}
+      ${infoCard('Registration Status', co.registrationStatus, statusColor(co.registrationStatus), co.registrationConfidence, co.registrationSource)}
       ${infoCard('Incorporation Date', co.incorporationDate)}
       ${infoCard('Legal Form', co.legalForm)}
       ${infoCard('Years in Operation', co.yearsInOperation)}
@@ -1032,17 +1126,15 @@ function renderResults(result) {
     </div>
     <div class="section-header">Compliance & Risk</div>
     <div class="info-grid">
-      ${infoCard('Sanctions Status', co.sanctionsStatus, checkColor(co.sanctionsStatus))}
+      ${infoCard('Sanctions Status', co.sanctionsStatus, checkColor(co.sanctionsStatus), null, co.sanctionsSource)}
       ${infoCard('Blacklist / Debarment', co.blacklistStatus, checkColor(co.blacklistStatus))}
       ${infoCard('Litigation', co.litigation)}
       ${infoCard('Financial Status', co.financialStatus)}
-      ${infoCard('Credit Rating (D&B)', co.creditRating)}
       ${infoCard('Trade History', co.tradeHistory)}
     </div>
     ${co.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${co.additionalFindings}</div>` : ''}
   `;
 
-  // People tab
   const people = r.people || [];
   let peopleHTML = '';
   if (people.length === 0) {
@@ -1051,8 +1143,8 @@ function renderResults(result) {
     people.forEach(p => {
       peopleHTML += `
         <div class="person-card">
-          <div class="person-name">${p.name}</div>
-          <div class="person-role">${p.role} · Source: ${p.source} · ${p.verified ? '✓ Verified externally' : '⚠ Unverified externally'}</div>
+          <div class="person-name">${p.name} ${confBadge(p.confidence)}</div>
+          <div class="person-role">${p.role} · Source: ${p.source}</div>
           <div class="person-checks">
             ${badge('Sanctions', p.sanctionsCheck)}
             ${badge('PEP', p.pepCheck)}
@@ -1068,7 +1160,6 @@ function renderResults(result) {
   }
   document.getElementById('tab-people').innerHTML = `<div class="section-header">Board Members & Key Individuals</div>${peopleHTML}`;
 
-  // Mining & Trade tab
   const mt = r.miningAndTrade || {};
   document.getElementById('tab-mining').innerHTML = `
     <div class="section-header">Mining Concessions</div>
@@ -1088,7 +1179,6 @@ function renderResults(result) {
     ${mt.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${mt.additionalFindings}</div>` : ''}
   `;
 
-  // Raw dump tab
   document.getElementById('tab-raw').innerHTML = `
     <div class="section-header">Complete Raw Research Dump</div>
     <div class="raw-dump">${r.rawDump || JSON.stringify(r, null, 2)}</div>
@@ -1102,18 +1192,19 @@ function renderFlagBox(flags, title, color) {
       ${flags.map(f => `
         <div class="flag-item">
           <div class="flag-icon" style="color:${color};">▲</div>
-          <div><strong style="color:${color};">[${f.category}]</strong> ${f.description}</div>
+          <div><strong style="color:${color};">[${f.category}]</strong> ${f.description} ${confBadge(f.confidence)}</div>
         </div>
       `).join('')}
     </div>
   `;
 }
 
-function infoCard(label, value, colorClass) {
+function infoCard(label, value, colorClass, confidence, source) {
   return `
     <div class="info-card">
       <div class="info-card-label">${label}</div>
-      <div class="info-card-value ${colorClass || ''}">${value || 'Not found'}</div>
+      <div class="info-card-value ${colorClass || ''}">${value || 'Not found'} ${confBadge(confidence)}</div>
+      ${source ? `<div class="evidence-trail"><span class="ev-source">Source:</span> ${source}</div>` : ''}
     </div>
   `;
 }
@@ -1165,7 +1256,6 @@ function formatDate(iso) {
 // ── History ─────────────────────────────────────────────────────────────
 function saveToHistory() {
   if (!currentResult) return;
-  // Avoid exact duplicates
   const idx = researchHistory.findIndex(h => h.company === currentResult.company && h.country === currentResult.country && h.date === currentResult.date);
   if (idx === -1) researchHistory.unshift(currentResult);
   localStorage.setItem('jdd_history', JSON.stringify(researchHistory.slice(0, 100)));
@@ -1212,9 +1302,7 @@ function renderHistory() {
 
 function loadFromHistory(i) {
   currentResult = researchHistory[i];
-  showView('search'); // switch to search view to show results
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.nav-btn').classList.add('active');
+  showView('search', document.querySelector('.nav-btn'));
   document.getElementById('companyName').value = currentResult.company;
   document.getElementById('companyCountry').value = currentResult.country;
   document.getElementById('companyWebsite').value = currentResult.website || '';
@@ -1229,11 +1317,8 @@ async function rerunFromHistory(i) {
   document.getElementById('companyCountry').value = h.country;
   document.getElementById('companyWebsite').value = h.website || '';
   document.getElementById('keyPerson').value = h.keyPerson || '';
-  showView('search');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.nav-btn').classList.add('active');
+  showView('search', document.querySelector('.nav-btn'));
   await runResearch();
-  // Save as new run
   if (!researchHistory[i].runs) researchHistory[i].runs = [];
   researchHistory[i].runs.push({ date: new Date().toISOString(), score: currentResult.raw?.score });
   researchHistory[i].date = new Date().toISOString();
@@ -1317,7 +1402,7 @@ function exportPDF() {
 ${(r.redFlags || []).length ? `
 
 <h2>Red Flags</h2>
-${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong><br>${f.description}</div>`).join('')}
+${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong> (${f.confidence || 'unrated'})<br>${f.description}</div>`).join('')}
 ` : ''}
 
 ${(r.conflicts || []).length ? `
@@ -1336,7 +1421,7 @@ ${(r.people || []).map(p => `
 <table>
 <tr><td>Name</td><td>${p.name}</td></tr>
 <tr><td>Role</td><td>${p.role}</td></tr>
-<tr><td>Verified</td><td>${p.verified ? 'Yes' : 'No'}</td></tr>
+<tr><td>Confidence</td><td>${p.confidence || 'unrated'}</td></tr>
 <tr><td>Sanctions</td><td>${p.sanctionsCheck}</td></tr>
 <tr><td>PEP</td><td>${p.pepCheck}</td></tr>
 <tr><td>Court Records</td><td>${p.courtRecords}</td></tr>
@@ -1354,7 +1439,6 @@ ${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== und
   <div class="confidential">STRICTLY CONFIDENTIAL — JERICHO DUE DILIGENCE ENGINE</div>
   <div style="margin-top:6px;">This report is generated for internal screening purposes only. All findings should be verified by qualified legal and compliance professionals before commercial decisions are made. © Jericho ${new Date().getFullYear()}</div>
 </div>
-
 </body>
 </html>
   `);
@@ -1374,6 +1458,8 @@ document.getElementById(‘resultsPanel’).classList.remove(‘active’);
 document.getElementById(‘progressPanel’).classList.remove(‘active’);
 currentResult = null;
 }
+
+initSetupBanner();
 </script>
 
 </body>
