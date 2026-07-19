@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -24,7 +25,7 @@
     --glass: rgba(17,34,64,0.85);
   }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-box-sizing: border-box; }
+- { margin: 0; padding: 0; box-sizing: border-box; -webkit-box-sizing: border-box; }
 
 html { background: #f5f0e8; }
 
@@ -32,14 +33,15 @@ body {
 background-color: #f5f0e8 !important;
 background: #f5f0e8 !important;
 color: #111111 !important;
-font-family: 'DM Sans', sans-serif;
+font-family: ‘DM Sans’, sans-serif;
 min-height: 100vh;
 overflow-x: hidden;
 -webkit-text-size-adjust: 100%;
 }
 
+/* Background texture */
 body::before {
-content: '';
+content: ‘’;
 position: fixed;
 inset: 0;
 background:
@@ -55,7 +57,7 @@ z-index: 0;
 
 .logo-block { display: flex; flex-direction: column; }
 .logo-name {
-font-family: 'Playfair Display', serif;
+font-family: ‘Playfair Display’, serif;
 font-size: 28px;
 font-weight: 900;
 letter-spacing: 3px;
@@ -63,7 +65,7 @@ color: #c9a84c;
 text-transform: uppercase;
 }
 .logo-sub {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 4px;
 color: #777777;
@@ -75,7 +77,7 @@ margin-top: 4px;
 background: transparent;
 border: 1px solid rgba(10,22,40,0.3);
 color: #444;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
 text-transform: uppercase;
@@ -103,7 +105,7 @@ margin-bottom: 32px;
 box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 .panel-title {
-font-family: 'Playfair Display', serif;
+font-family: ‘Playfair Display’, serif;
 font-size: 20px;
 color: #c9a84c;
 margin-bottom: 28px;
@@ -122,7 +124,7 @@ justify-content: space-between;
 .form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group.full { grid-column: 1 / -1; }
 label {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 3px;
 text-transform: uppercase;
@@ -134,7 +136,7 @@ background-color: #f9f7f3 !important;
 border: 1px solid #cccccc !important;
 color: #111111 !important;
 -webkit-text-fill-color: #111111 !important;
-font-family: 'DM Sans', sans-serif;
+font-family: ‘DM Sans’, sans-serif;
 font-size: 16px;
 padding: 12px 16px;
 border-radius: 2px;
@@ -153,7 +155,7 @@ textarea { resize: vertical; min-height: 80px; }
 background: #f5f2ec;
 border: 1px solid #cccccc;
 color: #555555;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 1px;
 padding: 8px 10px;
@@ -174,7 +176,7 @@ width: 100%;
 background: #0a1628;
 border: none;
 color: #ffffff;
-font-family: 'Playfair Display', serif;
+font-family: ‘Playfair Display’, serif;
 font-size: 16px;
 font-weight: 700;
 letter-spacing: 3px;
@@ -200,7 +202,7 @@ box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
 .progress-panel.active { display: block !important; }
 .progress-title {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 13px;
 letter-spacing: 3px;
 text-transform: uppercase;
@@ -228,7 +230,7 @@ width: 0%;
 display: flex;
 align-items: center;
 gap: 12px;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 13px;
 color: #999999;
 transition: color 0.3s;
@@ -256,22 +258,22 @@ border-radius: 4px;
 margin-bottom: 28px;
 border: 1px solid;
 }
-.score-banner.green { background: rgba(26,122,74,0.15); border-color: var(--green-soft); }
-.score-banner.amber { background: rgba(212,134,26,0.15); border-color: var(--amber); }
-.score-banner.red { background: rgba(192,57,43,0.15); border-color: var(--red-soft); }
+.score-banner.green { background: rgba(26,122,74,0.15); border-color: var(–green-soft); }
+.score-banner.amber { background: rgba(212,134,26,0.15); border-color: var(–amber); }
+.score-banner.red { background: rgba(192,57,43,0.15); border-color: var(–red-soft); }
 
 .score-left { display: flex; flex-direction: column; gap: 6px; }
-.score-company { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; }
-.score-meta { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gray); }
+.score-company { font-family: ‘Playfair Display’, serif; font-size: 24px; font-weight: 700; }
+.score-meta { font-family: ‘DM Mono’, monospace; font-size: 11px; letter-spacing: 2px; color: var(–gray); }
 .score-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.score-number { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 900; line-height: 1; }
-.score-banner.green .score-number { color: var(--green-soft); }
-.score-banner.amber .score-number { color: var(--amber); }
-.score-banner.red .score-number { color: var(--red-soft); }
-.score-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
-.score-banner.green .score-label { color: var(--green-soft); }
-.score-banner.amber .score-label { color: var(--amber); }
-.score-banner.red .score-label { color: var(--red-soft); }
+.score-number { font-family: ‘Playfair Display’, serif; font-size: 56px; font-weight: 900; line-height: 1; }
+.score-banner.green .score-number { color: var(–green-soft); }
+.score-banner.amber .score-number { color: var(–amber); }
+.score-banner.red .score-number { color: var(–red-soft); }
+.score-label { font-family: ‘DM Mono’, monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
+.score-banner.green .score-label { color: var(–green-soft); }
+.score-banner.amber .score-label { color: var(–amber); }
+.score-banner.red .score-label { color: var(–red-soft); }
 
 .result-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid #dddddd; }
 .result-tab {
@@ -279,7 +281,7 @@ background: transparent;
 border: none;
 border-bottom: 2px solid transparent;
 color: #777777;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
 text-transform: uppercase;
@@ -298,17 +300,17 @@ margin-bottom: -1px;
 .red-flags-box {
 background: rgba(192,57,43,0.1);
 border: 1px solid rgba(192,57,43,0.4);
-border-left: 4px solid var(--red-soft);
+border-left: 4px solid var(–red-soft);
 border-radius: 4px;
 padding: 24px;
 margin-bottom: 24px;
 }
 .red-flags-title {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 3px;
 text-transform: uppercase;
-color: var(--red-soft);
+color: var(–red-soft);
 margin-bottom: 16px;
 display: flex;
 align-items: center;
@@ -323,28 +325,28 @@ font-size: 13px;
 line-height: 1.5;
 }
 .flag-item:last-child { border-bottom: none; }
-.flag-icon { color: var(--red-soft); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.flag-icon { color: var(–red-soft); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
 
 .conflict-box {
 background: rgba(212,134,26,0.08);
 border: 1px solid rgba(212,134,26,0.3);
-border-left: 4px solid var(--amber);
+border-left: 4px solid var(–amber);
 border-radius: 4px;
 padding: 20px;
 margin-bottom: 16px;
 }
 .conflict-label {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 2px;
-color: var(--amber);
+color: var(–amber);
 text-transform: uppercase;
 margin-bottom: 8px;
 }
 .conflict-row { display: flex; gap: 16px; font-size: 13px; }
-.conflict-claim { color: var(--gray); }
-.conflict-claim span { color: var(--white); }
-.conflict-found { color: var(--amber); font-weight: 500; }
+.conflict-claim { color: var(–gray); }
+.conflict-claim span { color: var(–white); }
+.conflict-found { color: var(–amber); font-weight: 500; }
 
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
 .info-card {
@@ -356,7 +358,7 @@ padding: 20px;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .info-card-label {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 2px;
 color: #777777;
@@ -370,7 +372,7 @@ margin-bottom: 8px;
 
 .confidence-badge {
 display: inline-block;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 9px;
 letter-spacing: 1px;
 padding: 2px 8px;
@@ -379,9 +381,9 @@ text-transform: uppercase;
 margin-left: 8px;
 vertical-align: middle;
 }
-.confidence-badge.verified { background: rgba(26,122,74,0.15); color: var(--green-soft); border: 1px solid rgba(26,122,74,0.3); }
-.confidence-badge.probable { background: rgba(212,134,26,0.15); color: var(--amber); border: 1px solid rgba(212,134,26,0.3); }
-.confidence-badge.unverified { background: rgba(138,155,176,0.15); color: var(--gray); border: 1px solid rgba(138,155,176,0.3); }
+.confidence-badge.verified { background: rgba(26,122,74,0.15); color: var(–green-soft); border: 1px solid rgba(26,122,74,0.3); }
+.confidence-badge.probable { background: rgba(212,134,26,0.15); color: var(–amber); border: 1px solid rgba(212,134,26,0.3); }
+.confidence-badge.unverified { background: rgba(138,155,176,0.15); color: var(–gray); border: 1px solid rgba(138,155,176,0.3); }
 .confidence-badge.notfound { background: rgba(192,57,43,0.1); color: #999; border: 1px solid rgba(153,153,153,0.3); }
 
 .evidence-trail {
@@ -404,20 +406,20 @@ padding: 20px;
 margin-bottom: 16px;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.person-name { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
-.person-role { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; margin-bottom: 14px; }
+.person-name { font-family: ‘Playfair Display’, serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
+.person-role { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; margin-bottom: 14px; }
 .person-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .check-badge {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 1px;
 padding: 4px 10px;
 border-radius: 2px;
 text-transform: uppercase;
 }
-.check-badge.clear { background: rgba(26,122,74,0.2); color: var(--green-soft); border: 1px solid rgba(26,122,74,0.3); }
-.check-badge.flagged { background: rgba(192,57,43,0.2); color: var(--red-soft); border: 1px solid rgba(192,57,43,0.3); }
-.check-badge.unknown { background: rgba(138,155,176,0.1); color: var(--gray); border: 1px solid rgba(138,155,176,0.2); }
+.check-badge.clear { background: rgba(26,122,74,0.2); color: var(–green-soft); border: 1px solid rgba(26,122,74,0.3); }
+.check-badge.flagged { background: rgba(192,57,43,0.2); color: var(–red-soft); border: 1px solid rgba(192,57,43,0.3); }
+.check-badge.unknown { background: rgba(138,155,176,0.1); color: var(–gray); border: 1px solid rgba(138,155,176,0.2); }
 
 .raw-dump {
 background: #f0ede6 !important;
@@ -425,7 +427,7 @@ background-color: #f0ede6 !important;
 border: 1px solid #cccccc;
 border-radius: 4px;
 padding: 24px;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 12px;
 line-height: 1.8;
 color: #333333;
@@ -435,14 +437,14 @@ overflow-y: auto;
 }
 .raw-dump::-webkit-scrollbar { width: 4px; }
 .raw-dump::-webkit-scrollbar-track { background: transparent; }
-.raw-dump::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+.raw-dump::-webkit-scrollbar-thumb { background: var(–gold); border-radius: 2px; }
 
 .action-row { display: flex; gap: 12px; margin-top: 28px; }
 .action-btn {
 background: transparent;
 border: 1px solid #cccccc;
 color: #555555;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
 letter-spacing: 2px;
 text-transform: uppercase;
@@ -466,7 +468,7 @@ color: #ffffff;
 background: transparent;
 border: 1px solid #cccccc;
 color: #555555;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 1px;
 padding: 6px 12px;
@@ -492,19 +494,19 @@ transition: border-color 0.2s;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .history-item:hover { border-color: #c9a84c; }
-.history-company { font-family: 'Playfair Display', serif; font-size: 17px; color: #111111; }
-.history-meta { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; }
+.history-company { font-family: ‘Playfair Display’, serif; font-size: 17px; color: #111111; }
+.history-meta { font-family: ‘DM Mono’, monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; }
 .history-right { display: flex; align-items: center; gap: 16px; }
 .score-pill {
-font-family: 'Playfair Display', serif;
+font-family: ‘Playfair Display’, serif;
 font-size: 20px;
 font-weight: 700;
 min-width: 48px;
 text-align: center;
 }
-.score-pill.green { color: var(--green-soft); }
-.score-pill.amber { color: var(--amber); }
-.score-pill.red { color: var(--red-soft); }
+.score-pill.green { color: var(–green-soft); }
+.score-pill.amber { color: var(–amber); }
+.score-pill.red { color: var(–red-soft); }
 .history-btns { display: flex; gap: 8px; }
 
 .doc-upload-area {
@@ -516,24 +518,24 @@ cursor: pointer;
 transition: all 0.2s;
 margin-top: 16px;
 }
-.doc-upload-area:hover { border-color: var(--gold); background: rgba(201,168,76,0.03); }
-.doc-upload-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
+.doc-upload-area:hover { border-color: var(–gold); background: rgba(201,168,76,0.03); }
+.doc-upload-label { font-family: ‘DM Mono’, monospace; font-size: 11px; letter-spacing: 2px; color: var(–gray); text-transform: uppercase; }
 .doc-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .doc-item {
 display: flex;
 align-items: center;
 justify-content: space-between;
 background: rgba(17,34,64,0.6);
-border: 1px solid var(--border);
+border: 1px solid var(–border);
 border-radius: 2px;
 padding: 10px 14px;
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 11px;
-color: var(--gray-light);
+color: var(–gray-light);
 }
 
 .section-header {
-font-family: 'DM Mono', monospace;
+font-family: ‘DM Mono’, monospace;
 font-size: 10px;
 letter-spacing: 4px;
 text-transform: uppercase;
@@ -549,8 +551,8 @@ border-bottom: 1px solid #dddddd;
 .empty-state {
 text-align: center;
 padding: 60px 20px;
-color: var(--gray);
-font-family: 'DM Mono', monospace;
+color: var(–gray);
+font-family: ‘DM Mono’, monospace;
 font-size: 12px;
 letter-spacing: 2px;
 }
@@ -568,14 +570,35 @@ vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.loc-results {
+background: #ffffff !important;
+border: 1px solid #cccccc;
+border-radius: 4px;
+margin-top: 4px;
+max-height: 200px;
+overflow-y: auto;
+box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+position: relative;
+z-index: 50;
+}
+.loc-result-item {
+padding: 10px 14px;
+font-size: 14px;
+color: #111111;
+border-bottom: 1px solid #f0f0f0;
+cursor: pointer;
+}
+.loc-result-item:last-child { border-bottom: none; }
+.loc-result-item:hover { background: #f5f2ec; }
+
 .setup-banner {
 background: rgba(212,134,26,0.1);
 border: 1px solid rgba(212,134,26,0.4);
-border-left: 4px solid var(--amber);
+border-left: 4px solid var(–amber);
 border-radius: 4px;
 padding: 18px 24px;
 margin-bottom: 24px;
-font-family: 'DM Sans', sans-serif;
+font-family: ‘DM Sans’, sans-serif;
 font-size: 13px;
 line-height: 1.6;
 color: #6b4a0a;
@@ -590,11 +613,13 @@ color: #6b4a0a;
 .header { flex-direction: column; gap: 16px; align-items: flex-start; }
 }
 </style>
+
 </head>
 <body>
 <div class="app">
 
   <!-- Header -->
+
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
@@ -607,107 +632,114 @@ color: #6b4a0a;
   </div>
 
   <!-- SEARCH VIEW -->
+
   <div class="view active" id="view-search">
 
-    <div class="setup-banner" id="setupBanner">
-      <strong>⚠ One-time setup required:</strong> this tool needs a Worker URL to run research (the Worker handles all lookups — sanctions, registry, search, and reasoning — none of which require an API key from you). Enter it below once — it will be remembered on this device.
-      <div style="margin-top:10px;">
-        <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev" style="width:100%;max-width:420px;">
-        <button class="small-btn" style="margin-left:8px;" onclick="saveWorkerUrl()">Save</button>
-      </div>
+```
+<div class="setup-banner" id="setupBanner">
+  <strong>⚠ One-time setup required:</strong> this tool needs a Worker URL to run research (the Worker handles all lookups — sanctions, registry, search, and reasoning — none of which require an API key from you). Enter it below once — it will be remembered on this device.
+  <div style="margin-top:10px;">
+    <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev" style="width:100%;max-width:420px;">
+    <button class="small-btn" style="margin-left:8px;" onclick="saveWorkerUrl()">Save</button>
+  </div>
+</div>
+
+<div class="search-panel">
+  <div class="panel-title">Company Intelligence Request</div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Company Name *</label>
+      <input type="text" id="companyName" placeholder="Company Name Ltd.">
     </div>
-
-    <div class="search-panel">
-      <div class="panel-title">Company Intelligence Request</div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Company Name *</label>
-          <input type="text" id="companyName" placeholder="e.g. Gramazini Mineração Ltda">
-        </div>
-        <div class="form-group">
-          <label>Country of Registration *</label>
-          <input type="text" id="companyCountry" placeholder="e.g. Brazil, South Africa, DRC" oninput="checkManualRegistryLink()">
-          <div id="manualRegistryButtonBox" style="margin-top:8px;display:none;"></div>
-        </div>
-        <div class="form-group">
-          <label>Website URL (optional)</label>
-          <input type="text" id="companyWebsite" placeholder="https://...">
-        </div>
-        <div class="form-group">
-          <label>Key Person Name (optional)</label>
-          <input type="text" id="keyPerson" placeholder="e.g. Director / CEO name">
-        </div>
-        <div class="form-group full">
-          <label>Industry / Commodity Sector</label>
-          <div class="sector-grid" id="sectorGrid">
-            <div class="sector-tag" onclick="toggleSector(this)">Chrome Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Manganese</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Iron Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Ferrochrome</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Copper</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Cobalt</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Lithium</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Fuels</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Gold</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Antimony</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Trading / Broker</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Other</div>
-          </div>
-        </div>
-        <div class="form-group full">
-          <label>Additional Notes (optional)</label>
-          <textarea id="extraNotes" placeholder="Any specific concerns, deal context, or focus areas..."></textarea>
-        </div>
-      </div>
-
-      <button class="run-btn" id="runBtn" onclick="runResearch()">
-        ⬡ &nbsp; Run Full Due Diligence
-      </button>
+    <div class="form-group">
+      <label>Country of Registration *</label>
+      <input type="text" id="companyCountry" placeholder="Start typing a country..." oninput="checkManualRegistryLink(); showCountrySuggestions(this.value)" onfocus="showCountrySuggestions(this.value)" autocomplete="off">
+      <div id="countrySuggestionBox" class="loc-results" style="display:none;"></div>
+      <div id="manualRegistryButtonBox" style="margin-top:8px;display:none;"></div>
     </div>
-
-    <!-- Progress -->
-    <div class="progress-panel" id="progressPanel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <div class="progress-title" style="margin-bottom:0;">⬡ &nbsp; Research in progress — please wait</div>
-        <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#c9a84c;letter-spacing:2px;background:#0a1628;padding:8px 16px;border-radius:4px;border:2px solid #c9a84c;" id="runTimer">00:00</div>
-      </div>
-      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
-      <div class="progress-steps" id="progressSteps"></div>
-      <div style="margin-top:16px;font-size:11px;color:#999;font-family:'DM Mono',monospace;">ℹ Reports can take up to a minute due to free-tier rate limits on the reasoning step. This is normal — no need to refresh or resubmit.</div>
+    <div class="form-group">
+      <label>Website URL (optional)</label>
+      <input type="text" id="companyWebsite" placeholder="https://www.example.com">
     </div>
-
-    <!-- Results -->
-    <div class="results-panel" id="resultsPanel">
-      <div id="scoreBanner"></div>
-
-      <div class="result-tabs">
-        <button class="result-tab active" onclick="showTab('summary',this)">Summary</button>
-        <button class="result-tab" onclick="showTab('redflags',this)">Red Flags</button>
-        <button class="result-tab" onclick="showTab('company',this)">Company</button>
-        <button class="result-tab" onclick="showTab('people',this)">People</button>
-        <button class="result-tab" onclick="showTab('mining',this)">Mining & Trade</button>
-        <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
+    <div class="form-group">
+      <label>Key Person Name (optional)</label>
+      <input type="text" id="keyPerson" placeholder="Full Name">
+    </div>
+    <div class="form-group full">
+      <label>Industry / Commodity Sector</label>
+      <div class="sector-grid" id="sectorGrid">
+        <div class="sector-tag" onclick="toggleSector(this)">Chrome Ore</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Manganese</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Iron Ore</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Ferrochrome</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Copper</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Cobalt</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Lithium</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Fuels</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Gold</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Antimony</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Trading / Broker</div>
+        <div class="sector-tag" onclick="toggleSector(this)">Other</div>
       </div>
-
-      <div class="result-content">
-        <div class="result-section active" id="tab-summary"></div>
-        <div class="result-section" id="tab-redflags"></div>
-        <div class="result-section" id="tab-company"></div>
-        <div class="result-section" id="tab-people"></div>
-        <div class="result-section" id="tab-mining"></div>
-        <div class="result-section" id="tab-raw"></div>
-      </div>
-
-      <div class="action-row">
-        <button class="action-btn primary" onclick="exportPDF()">⬡ Export PDF Report</button>
-        <button class="action-btn" onclick="saveToHistory()">↓ Save to History</button>
-        <button class="action-btn" onclick="resetSearch()">↺ New Search</button>
-      </div>
+      <button type="button" class="small-btn" onclick="window.open('https://www.responsiblemineralsinitiative.org/facilities-lists/public-list/','_blank')" style="width:100%;margin-top:10px;">🔗 Check RMI Public List — smelter/refiner responsible-sourcing status (free, covers cobalt, copper, lithium and other minerals)</button>
+    </div>
+    <div class="form-group full">
+      <label>Additional Notes (optional)</label>
+      <textarea id="extraNotes" placeholder="Any specific concerns, deal context, or focus areas..."></textarea>
     </div>
   </div>
 
+  <button class="run-btn" id="runBtn" onclick="runResearch()">
+    ⬡ &nbsp; Run Full Due Diligence
+  </button>
+</div>
+
+<!-- Progress -->
+<div class="progress-panel" id="progressPanel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="progress-title" style="margin-bottom:0;">⬡ &nbsp; Research in progress — please wait</div>
+    <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#c9a84c;letter-spacing:2px;background:#0a1628;padding:8px 16px;border-radius:4px;border:2px solid #c9a84c;" id="runTimer">00:00</div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-steps" id="progressSteps"></div>
+  <div style="margin-top:16px;font-size:11px;color:#999;font-family:'DM Mono',monospace;">ℹ Reports can take up to a minute due to free-tier rate limits on the reasoning step. This is normal — no need to refresh or resubmit.</div>
+</div>
+
+<!-- Results -->
+<div class="results-panel" id="resultsPanel">
+  <div id="scoreBanner"></div>
+
+  <div class="result-tabs">
+    <button class="result-tab active" onclick="showTab('summary',this)">Summary</button>
+    <button class="result-tab" onclick="showTab('redflags',this)">Red Flags</button>
+    <button class="result-tab" onclick="showTab('company',this)">Company</button>
+    <button class="result-tab" onclick="showTab('people',this)">People</button>
+    <button class="result-tab" onclick="showTab('mining',this)">Mining & Trade</button>
+    <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
+  </div>
+
+  <div class="result-content">
+    <div class="result-section active" id="tab-summary"></div>
+    <div class="result-section" id="tab-redflags"></div>
+    <div class="result-section" id="tab-company"></div>
+    <div class="result-section" id="tab-people"></div>
+    <div class="result-section" id="tab-mining"></div>
+    <div class="result-section" id="tab-raw"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="action-btn primary" onclick="exportPDF()">⬡ Export PDF Report</button>
+    <button class="action-btn" onclick="saveToHistory()">↓ Save to History</button>
+    <button class="action-btn" onclick="resetSearch()">↺ New Search</button>
+  </div>
+</div>
+```
+
+  </div>
+
   <!-- HISTORY VIEW -->
+
   <div class="view" id="view-history">
     <div class="search-panel" style="margin-bottom:24px;">
       <div class="panel-title">Research History</div>
@@ -720,10 +752,12 @@ color: #6b4a0a;
 <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.png">
 
 <script>
+// ── State ──────────────────────────────────────────────────────────────
 let currentResult = null;
 let researchHistory = JSON.parse(localStorage.getItem('jdd_history') || '[]');
 let WORKER_URL = localStorage.getItem('jdd_worker_url') || '';
 
+// ── One-time Worker URL setup ────────────────────────────────────────────
 function initSetupBanner() {
   const banner = document.getElementById('setupBanner');
   const input = document.getElementById('workerUrlInput');
@@ -742,6 +776,7 @@ function saveWorkerUrl() {
   document.getElementById('setupBanner').style.display = 'none';
 }
 
+// ── UI Navigation ───────────────────────────────────────────────────────
 function showView(name, btn) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -759,7 +794,13 @@ function showTab(name, btn) {
 
 function toggleSector(el) { el.classList.toggle('selected'); }
 
+// Same countries the Worker cannot reach via a free API - opens the correct
+// official government site directly in a new tab for a quick manual check.
 const MANUAL_REGISTRY_SITES = {
+  "united states": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
+  "usa": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
+  "united kingdom": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
+  "uk": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
   "south africa": { label: "Open CIPC (South Africa)", url: "https://eservices.cipc.co.za/Search.aspx" },
   "zimbabwe": { label: "Zimbabwe Companies Office info", url: "https://www.google.com/search?q=Zimbabwe+Companies+and+Intellectual+Property+Office+company+search" },
   "zambia": { label: "Open PACRA (Zambia)", url: "https://www.pacra.org.zm" },
@@ -768,7 +809,10 @@ const MANUAL_REGISTRY_SITES = {
   "united arab emirates": { label: "Open UAE National Economic Register", url: "https://ner.moec.gov.ae" },
   "drc": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
   "democratic republic of congo": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" }
+  "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" },
+  "belgium": { label: "Open KBO/BCE (Belgium)", url: "https://kbopub.economie.fgov.be" },
+  "netherlands": { label: "Open KVK (Netherlands)", url: "https://www.kvk.nl/zoeken" },
+  "germany": { label: "Open Handelsregister (Germany)", url: "https://www.handelsregister.de" }
 };
 
 function checkManualRegistryLink() {
@@ -787,6 +831,38 @@ function checkManualRegistryLink() {
   }
 }
 
+// Global list of countries for the autocomplete dropdown on the Country of
+// Registration field. This is a broad, general reference list covering most
+// countries worldwide, independent of which specific ones have a manual
+// registry link configured above.
+const ALL_COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Democratic Republic of Congo","Denmark","Djibouti","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania","Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saudi Arabia","Senegal","Serbia","Sierra Leone","Singapore","Slovakia","Slovenia","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","UAE","Uganda","UK","Ukraine","Uruguay","USA","Uzbekistan","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+
+function showCountrySuggestions(val) {
+  const box = document.getElementById('countrySuggestionBox');
+  const trimmed = (val || '').trim().toLowerCase();
+  if (!trimmed) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  const matches = ALL_COUNTRIES.filter(function (c) { return c.toLowerCase().indexOf(trimmed) !== -1; }).slice(0, 8);
+  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = matches.map(function (c) {
+    return `<div class="loc-result-item" onclick="selectCountry('${c.replace(/'/g, "\\'")}')">${c}</div>`;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function selectCountry(name) {
+  document.getElementById('companyCountry').value = name;
+  document.getElementById('countrySuggestionBox').style.display = 'none';
+  checkManualRegistryLink();
+}
+
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('#companyCountry') && !e.target.closest('#countrySuggestionBox')) {
+    const box = document.getElementById('countrySuggestionBox');
+    if (box) box.style.display = 'none';
+  }
+});
+
+// ── Research Runner ─────────────────────────────────────────────────────
 let timerInterval = null;
 
 function startTimer() {
@@ -888,6 +964,7 @@ async function animateProgress(steps) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// ── Prompt Builder ──────────────────────────────────────────────────────
 function buildPrompt(company, country, website, keyPerson, sectors, notes) {
   return `You are a rigorous due diligence analyst specializing in commodities, mining, and international trade counterparties. Your task is to conduct an evidence-based investigation of the following entity.
 
@@ -983,6 +1060,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
 }`;
 }
 
+// ── Worker API Call (replaces direct Anthropic call — key is never exposed here) ──
 async function callWorker(prompt, companyName, companyCountry, keyPerson) {
   const response = await fetch(WORKER_URL, {
     method: 'POST',
@@ -1017,6 +1095,7 @@ async function callWorker(prompt, companyName, companyCountry, keyPerson) {
   }
 }
 
+// ── Render Results ──────────────────────────────────────────────────────
 function confBadge(conf) {
   if (!conf) return '';
   const map = {
@@ -1236,6 +1315,7 @@ function formatDate(iso) {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ── History ─────────────────────────────────────────────────────────────
 function saveToHistory() {
   if (!currentResult) return;
   const idx = researchHistory.findIndex(h => h.company === currentResult.company && h.country === currentResult.country && h.date === currentResult.date);
@@ -1327,6 +1407,7 @@ function triggerUpload(i) {
   fi.click();
 }
 
+// ── Export PDF ───────────────────────────────────────────────────────────
 function exportPDF() {
   if (!currentResult || !currentResult.raw) { alert('No results to export.'); return; }
   const r = currentResult.raw;
@@ -1360,6 +1441,7 @@ function exportPDF() {
   .footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 10px; color: #999; font-family: monospace; }
   .confidential { color: #c0392b; font-weight: bold; letter-spacing: 2px; font-size: 11px; }
 </style>
+
 </head>
 <body>
 <div class="header">
@@ -1380,11 +1462,13 @@ function exportPDF() {
 <div class="prose">${r.scoreRationale || ''}</div>
 
 ${(r.redFlags || []).length ? `
+
 <h2>Red Flags</h2>
 ${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong> (${f.confidence || 'unrated'})<br>${f.description}</div>`).join('')}
 ` : ''}
 
 ${(r.conflicts || []).length ? `
+
 <h2>Claim vs. Independent Findings</h2>
 ${(r.conflicts || []).map(c => `<div class="flag medium"><strong>${c.field}</strong><br>Claimed: ${c.claimed}<br>Found: ${c.found}</div>`).join('')}
 ` : ''}
@@ -1424,16 +1508,17 @@ ${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== und
   setTimeout(() => printWindow.print(), 800);
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────
 function resetSearch() {
-  document.getElementById('companyName').value = '';
-  document.getElementById('companyCountry').value = '';
-  document.getElementById('companyWebsite').value = '';
-  document.getElementById('keyPerson').value = '';
-  document.getElementById('extraNotes').value = '';
-  document.querySelectorAll('.sector-tag').forEach(t => t.classList.remove('selected'));
-  document.getElementById('resultsPanel').classList.remove('active');
-  document.getElementById('progressPanel').classList.remove('active');
-  currentResult = null;
+document.getElementById(‘companyName’).value = ‘’;
+document.getElementById(‘companyCountry’).value = ‘’;
+document.getElementById(‘companyWebsite’).value = ‘’;
+document.getElementById(‘keyPerson’).value = ‘’;
+document.getElementById(‘extraNotes’).value = ‘’;
+document.querySelectorAll(’.sector-tag’).forEach(t => t.classList.remove(‘selected’));
+document.getElementById(‘resultsPanel’).classList.remove(‘active’);
+document.getElementById(‘progressPanel’).classList.remove(‘active’);
+currentResult = null;
 }
 
 initSetupBanner();
