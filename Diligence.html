@@ -1,1517 +1,342 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jericho Due Diligence Engine</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --navy: #0a1628;
-    --navy-mid: #112240;
-    --navy-light: #1a3a5c;
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --red: #c0392b;
-    --red-soft: #e74c3c;
-    --amber: #d4861a;
-    --green: #1a7a4a;
-    --green-soft: #27ae60;
-    --white: #f5f0e8;
-    --gray: #8a9bb0;
-    --gray-light: #c5cdd8;
-    --border: rgba(201,168,76,0.2);
-    --glass: rgba(17,34,64,0.85);
+// ============================================================
+// JERICHO DUE DILIGENCE - CLOUDFLARE WORKER (v10 - Full Functional Restore)
+// ============================================================
+// This version replaces literal placeholder comments that were left in the
+// previously deployed v9 script (e.g. "/* your full original object */",
+// "// [Full ... code from your original - unchanged]", and a prompt evidence
+// block that literally said "[your full original evidence block here]").
+// Those placeholders meant: no registry links were ever sent, no web search
+// ever ran, no article text was ever fetched, and Mistral was being asked
+// to write a report from evidence that was literally the words
+// "[your full original evidence block here]" - which is why its answers
+// came back garbled/duplicated-looking. This script has real, working code
+// in every one of those places.
+//
+// Required secrets (Cloudflare dashboard -> Worker -> Settings -> Variables):
+//   SERPER_API_KEY   (required for web search step)
+//   MISTRAL_API_KEY  (required for the report-writing step)
+// Optional binding:
+//   DILIGENCE_CACHE  (KV namespace, for 24-hour evidence caching)
+
+export default {
+  async fetch(request, env) {
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    };
+
+    if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+    if (request.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Only POST requests are accepted" }), {
+        status: 405,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    }
+
+    const prompt = body.prompt;
+    const companyName = body.companyName || "";
+    const companyCountry = body.companyCountry || "";
+    const keyPerson = body.keyPerson || "";
+
+    if (!prompt || typeof prompt !== "string") {
+      return new Response(JSON.stringify({ error: "Missing or invalid prompt field" }), {
+        status: 400,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    }
+
+    // ── CACHING ──────────────────────────────────────────────────────────
+    // Cache key version bumped to v10 on purpose: any evidence cached under
+    // the old "diligence-v9:" key could have been built from the broken
+    // placeholder-driven search step, so it must not be reused here.
+    let cachedEvidence = null;
+    let cacheKey = "";
+    if (env.DILIGENCE_CACHE && companyName) {
+      cacheKey = "diligence-v10:" + encodeURIComponent(companyName.toLowerCase().trim()) +
+        ":" + encodeURIComponent((companyCountry || "").toLowerCase().trim());
+      try {
+        const cachedRaw = await env.DILIGENCE_CACHE.get(cacheKey);
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          if (parsed && parsed.timestamp && (Date.now() - parsed.timestamp < 86400000)) {
+            cachedEvidence = parsed;
+          }
+        }
+      } catch (e) { /* cache miss or corrupt entry - proceed as if nothing was cached */ }
+    }
+
+    // ── STEP 1: Manual sanctions + registry links ───────────────────────
+    const SANCTIONS_LINKS_NOTE =
+      "OFFICIAL FREE SANCTIONS LISTS (no automated check was performed - these are the correct " +
+      "official sources for a human to verify sanctions status directly): " +
+      "OFAC Specially Designated Nationals list (US Treasury): https://sanctionslist.ofac.treas.gov | " +
+      "EU Consolidated Sanctions List: https://webgate.ec.europa.eu/fsd/fsf | " +
+      "UK Sanctions List: https://www.gov.uk/government/publications/the-uk-sanctions-list | " +
+      "UN Security Council Consolidated List: https://www.un.org/securitycouncil/content/un-sc-consolidated-list";
+
+    // Real official registry links. Where a jurisdiction has no functional
+    // online public search (e.g. DRC), that is stated honestly rather than
+    // inventing a URL.
+    const MANUAL_REGISTRY_LINKS = {
+      "united states": "SEC EDGAR full-text search: https://www.sec.gov/edgar/search/",
+      "usa": "SEC EDGAR full-text search: https://www.sec.gov/edgar/search/",
+      "united kingdom": "UK Companies House: https://find-and-update.company-information.service.gov.uk/",
+      "south africa": "South Africa CIPC (via eServices/BizPortal): https://www.cipc.co.za",
+      "zimbabwe": "Zimbabwe Companies and Deeds Office - no reliable free online public search as of last check; registry office contact required for verification.",
+      "zambia": "Zambia PACRA Business Search (free name/status search): https://search.pacra.org.zm/",
+      "nigeria": "Nigeria CAC public search portal: https://www.cac.gov.ng (Public Search / name and RC-number lookup)",
+      "united arab emirates": "UAE National Economic Register: https://ner.economy.ae/Search_By_BN.aspx | DIFC Public Register: https://www.difc.com/business/public-register | ADGM Public Register: https://www.adgm.com/public-registers",
+      "uae": "UAE National Economic Register: https://ner.economy.ae/Search_By_BN.aspx | DIFC Public Register: https://www.difc.com/business/public-register | ADGM Public Register: https://www.adgm.com/public-registers",
+      "democratic republic of the congo": "DRC RCCM registry has NO functional online public search - it is paper-based, in-person only, at the Tribunaux de Commerce (Kinshasa/Lubumbashi). State this limitation explicitly rather than treating absence of online data as a clean result.",
+      "drc": "DRC RCCM registry has NO functional online public search - it is paper-based, in-person only, at the Tribunaux de Commerce (Kinshasa/Lubumbashi). State this limitation explicitly rather than treating absence of online data as a clean result.",
+      "congo": "DRC RCCM registry has NO functional online public search - it is paper-based, in-person only, at the Tribunaux de Commerce (Kinshasa/Lubumbashi). State this limitation explicitly rather than treating absence of online data as a clean result.",
+      "mexico": "Mexico SIGER (Sistema Integral de Gestion Registral): https://www.gob.mx/tramites/ficha/consulta-al-sistema-integral-de-gestion-registral-siger/SE1147 | SAT (tax status verification): https://www.sat.gob.mx | RUG (movable-asset lien registry): https://rug.economia.gob.mx",
+      "belgium": "Belgium KBO/BCE (Crossroads Bank for Enterprises public search): https://kbopub.economie.fgov.be",
+      "netherlands": "Netherlands KVK (Chamber of Commerce) search: https://www.kvk.nl/zoeken/",
+      "germany": "Germany Handelsregister (commercial register): https://www.handelsregister.de"
+    };
+
+    const countryKey = (companyCountry || "").toLowerCase().trim();
+    let manualLinkNote = SANCTIONS_LINKS_NOTE + "\n\n";
+    let registryFound = false;
+    for (const key in MANUAL_REGISTRY_LINKS) {
+      if (countryKey.indexOf(key) !== -1) {
+        manualLinkNote += "OFFICIAL REGISTRY FOR " + companyCountry.toUpperCase() + ": " + MANUAL_REGISTRY_LINKS[key];
+        registryFound = true;
+        break;
+      }
+    }
+    if (!registryFound) {
+      manualLinkNote += "OFFICIAL REGISTRY FOR " + (companyCountry || "this country").toUpperCase() +
+        ": No specific free registry link is on file for this country in this Worker. Search for the " +
+        "official government company registrar for " + (companyCountry || "the relevant country") +
+        " and note in the report that this requires manual verification.";
+    }
+
+    // ── Helper: estimate source confidence tier from a URL ──────────────
+    function estimateSourceTier(url) {
+      if (!url) return "Tier 4 (unknown/unverifiable source)";
+      let host = "";
+      try { host = new URL(url).hostname.toLowerCase(); } catch (e) { return "Tier 4 (unknown/unverifiable source)"; }
+
+      const socialMedia = ["linkedin.com", "facebook.com", "instagram.com", "tiktok.com", "youtube.com", "twitter.com", "x.com"];
+      if (socialMedia.some(function (d) { return host.indexOf(d) !== -1; })) {
+        return "Tier 4 (company-controlled social media - claim only, ignore for scoring)";
+      }
+
+      if (host.endsWith(".gov") || host.indexOf(".gov.") !== -1 || host.endsWith(".gouv.cd") ||
+        host.indexOf("sec.gov") !== -1 || host.indexOf("un.org") !== -1 || host.indexOf("europa.eu") !== -1 ||
+        host.indexOf("companieshouse") !== -1 || host.indexOf("company-information.service.gov.uk") !== -1 ||
+        host.indexOf("cipc.co.za") !== -1 || host.indexOf("pacra.org.zm") !== -1 || host.indexOf("cac.gov.ng") !== -1 ||
+        host.indexOf("kvk.nl") !== -1 || host.indexOf("handelsregister.de") !== -1 || host.indexOf("kbopub.economie.fgov.be") !== -1 ||
+        host.indexOf("ner.economy.ae") !== -1 || host.indexOf("difc.com") !== -1 || host.indexOf("adgm.com") !== -1) {
+        return "Tier 1 (government/official registry or regulator)";
+      }
+
+      const majorNews = ["reuters.com", "bloomberg.com", "ft.com", "wsj.com", "nytimes.com", "apnews.com",
+        "bbc.com", "bbc.co.uk", "theguardian.com", "miningweekly.com", "engineeringnews.co.za", "africanminingmarket.com",
+        "businessdayonline.com", "moneyweb.co.za"];
+      if (majorNews.some(function (d) { return host.indexOf(d) !== -1; })) {
+        return "Tier 2 (major news / industry publication)";
+      }
+
+      return "Tier 3 (general web source - weigh cautiously)";
+    }
+
+    // ── STEP 2 & 3: Serper web search + Jina full-article fetch ─────────
+    let searchResultLinks = [];
+    let searchSummaryText = "Web search was not performed (no SERPER_API_KEY configured on this Worker).";
+
+    if (!cachedEvidence) {
+      if (env.SERPER_API_KEY) {
+        try {
+          const queries = [
+            companyName + " company registration " + companyCountry,
+            companyName + " news",
+            companyName + " fraud OR lawsuit OR scandal OR investigation",
+            companyName + " sanctions OR corruption OR blacklist",
+            companyName + " owner OR ownership OR director OR shareholder"
+          ];
+          if (keyPerson) {
+            queries.push(keyPerson + " " + companyName + " sanctions OR fraud OR court OR PEP");
+          }
+
+          const allResults = [];
+          for (const q of queries) {
+            try {
+              const resp = await fetch("https://google.serper.dev/search", {
+                method: "POST",
+                headers: {
+                  "X-API-KEY": env.SERPER_API_KEY,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ q: q, num: 6 })
+              });
+              if (resp.ok) {
+                const data = await resp.json();
+                const organic = data.organic || [];
+                organic.forEach(function (r) {
+                  allResults.push({
+                    query: q,
+                    title: r.title || "",
+                    link: r.link || "",
+                    snippet: r.snippet || "",
+                    tier: estimateSourceTier(r.link)
+                  });
+                });
+              }
+            } catch (eq) { /* one query failing shouldn't abort the whole search */ }
+          }
+
+          // De-duplicate by link
+          const seen = new Set();
+          searchResultLinks = allResults.filter(function (r) {
+            if (!r.link || seen.has(r.link)) return false;
+            seen.add(r.link);
+            return true;
+          });
+
+          if (searchResultLinks.length) {
+            searchSummaryText = searchResultLinks.map(function (r) {
+              return "[" + r.tier + "] \"" + r.title + "\" - " + r.link + "\n  Snippet: " + r.snippet + "\n  (from query: " + r.query + ")";
+            }).join("\n\n");
+          } else {
+            searchSummaryText = "Web search ran but returned no results for this company/country combination.";
+          }
+        } catch (e) {
+          searchSummaryText = "Web search step failed to run: " + (e && e.message ? e.message : "unknown error");
+        }
+      }
+    } else {
+      searchResultLinks = cachedEvidence.searchLinks || [];
+      searchSummaryText = cachedEvidence.search || searchSummaryText;
+    }
+
+    // Fetch full article text for the top few highest-tier, non-social results
+    let articleText = cachedEvidence ? (cachedEvidence.articles || "No cached article text.") : "";
+    if (!cachedEvidence) {
+      const toFetch = searchResultLinks
+        .filter(function (r) { return r.tier.indexOf("Tier 4") === -1; })
+        .sort(function (a, b) {
+          const rank = function (t) { return t.indexOf("Tier 1") !== -1 ? 0 : t.indexOf("Tier 2") !== -1 ? 1 : 2; };
+          return rank(a.tier) - rank(b.tier);
+        })
+        .slice(0, 5);
+
+      const fetchedBodies = [];
+      const seenSnippets = new Set(); // crude duplicate/syndicated-content detection
+
+      for (const item of toFetch) {
+        try {
+          const jinaResp = await fetch("https://r.jina.ai/" + item.link, { method: "GET" });
+          if (jinaResp.ok) {
+            let text = await jinaResp.text();
+            text = text.slice(0, 4000); // keep evidence block a sane size
+            const fingerprint = text.slice(0, 300).replace(/\s+/g, " ").trim();
+
+            let dupNote = "";
+            if (seenSnippets.has(fingerprint)) {
+              dupNote = " [NOTE: opening content matches another fetched article - likely syndicated/duplicate coverage, weight accordingly]";
+            } else {
+              seenSnippets.add(fingerprint);
+            }
+
+            fetchedBodies.push(
+              "SOURCE: " + item.link + " (" + item.tier + ")\n" +
+              "FETCHED: " + new Date().toISOString().slice(0, 10) + dupNote + "\n" +
+              "FULL TEXT:\n" + text
+            );
+          }
+        } catch (ef) { /* one article failing to fetch shouldn't abort the rest */ }
+      }
+
+      articleText = fetchedBodies.length ? fetchedBodies.join("\n\n---\n\n") : "No full article text could be fetched.";
+    }
+
+    // Save to cache for next time (24h)
+    if (env.DILIGENCE_CACHE && cacheKey && !cachedEvidence) {
+      try {
+        await env.DILIGENCE_CACHE.put(cacheKey, JSON.stringify({
+          timestamp: Date.now(),
+          search: searchSummaryText,
+          searchLinks: searchResultLinks,
+          articles: articleText
+        }));
+      } catch (ec) { /* caching is a nice-to-have, never block the response on it */ }
+    }
+
+    // ── Assemble the REAL evidence block (this replaces the placeholder) ─
+    const evidenceBlock =
+      "SANCTIONS & REGISTRY REFERENCE LINKS:\n" + manualLinkNote + "\n\n" +
+      "WEB SEARCH RESULTS (Serper.dev, tagged by estimated source confidence tier):\n" + searchSummaryText + "\n\n" +
+      "FULL ARTICLE TEXT (fetched via Jina Reader for the highest-confidence results above):\n" + articleText;
+
+    const fullPrompt = prompt +
+      "\n\n=====================================\nPRE-GATHERED EVIDENCE (this is all the evidence available - " +
+      "base your findings only on what appears below, per the verification rules above):\n" +
+      evidenceBlock +
+      "\n=====================================\n\n" +
+      "YOU MUST RESPOND WITH ONLY CLEAN VALID JSON. NO EXTRA TEXT BEFORE OR AFTER. NO MARKDOWN CODE FENCES. " +
+      "NO REPETITION OF THIS PROMPT IN YOUR ANSWER. Follow exactly the JSON structure specified above.";
+
+    // ── STEP 4: Mistral ──────────────────────────────────────────────────
+    if (!env.MISTRAL_API_KEY) {
+      return new Response(JSON.stringify({ error: "Worker is missing MISTRAL_API_KEY - add it in Cloudflare dashboard Settings > Variables" }), {
+        status: 500,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    }
+
+    try {
+      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + env.MISTRAL_API_KEY
+        },
+        body: JSON.stringify({
+          model: "mistral-large-latest",
+          messages: [{ role: "user", content: fullPrompt }],
+          max_tokens: 4000,
+          temperature: 0.2
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(function () { return ""; });
+        return new Response(JSON.stringify({ error: "Mistral error", status: response.status, detail: errText.slice(0, 300) }), {
+          status: response.status,
+          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+        });
+      }
+
+      const data = await response.json();
+      let text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+
+      // Clean up markdown fences or a bare "JSON" label some models prepend
+      text = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      text = text.replace(/^JSON\s*/i, "").trim();
+
+      return new Response(JSON.stringify({ content: [{ type: "text", text: text }] }), {
+        status: 200,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: "Request failed", message: err.message }), {
+        status: 502,
+        headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders)
+      });
+    }
   }
-
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-box-sizing: border-box; }
-
-html { background: #f5f0e8; }
-
-body {
-background-color: #f5f0e8 !important;
-background: #f5f0e8 !important;
-color: #111111 !important;
-font-family: 'DM Sans', sans-serif;
-min-height: 100vh;
-overflow-x: hidden;
--webkit-text-size-adjust: 100%;
-}
-
-/* Background texture */
-body::before {
-content: '';
-position: fixed;
-inset: 0;
-background:
-radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
-radial-gradient(ellipse at 80% 80%, rgba(26,58,92,0.4) 0%, transparent 50%),
-repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(201,168,76,0.015) 50px, rgba(201,168,76,0.015) 51px),
-repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(201,168,76,0.015) 50px, rgba(201,168,76,0.015) 51px);
-pointer-events: none;
-z-index: 0;
-}
-
-.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
-
-.logo-block { display: flex; flex-direction: column; }
-.logo-name {
-font-family: 'Playfair Display', serif;
-font-size: 28px;
-font-weight: 900;
-letter-spacing: 3px;
-color: #c9a84c;
-text-transform: uppercase;
-}
-.logo-sub {
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-letter-spacing: 4px;
-color: #777777;
-text-transform: uppercase;
-margin-top: 4px;
-}
-.header-right { display: flex; gap: 12px; }
-.nav-btn {
-background: transparent;
-border: 1px solid rgba(10,22,40,0.3);
-color: #444;
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-letter-spacing: 2px;
-text-transform: uppercase;
-padding: 8px 16px;
-cursor: pointer;
-transition: all 0.2s;
-border-radius: 2px;
-}
-.nav-btn:hover, .nav-btn.active {
-border-color: #0a1628;
-color: #ffffff;
-background: #0a1628;
-}
-
-.view { display: none; }
-.view.active { display: block; }
-
-.search-panel {
-background: #ffffff !important;
-background-color: #ffffff !important;
-border: 1px solid rgba(10,22,40,0.15);
-border-radius: 4px;
-padding: 36px;
-margin-bottom: 32px;
-box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-.panel-title {
-font-family: 'Playfair Display', serif;
-font-size: 20px;
-color: #c9a84c;
-margin-bottom: 28px;
-letter-spacing: 1px;
-}
-
-.header {
-padding: 40px 0 30px;
-border-bottom: 2px solid #c9a84c;
-margin-bottom: 40px;
-display: flex;
-align-items: center;
-justify-content: space-between;
-}
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-.form-group { display: flex; flex-direction: column; gap: 8px; }
-.form-group.full { grid-column: 1 / -1; }
-label {
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 3px;
-text-transform: uppercase;
-color: #555555;
-}
-input, select, textarea {
-background: #f9f7f3 !important;
-background-color: #f9f7f3 !important;
-border: 1px solid #cccccc !important;
-color: #111111 !important;
--webkit-text-fill-color: #111111 !important;
-font-family: 'DM Sans', sans-serif;
-font-size: 16px;
-padding: 12px 16px;
-border-radius: 2px;
-outline: none;
-transition: border-color 0.2s;
--webkit-appearance: none;
-appearance: none;
-}
-input::placeholder, textarea::placeholder { color: #999999 !important; -webkit-text-fill-color: #999999 !important; opacity: 1; }
-input:focus, select:focus, textarea:focus { border-color: #c9a84c !important; }
-select option { background: #ffffff; color: #111111; }
-textarea { resize: vertical; min-height: 80px; }
-
-.sector-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.sector-tag {
-background: #f5f2ec;
-border: 1px solid #cccccc;
-color: #555555;
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 1px;
-padding: 8px 10px;
-text-align: center;
-cursor: pointer;
-border-radius: 2px;
-transition: all 0.2s;
-text-transform: uppercase;
-}
-.sector-tag.selected {
-background: #0a1628;
-border-color: #0a1628;
-color: #ffffff;
-}
-
-.run-btn {
-width: 100%;
-background: #0a1628;
-border: none;
-color: #ffffff;
-font-family: 'Playfair Display', serif;
-font-size: 16px;
-font-weight: 700;
-letter-spacing: 3px;
-text-transform: uppercase;
-padding: 18px;
-cursor: pointer;
-border-radius: 2px;
-transition: all 0.3s;
-margin-top: 24px;
-}
-.run-btn:hover { background: #1a3a5c; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(10,22,40,0.3); }
-.run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-.progress-panel {
-background: #ffffff !important;
-background-color: #ffffff !important;
-border: 2px solid #0a1628;
-border-radius: 4px;
-padding: 32px;
-margin-bottom: 32px;
-display: none;
-box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-}
-.progress-panel.active { display: block !important; }
-.progress-title {
-font-family: 'DM Mono', monospace;
-font-size: 13px;
-letter-spacing: 3px;
-text-transform: uppercase;
-color: #0a1628 !important;
-margin-bottom: 20px;
-font-weight: bold;
-}
-.progress-bar-wrap {
-height: 10px;
-background: #e8e4dc;
-border-radius: 5px;
-margin-bottom: 24px;
-overflow: hidden;
-border: 1px solid #cccccc;
-}
-.progress-bar {
-height: 100%;
-background: #c9a84c;
-border-radius: 5px;
-transition: width 0.4s ease;
-width: 0%;
-}
-.progress-steps { display: flex; flex-direction: column; gap: 10px; }
-.step-item {
-display: flex;
-align-items: center;
-gap: 12px;
-font-family: 'DM Mono', monospace;
-font-size: 13px;
-color: #999999;
-transition: color 0.3s;
-}
-.step-item.done { color: #1a7a4a !important; }
-.step-item.active { color: #0a1628 !important; font-weight: bold; }
-.step-dot {
-width: 8px; height: 8px;
-border-radius: 50%;
-background: currentColor;
-flex-shrink: 0;
-}
-.step-item.active .step-dot { animation: pulse 1s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-.results-panel { display: none; }
-.results-panel.active { display: block; }
-
-.score-banner {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 28px 36px;
-border-radius: 4px;
-margin-bottom: 28px;
-border: 1px solid;
-}
-.score-banner.green { background: rgba(26,122,74,0.15); border-color: var(--green-soft); }
-.score-banner.amber { background: rgba(212,134,26,0.15); border-color: var(--amber); }
-.score-banner.red { background: rgba(192,57,43,0.15); border-color: var(--red-soft); }
-
-.score-left { display: flex; flex-direction: column; gap: 6px; }
-.score-company { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; }
-.score-meta { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gray); }
-.score-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.score-number { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 900; line-height: 1; }
-.score-banner.green .score-number { color: var(--green-soft); }
-.score-banner.amber .score-number { color: var(--amber); }
-.score-banner.red .score-number { color: var(--red-soft); }
-.score-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
-.score-banner.green .score-label { color: var(--green-soft); }
-.score-banner.amber .score-label { color: var(--amber); }
-.score-banner.red .score-label { color: var(--red-soft); }
-
-.result-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid #dddddd; }
-.result-tab {
-background: transparent;
-border: none;
-border-bottom: 2px solid transparent;
-color: #777777;
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-letter-spacing: 2px;
-text-transform: uppercase;
-padding: 14px 20px;
-cursor: pointer;
-transition: all 0.2s;
-margin-bottom: -1px;
-}
-.result-tab:hover { color: #0a1628; }
-.result-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
-
-.result-content { padding-top: 28px; }
-.result-section { display: none; }
-.result-section.active { display: block; }
-
-.red-flags-box {
-background: rgba(192,57,43,0.1);
-border: 1px solid rgba(192,57,43,0.4);
-border-left: 4px solid var(--red-soft);
-border-radius: 4px;
-padding: 24px;
-margin-bottom: 24px;
-}
-.red-flags-title {
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-letter-spacing: 3px;
-text-transform: uppercase;
-color: var(--red-soft);
-margin-bottom: 16px;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.flag-item {
-display: flex;
-gap: 12px;
-padding: 10px 0;
-border-bottom: 1px solid rgba(192,57,43,0.15);
-font-size: 13px;
-line-height: 1.5;
-}
-.flag-item:last-child { border-bottom: none; }
-.flag-icon { color: var(--red-soft); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
-
-.conflict-box {
-background: rgba(212,134,26,0.08);
-border: 1px solid rgba(212,134,26,0.3);
-border-left: 4px solid var(--amber);
-border-radius: 4px;
-padding: 20px;
-margin-bottom: 16px;
-}
-.conflict-label {
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 2px;
-color: var(--amber);
-text-transform: uppercase;
-margin-bottom: 8px;
-}
-.conflict-row { display: flex; gap: 16px; font-size: 13px; }
-.conflict-claim { color: var(--gray); }
-.conflict-claim span { color: var(--white); }
-.conflict-found { color: var(--amber); font-weight: 500; }
-
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-.info-card {
-background: #ffffff !important;
-background-color: #ffffff !important;
-border: 1px solid #dddddd;
-border-radius: 4px;
-padding: 20px;
-box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.info-card-label {
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 2px;
-color: #777777;
-text-transform: uppercase;
-margin-bottom: 8px;
-}
-.info-card-value { font-size: 14px; line-height: 1.6; color: #111111; }
-.info-card-value.ok { color: #1a7a4a; }
-.info-card-value.warn { color: #d4861a; }
-.info-card-value.bad { color: #c0392b; }
-
-.confidence-badge {
-display: inline-block;
-font-family: 'DM Mono', monospace;
-font-size: 9px;
-letter-spacing: 1px;
-padding: 2px 8px;
-border-radius: 2px;
-text-transform: uppercase;
-margin-left: 8px;
-vertical-align: middle;
-}
-.confidence-badge.verified { background: rgba(26,122,74,0.15); color: var(--green-soft); border: 1px solid rgba(26,122,74,0.3); }
-.confidence-badge.probable { background: rgba(212,134,26,0.15); color: var(--amber); border: 1px solid rgba(212,134,26,0.3); }
-.confidence-badge.unverified { background: rgba(138,155,176,0.15); color: var(--gray); border: 1px solid rgba(138,155,176,0.3); }
-.confidence-badge.notfound { background: rgba(192,57,43,0.1); color: #999; border: 1px solid rgba(153,153,153,0.3); }
-
-.evidence-trail {
-margin-top: 10px;
-padding: 10px 14px;
-background: rgba(10,22,40,0.03);
-border-left: 2px solid #cccccc;
-font-size: 12px;
-color: #666666;
-line-height: 1.6;
-}
-.evidence-trail .ev-source { color: #0a1628; font-weight: 600; }
-
-.person-card {
-background: #ffffff !important;
-background-color: #ffffff !important;
-border: 1px solid #dddddd;
-border-radius: 4px;
-padding: 20px;
-margin-bottom: 16px;
-box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.person-name { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
-.person-role { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; margin-bottom: 14px; }
-.person-checks { display: flex; flex-wrap: wrap; gap: 8px; }
-.check-badge {
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 1px;
-padding: 4px 10px;
-border-radius: 2px;
-text-transform: uppercase;
-}
-.check-badge.clear { background: rgba(26,122,74,0.2); color: var(--green-soft); border: 1px solid rgba(26,122,74,0.3); }
-.check-badge.flagged { background: rgba(192,57,43,0.2); color: var(--red-soft); border: 1px solid rgba(192,57,43,0.3); }
-.check-badge.unknown { background: rgba(138,155,176,0.1); color: var(--gray); border: 1px solid rgba(138,155,176,0.2); }
-
-.raw-dump {
-background: #f0ede6 !important;
-background-color: #f0ede6 !important;
-border: 1px solid #cccccc;
-border-radius: 4px;
-padding: 24px;
-font-family: 'DM Mono', monospace;
-font-size: 12px;
-line-height: 1.8;
-color: #333333;
-white-space: pre-wrap;
-max-height: 600px;
-overflow-y: auto;
-}
-.raw-dump::-webkit-scrollbar { width: 4px; }
-.raw-dump::-webkit-scrollbar-track { background: transparent; }
-.raw-dump::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
-
-.action-row { display: flex; gap: 12px; margin-top: 28px; }
-.action-btn {
-background: transparent;
-border: 1px solid #cccccc;
-color: #555555;
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-letter-spacing: 2px;
-text-transform: uppercase;
-padding: 12px 20px;
-cursor: pointer;
-border-radius: 2px;
-transition: all 0.2s;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.action-btn:hover { border-color: #0a1628; color: #0a1628; }
-.action-btn.primary {
-background: #0a1628;
-border-color: #0a1628;
-color: #ffffff;
-}
-.action-btn.primary:hover { background: #1a3a5c; }
-
-.small-btn {
-background: transparent;
-border: 1px solid #cccccc;
-color: #555555;
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 1px;
-padding: 6px 12px;
-cursor: pointer;
-border-radius: 2px;
-transition: all 0.2s;
-text-transform: uppercase;
-}
-.small-btn:hover { border-color: #c9a84c; color: #c9a84c; }
-
-.history-list { display: flex; flex-direction: column; gap: 12px; }
-.history-item {
-background: #ffffff !important;
-background-color: #ffffff !important;
-border: 1px solid #dddddd;
-border-radius: 4px;
-padding: 20px 24px;
-display: flex;
-align-items: center;
-justify-content: space-between;
-cursor: pointer;
-transition: border-color 0.2s;
-box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.history-item:hover { border-color: #c9a84c; }
-.history-company { font-family: 'Playfair Display', serif; font-size: 17px; color: #111111; }
-.history-meta { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; }
-.history-right { display: flex; align-items: center; gap: 16px; }
-.score-pill {
-font-family: 'Playfair Display', serif;
-font-size: 20px;
-font-weight: 700;
-min-width: 48px;
-text-align: center;
-}
-.score-pill.green { color: var(--green-soft); }
-.score-pill.amber { color: var(--amber); }
-.score-pill.red { color: var(--red-soft); }
-.history-btns { display: flex; gap: 8px; }
-
-.doc-upload-area {
-border: 1px dashed rgba(201,168,76,0.3);
-border-radius: 4px;
-padding: 24px;
-text-align: center;
-cursor: pointer;
-transition: all 0.2s;
-margin-top: 16px;
-}
-.doc-upload-area:hover { border-color: var(--gold); background: rgba(201,168,76,0.03); }
-.doc-upload-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
-.doc-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-.doc-item {
-display: flex;
-align-items: center;
-justify-content: space-between;
-background: rgba(17,34,64,0.6);
-border: 1px solid var(--border);
-border-radius: 2px;
-padding: 10px 14px;
-font-family: 'DM Mono', monospace;
-font-size: 11px;
-color: var(--gray-light);
-}
-
-.section-header {
-font-family: 'DM Mono', monospace;
-font-size: 10px;
-letter-spacing: 4px;
-text-transform: uppercase;
-color: #c9a84c;
-margin-bottom: 16px;
-padding-bottom: 8px;
-border-bottom: 1px solid #dddddd;
-}
-
-.prose { font-size: 14px; line-height: 1.8; color: #333333; margin-bottom: 20px; }
-.prose strong { color: #111111; }
-
-.empty-state {
-text-align: center;
-padding: 60px 20px;
-color: var(--gray);
-font-family: 'DM Mono', monospace;
-font-size: 12px;
-letter-spacing: 2px;
-}
-
-#fileInput { display: none; }
-
-.spinner {
-display: inline-block;
-width: 14px; height: 14px;
-border: 2px solid rgba(255,255,255,0.3);
-border-top-color: #ffffff;
-border-radius: 50%;
-animation: spin 0.8s linear infinite;
-vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loc-results {
-background: #ffffff !important;
-border: 1px solid #cccccc;
-border-radius: 4px;
-margin-top: 4px;
-max-height: 200px;
-overflow-y: auto;
-box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-position: relative;
-z-index: 50;
-}
-.loc-result-item {
-padding: 10px 14px;
-font-size: 14px;
-color: #111111;
-border-bottom: 1px solid #f0f0f0;
-cursor: pointer;
-}
-.loc-result-item:last-child { border-bottom: none; }
-.loc-result-item:hover { background: #f5f2ec; }
-
-.setup-banner {
-background: rgba(212,134,26,0.1);
-border: 1px solid rgba(212,134,26,0.4);
-border-left: 4px solid var(--amber);
-border-radius: 4px;
-padding: 18px 24px;
-margin-bottom: 24px;
-font-family: 'DM Sans', sans-serif;
-font-size: 13px;
-line-height: 1.6;
-color: #6b4a0a;
-}
-.setup-banner strong { color: #0a1628; }
-
-@media (max-width: 640px) {
-.form-grid { grid-template-columns: 1fr; }
-.info-grid { grid-template-columns: 1fr; }
-.sector-grid { grid-template-columns: repeat(2, 1fr); }
-.score-banner { flex-direction: column; gap: 20px; text-align: center; }
-.header { flex-direction: column; gap: 16px; align-items: flex-start; }
-}
-</style>
-</head>
-<body>
-<div class="app">
-
-  <!-- Header -->
-  <div class="header">
-    <div class="logo-block">
-      <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v2.0</div>
-    </div>
-    <div class="header-right">
-      <button class="nav-btn active" onclick="showView('search',this)">New Research</button>
-      <button class="nav-btn" onclick="showView('history',this)">History</button>
-    </div>
-  </div>
-
-  <!-- SEARCH VIEW -->
-  <div class="view active" id="view-search">
-
-    <div class="setup-banner" id="setupBanner">
-      <strong>⚠ One-time setup required:</strong> this tool needs a Worker URL to run research (the Worker handles all lookups — sanctions, registry, search, and reasoning — none of which require an API key from you). Enter it below once — it will be remembered on this device.
-      <div style="margin-top:10px;">
-        <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev" style="width:100%;max-width:420px;">
-        <button class="small-btn" style="margin-left:8px;" onclick="saveWorkerUrl()">Save</button>
-      </div>
-    </div>
-
-    <div class="search-panel">
-      <div class="panel-title">Company Intelligence Request</div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Company Name *</label>
-          <input type="text" id="companyName" placeholder="Company Name Ltd.">
-        </div>
-        <div class="form-group">
-          <label>Country of Registration *</label>
-          <input type="text" id="companyCountry" placeholder="Start typing a country..." oninput="checkManualRegistryLink(); showCountrySuggestions(this.value)" onfocus="showCountrySuggestions(this.value)" autocomplete="off">
-          <div id="countrySuggestionBox" class="loc-results" style="display:none;"></div>
-          <div id="manualRegistryButtonBox" style="margin-top:8px;display:none;"></div>
-        </div>
-        <div class="form-group">
-          <label>Website URL (optional)</label>
-          <input type="text" id="companyWebsite" placeholder="https://www.example.com">
-        </div>
-        <div class="form-group">
-          <label>Key Person Name (optional)</label>
-          <input type="text" id="keyPerson" placeholder="Full Name">
-        </div>
-        <div class="form-group full">
-          <label>Industry / Commodity Sector</label>
-          <div class="sector-grid" id="sectorGrid">
-            <div class="sector-tag" onclick="toggleSector(this)">Chrome Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Manganese</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Iron Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Ferrochrome</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Copper</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Cobalt</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Lithium</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Fuels</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Gold</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Antimony</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Trading / Broker</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Other</div>
-          </div>
-          <button type="button" class="small-btn" onclick="window.open('https://www.responsiblemineralsinitiative.org/facilities-lists/public-list/','_blank')" style="width:100%;margin-top:10px;">🔗 Check RMI Public List — smelter/refiner responsible-sourcing status (free, covers cobalt, copper, lithium and other minerals)</button>
-        </div>
-        <div class="form-group full">
-          <label>Additional Notes (optional)</label>
-          <textarea id="extraNotes" placeholder="Any specific concerns, deal context, or focus areas..."></textarea>
-        </div>
-      </div>
-
-      <button class="run-btn" id="runBtn" onclick="runResearch()">
-        ⬡ &nbsp; Run Full Due Diligence
-      </button>
-    </div>
-
-    <!-- Progress -->
-    <div class="progress-panel" id="progressPanel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <div class="progress-title" style="margin-bottom:0;">⬡ &nbsp; Research in progress — please wait</div>
-        <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#c9a84c;letter-spacing:2px;background:#0a1628;padding:8px 16px;border-radius:4px;border:2px solid #c9a84c;" id="runTimer">00:00</div>
-      </div>
-      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
-      <div class="progress-steps" id="progressSteps"></div>
-      <div style="margin-top:16px;font-size:11px;color:#999;font-family:'DM Mono',monospace;">ℹ Reports can take up to a minute due to free-tier rate limits on the reasoning step. This is normal — no need to refresh or resubmit.</div>
-    </div>
-
-    <!-- Results -->
-    <div class="results-panel" id="resultsPanel">
-      <div id="scoreBanner"></div>
-
-      <div class="result-tabs">
-        <button class="result-tab active" onclick="showTab('summary',this)">Summary</button>
-        <button class="result-tab" onclick="showTab('redflags',this)">Red Flags</button>
-        <button class="result-tab" onclick="showTab('company',this)">Company</button>
-        <button class="result-tab" onclick="showTab('people',this)">People</button>
-        <button class="result-tab" onclick="showTab('mining',this)">Mining & Trade</button>
-        <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
-      </div>
-
-      <div class="result-content">
-        <div class="result-section active" id="tab-summary"></div>
-        <div class="result-section" id="tab-redflags"></div>
-        <div class="result-section" id="tab-company"></div>
-        <div class="result-section" id="tab-people"></div>
-        <div class="result-section" id="tab-mining"></div>
-        <div class="result-section" id="tab-raw"></div>
-      </div>
-
-      <div class="action-row">
-        <button class="action-btn primary" onclick="exportPDF()">⬡ Export PDF Report</button>
-        <button class="action-btn" onclick="saveToHistory()">↓ Save to History</button>
-        <button class="action-btn" onclick="resetSearch()">↺ New Search</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- HISTORY VIEW -->
-  <div class="view" id="view-history">
-    <div class="search-panel" style="margin-bottom:24px;">
-      <div class="panel-title">Research History</div>
-      <div id="historyList"></div>
-    </div>
-  </div>
-
-</div>
-
-<input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.png">
-
-<script>
-// ── State ──────────────────────────────────────────────────────────────
-let currentResult = null;
-let researchHistory = JSON.parse(localStorage.getItem('jdd_history') || '[]');
-let WORKER_URL = localStorage.getItem('jdd_worker_url') || '';
-
-// ── One-time Worker URL setup ────────────────────────────────────────────
-function initSetupBanner() {
-  const banner = document.getElementById('setupBanner');
-  const input = document.getElementById('workerUrlInput');
-  if (WORKER_URL) {
-    banner.style.display = 'none';
-  } else {
-    banner.style.display = 'block';
-  }
-  input.value = WORKER_URL;
-}
-function saveWorkerUrl() {
-  const val = document.getElementById('workerUrlInput').value.trim().replace(/\/$/, '');
-  if (!val) { alert('Please enter a Worker URL.'); return; }
-  WORKER_URL = val;
-  localStorage.setItem('jdd_worker_url', val);
-  document.getElementById('setupBanner').style.display = 'none';
-}
-
-// ── UI Navigation ───────────────────────────────────────────────────────
-function showView(name, btn) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (name === 'history') renderHistory();
-}
-
-function showTab(name, btn) {
-  document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.result-section').forEach(s => s.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-}
-
-function toggleSector(el) { el.classList.toggle('selected'); }
-
-// Same countries the Worker cannot reach via a free API - opens the correct
-// official government site directly in a new tab for a quick manual check.
-const MANUAL_REGISTRY_SITES = {
-  "united states": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
-  "usa": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
-  "united kingdom": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
-  "uk": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
-  "south africa": { label: "Open CIPC (South Africa)", url: "https://eservices.cipc.co.za/Search.aspx" },
-  "zimbabwe": { label: "Zimbabwe Companies Office info", url: "https://www.google.com/search?q=Zimbabwe+Companies+and+Intellectual+Property+Office+company+search" },
-  "zambia": { label: "Open PACRA (Zambia)", url: "https://www.pacra.org.zm" },
-  "nigeria": { label: "Open CAC (Nigeria)", url: "https://search.cac.gov.ng" },
-  "uae": { label: "Open UAE National Economic Register", url: "https://ner.moec.gov.ae" },
-  "united arab emirates": { label: "Open UAE National Economic Register", url: "https://ner.moec.gov.ae" },
-  "drc": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "democratic republic of congo": { label: "Open OHADA Registry (DRC)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" },
-  "belgium": { label: "Open KBO/BCE (Belgium)", url: "https://kbopub.economie.fgov.be" },
-  "netherlands": { label: "Open KVK (Netherlands)", url: "https://www.kvk.nl/zoeken" },
-  "germany": { label: "Open Handelsregister (Germany)", url: "https://www.handelsregister.de" }
 };
-
-function checkManualRegistryLink() {
-  const val = document.getElementById('companyCountry').value.toLowerCase().trim();
-  const box = document.getElementById('manualRegistryButtonBox');
-  let match = null;
-  for (const key in MANUAL_REGISTRY_SITES) {
-    if (val.indexOf(key) !== -1) { match = MANUAL_REGISTRY_SITES[key]; break; }
-  }
-  if (match) {
-    box.style.display = 'block';
-    box.innerHTML = `<button type="button" class="small-btn" onclick="window.open('${match.url}','_blank')" style="width:100%;">🔗 ${match.label} — no free automated check available, opens official site</button>`;
-  } else {
-    box.style.display = 'none';
-    box.innerHTML = '';
-  }
-}
-
-// Global list of countries for the autocomplete dropdown on the Country of
-// Registration field. This is a broad, general reference list covering most
-// countries worldwide, independent of which specific ones have a manual
-// registry link configured above.
-const ALL_COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Democratic Republic of Congo","Denmark","Djibouti","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania","Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saudi Arabia","Senegal","Serbia","Sierra Leone","Singapore","Slovakia","Slovenia","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","United Arab Emirates","Uganda","United Kingdom","Ukraine","Uruguay","United States","Uzbekistan","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
-
-function showCountrySuggestions(val) {
-  const box = document.getElementById('countrySuggestionBox');
-  const trimmed = (val || '').trim().toLowerCase();
-  if (!trimmed) { box.style.display = 'none'; box.innerHTML = ''; return; }
-  const matches = ALL_COUNTRIES.filter(function (c) { return c.toLowerCase().indexOf(trimmed) !== -1; }).slice(0, 8);
-  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-  box.innerHTML = matches.map(function (c) {
-    return `<div class="loc-result-item" onclick="selectCountry('${c.replace(/'/g, "\\'")}')">${c}</div>`;
-  }).join('');
-  box.style.display = 'block';
-}
-
-function selectCountry(name) {
-  document.getElementById('companyCountry').value = name;
-  document.getElementById('countrySuggestionBox').style.display = 'none';
-  checkManualRegistryLink();
-}
-
-document.addEventListener('click', function (e) {
-  if (!e.target.closest('#companyCountry') && !e.target.closest('#countrySuggestionBox')) {
-    const box = document.getElementById('countrySuggestionBox');
-    if (box) box.style.display = 'none';
-  }
-});
-
-// ── Research Runner ─────────────────────────────────────────────────────
-let timerInterval = null;
-
-function startTimer() {
-  let seconds = 0;
-  const timerEl = document.getElementById('runTimer');
-  if (timerEl) timerEl.textContent = '00:00';
-  timerInterval = setInterval(() => {
-    seconds++;
-    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const ss = String(seconds % 60).padStart(2, '0');
-    if (timerEl) timerEl.textContent = mm + ':' + ss;
-  }, 1000);
-}
-
-function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-}
-
-async function runResearch() {
-  if (!WORKER_URL) {
-    alert('Please enter and save your Worker URL first (see the banner at the top of the page).');
-    return;
-  }
-
-  const company = document.getElementById('companyName').value.trim();
-  const country = document.getElementById('companyCountry').value.trim();
-  if (!company || !country) { alert('Please enter at least a company name and country.'); return; }
-
-  const website = document.getElementById('companyWebsite').value.trim();
-  const keyPerson = document.getElementById('keyPerson').value.trim();
-  const sectors = [...document.querySelectorAll('.sector-tag.selected')].map(e => e.textContent);
-  const notes = document.getElementById('extraNotes').value.trim();
-
-  document.getElementById('runBtn').disabled = true;
-  document.getElementById('runBtn').innerHTML = '<span class="spinner"></span> &nbsp; Searching...';
-  document.getElementById('progressPanel').classList.add('active');
-  document.getElementById('resultsPanel').classList.remove('active');
-
-  const steps = [
-    'Checking sanctions lists (OFAC, UN, EU, UK via OpenSanctions)',
-    'Searching independent corporate registries',
-    'Searching independent news and adverse media',
-    'Cross-referencing company website claims vs. independent sources',
-    'Verifying registered address and legal status',
-    'Checking directors and key persons individually',
-    'Identifying conflicts between claims and evidence',
-    'Assessing mining/trade-specific red flags',
-    'Scoring confidence per finding',
-    'Compiling final report'
-  ];
-
-  renderProgressSteps(steps);
-  startTimer();
-
-  const prompt = buildPrompt(company, country, website, keyPerson, sectors, notes);
-  let raw;
-  try {
-    const [result] = await Promise.all([
-      callWorker(prompt, company, country, keyPerson),
-      animateProgress(steps)
-    ]);
-    raw = result;
-  } catch (err) {
-    raw = { error: true, rawText: 'Request failed: ' + (err?.message || 'Unknown error') + '. Check that your Worker URL is correct and the Worker is deployed.' };
-  }
-
-  stopTimer();
-  currentResult = { company, country, website, keyPerson, sectors, notes, raw, date: new Date().toISOString() };
-
-  renderResults(currentResult);
-  document.getElementById('progressPanel').classList.remove('active');
-  document.getElementById('resultsPanel').classList.add('active');
-  document.getElementById('runBtn').disabled = false;
-  document.getElementById('runBtn').innerHTML = '⬡ &nbsp; Run Full Due Diligence';
-}
-
-function renderProgressSteps(steps) {
-  const el = document.getElementById('progressSteps');
-  el.innerHTML = steps.map((s, i) => `
-    <div class="step-item" id="step-${i}">
-      <div class="step-dot"></div>
-      <span>${s}</span>
-    </div>
-  `).join('');
-}
-
-async function animateProgress(steps) {
-  const bar = document.getElementById('progressBar');
-  for (let i = 0; i < steps.length; i++) {
-    document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
-    const el = document.getElementById('step-' + i);
-    if (el) el.classList.add('active');
-    bar.style.width = ((i + 1) / steps.length * 85) + '%';
-    await sleep(600 + Math.random() * 400);
-    if (el) { el.classList.remove('active'); el.classList.add('done'); }
-  }
-  bar.style.width = '100%';
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── Prompt Builder ──────────────────────────────────────────────────────
-function buildPrompt(company, country, website, keyPerson, sectors, notes) {
-  return `You are a rigorous due diligence analyst specializing in commodities, mining, and international trade counterparties. Your task is to conduct an evidence-based investigation of the following entity.
-
-COMPANY: ${company}
-COUNTRY: ${country}
-${website ? 'WEBSITE (claimed by the company — see verification rules below): ' + website : ''}
-${keyPerson ? 'KEY PERSON: ' + keyPerson : ''}
-${sectors.length ? 'SECTOR: ' + sectors.join(', ') : ''}
-${notes ? 'ADDITIONAL CONTEXT: ' + notes : ''}
-
-CORE PRINCIPLE — THE ENTITY CANNOT PROVE ITSELF:
-The company's own website, press releases, and any company-controlled social media (LinkedIn, Facebook, Instagram, TikTok, YouTube) may ONLY be used as a source of CLAIMS to be independently verified. They must NEVER be treated as evidence of legitimacy, reputation, ownership, financial health, or trustworthiness. If the website says "25 years of experience" or "leading mining company," that is a claim, not a fact, until independently corroborated.
-
-SOURCE HIERARCHY (apply this when weighing every piece of evidence):
-- HIGHEST CONFIDENCE: government registries, regulators, official sanctions lists (OFAC/UN/EU/UK), court records, official public filings
-- MEDIUM CONFIDENCE: recognized news organizations, investigative journalism, NGO reports, industry publications
-- LOW CONFIDENCE: company websites, company blogs, press releases (claims only, never proof)
-- IGNORE FOR SCORING: LinkedIn, Facebook, Instagram, TikTok, YouTube, or any other company-controlled social media
-
-VERIFICATION RULES — CRITICAL:
-1. You will be given pre-gathered evidence below (sanctions data, registry data, search results, and full article text collected by separate tools before this message). Base your findings on this evidence — do not claim you independently searched anything yourself, and do not invent sources that were not provided to you.
-2. All output must be in English, even where the underlying evidence includes non-English sources.
-3. For every finding, you must classify it as one of exactly four states:
-   - "verified": confirmed by at least one independent, authoritative source in the evidence provided
-   - "probable": suggested by independent sources in the evidence but not fully corroborated, or corroborated only by medium-confidence sources
-   - "unverified": only a claim exists (e.g. company website), with no independent confirmation found in the evidence provided
-   - "not_found": the evidence provided does not cover this — this is itself meaningful and must be stated plainly, never silently omitted or filled with assumption
-4. Do NOT fill gaps with assumptions. If the evidence provided does not cover something, say "not_found" — do not guess or infer based on similar companies or general patterns.
-5. Flag every inconsistency between what the company claims and what the evidence shows as a "conflict."
-6. Be thorough but honest about the limits of what the evidence shows. Missing information is itself worth noting, not something to paper over with confident-sounding language.
-7. For every named finding, briefly note where it came from (e.g. "South African CIPC registry", "Reuters, March 2026", "company website — unverified claim") so the finding is traceable.
-8. If evidence is genuinely ambiguous or contradictory and you cannot responsibly resolve it into a clear verified/unverified judgment, do NOT force a confident-sounding conclusion. Instead, explicitly say the finding requires manual human review, and explain exactly what is unclear and what a human should check. It is always better to say "this needs a human to verify" than to guess and sound certain.
-
-Regarding the sanctions data provided to you below: this was retrieved directly from OpenSanctions, an authoritative database combining OFAC, UN, EU, UK and other official sanctions and PEP watchlists. Treat this data as ground truth for the sanctionsStatus and sanctionsSource fields — do not independently re-search for sanctions information, use exactly what is provided.
-
-Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) with exactly this structure:
-
-{
-  "score": <integer 0-100>,
-  "scoreRationale": "<2-3 sentence explanation of the score, referencing the balance of verified vs. unverified vs. missing evidence>",
-  "executiveSummary": "<3-5 paragraph executive summary of findings, written with analytical precision, explicitly distinguishing verified facts from unverified claims from gaps>",
-  "redFlags": [
-    { "severity": "high|medium|low", "category": "<category>", "description": "<detailed description of the red flag>", "confidence": "verified|probable|unverified|not_found" }
-  ],
-  "conflicts": [
-    { "field": "<what is being compared>", "claimed": "<what company claims>", "found": "<what independent sources show, or 'no independent information found'>" }
-  ],
-  "company": {
-    "registrationStatus": "<active/inactive/not found/unclear>",
-    "registrationConfidence": "verified|probable|unverified|not_found",
-    "registrationSource": "<which registry or source, e.g. 'CIPC South Africa', 'not searched — no public registry identified'>",
-    "incorporationDate": "<date or not found>",
-    "registeredAddress": "<address>",
-    "addressType": "<analysis: real office / virtual office / flexi desk / residential / unknown>",
-    "legalForm": "<LLC/Ltd/SA/etc>",
-    "directors": "<names found in registries, noting source>",
-    "financialStatus": "<any public financial info, noting source>",
-    "litigation": "<any lawsuits, disputes, legal issues, noting source>",
-    "sanctionsStatus": "<clear/flagged/not found>",
-    "sanctionsSource": "<e.g. 'OpenSanctions (OFAC/UN/EU/UK consolidated)'>",
-    "blacklistStatus": "<clear/flagged/not found>",
-    "tradeHistory": "<any export/import records found, noting source>",
-    "yearsInOperation": "<calculated from verified registration date, or 'unknown — registration date not independently confirmed'>",
-    "additionalFindings": "<any other relevant company-level findings, each noting confidence level and source>"
-  },
-  "people": [
-    {
-      "name": "<person name>",
-      "role": "<their role>",
-      "source": "website|registry|both|other",
-      "confidence": "verified|probable|unverified|not_found",
-      "sanctionsCheck": "clear|flagged|not found",
-      "pepCheck": "clear|flagged|not found",
-      "courtRecords": "clear|flagged|not found",
-      "bankruptcyCheck": "clear|flagged|not found",
-      "fraudRegistry": "clear|flagged|not found",
-      "adverseMedia": "clear|flagged|not found",
-      "notes": "<any specific findings about this person, noting source>"
-    }
-  ],
-  "miningAndTrade": {
-    "concessionsClaimed": "<what company claims to hold>",
-    "concessionsVerified": "<what government registries show, or 'no independent registry checked/available'>",
-    "concessionsMatch": true|false|null,
-    "miningArea": "<geographic area claimed>",
-    "miningAreaStatus": "<verified active / belongs to another entity / no record / not applicable>",
-    "exportRecords": "<any customs or trade data found, noting source>",
-    "tradeDataSources": "<which databases were checked>",
-    "governmentRegistriesChecked": "<list of registries actually searched>",
-    "additionalFindings": "<any other mining/trade findings, each noting confidence level>"
-  },
-  "rawDump": "<complete unstructured dump of ALL raw findings, sources consulted, searches performed, and any other data collected — formatted as plain text with section headers>"
-}`;
-}
-
-// ── Worker API Call (replaces direct Anthropic call — key is never exposed here) ──
-async function callWorker(prompt, companyName, companyCountry, keyPerson) {
-  const response = await fetch(WORKER_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson })
-  });
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error('Worker returned status ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
-  }
-
-  const data = await response.json();
-
-  let text = '';
-  if (data.content) {
-    for (const block of data.content) {
-      if (block.type === 'text') text += block.text;
-    }
-  }
-
-  text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      try { return JSON.parse(match[0]); } catch (e2) {}
-    }
-    return { error: true, rawText: text || 'No content returned from Worker.' };
-  }
-}
-
-// ── Render Results ──────────────────────────────────────────────────────
-function confBadge(conf) {
-  if (!conf) return '';
-  const map = {
-    verified: ['verified', 'Verified'],
-    probable: ['probable', 'Probable'],
-    unverified: ['unverified', 'Unverified'],
-    not_found: ['notfound', 'Not Found']
-  };
-  const [cls, label] = map[conf] || ['unverified', conf];
-  return `<span class="confidence-badge ${cls}">${label}</span>`;
-}
-
-function renderResults(result) {
-  const r = result.raw;
-  if (!r || r.error) {
-    document.getElementById('tab-summary').innerHTML = `<div class="prose">Research completed, but the response could not be read as a structured report.<br><br><strong>Details:</strong><br>${r?.rawText || 'No data'}</div>`;
-    ['redflags','company','people','mining','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
-    document.getElementById('scoreBanner').innerHTML = '';
-    return;
-  }
-
-  const score = r.score || 0;
-  const colorClass = score >= 76 ? 'green' : score >= 60 ? 'amber' : 'red';
-  const colorLabel = score >= 76 ? 'LOW RISK' : score >= 60 ? 'MODERATE RISK' : 'HIGH RISK';
-
-  document.getElementById('scoreBanner').innerHTML = `
-    <div class="score-banner ${colorClass}">
-      <div class="score-left">
-        <div class="score-company">${result.company}</div>
-        <div class="score-meta">${result.country} · ${result.sectors?.join(', ') || 'General'} · ${formatDate(result.date)}</div>
-      </div>
-      <div class="score-right">
-        <div class="score-number">${score}</div>
-        <div class="score-label">${colorLabel}</div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('tab-summary').innerHTML = `
-    <div class="section-header">Executive Summary</div>
-    <div class="prose">${(r.executiveSummary || 'No summary available.').replace(/\n/g, '<br>')}</div>
-    <div class="section-header">Score Rationale</div>
-    <div class="prose">${r.scoreRationale || ''}</div>
-  `;
-
-  const flags = r.redFlags || [];
-  const conflicts = r.conflicts || [];
-  let rfHTML = '';
-
-  if (flags.length > 0) {
-    const high = flags.filter(f => f.severity === 'high');
-    const med = flags.filter(f => f.severity === 'medium');
-    const low = flags.filter(f => f.severity === 'low');
-
-    if (high.length) rfHTML += renderFlagBox(high, 'HIGH SEVERITY FLAGS', 'var(--red-soft)');
-    if (med.length) rfHTML += renderFlagBox(med, 'MEDIUM SEVERITY FLAGS', 'var(--amber)');
-    if (low.length) rfHTML += renderFlagBox(low, 'LOW SEVERITY FLAGS', 'var(--gray)');
-  } else {
-    rfHTML += '<div class="prose">No significant red flags identified.</div>';
-  }
-
-  if (conflicts.length > 0) {
-    rfHTML += '<div class="section-header" style="margin-top:28px;">Claim vs. Independent Findings — Conflicts</div>';
-    conflicts.forEach(c => {
-      rfHTML += `
-        <div class="conflict-box">
-          <div class="conflict-label">⚠ ${c.field}</div>
-          <div class="conflict-row">
-            <div class="conflict-claim">Claimed: <span>${c.claimed}</span></div>
-            <div style="color:var(--gray)">→</div>
-            <div class="conflict-found">Found: ${c.found}</div>
-          </div>
-        </div>
-      `;
-    });
-  }
-
-  document.getElementById('tab-redflags').innerHTML = rfHTML;
-
-  const co = r.company || {};
-  document.getElementById('tab-company').innerHTML = `
-    <div class="section-header">Registration & Legal</div>
-    <div class="info-grid">
-      ${infoCard('Registration Status', co.registrationStatus, statusColor(co.registrationStatus), co.registrationConfidence, co.registrationSource)}
-      ${infoCard('Incorporation Date', co.incorporationDate)}
-      ${infoCard('Legal Form', co.legalForm)}
-      ${infoCard('Years in Operation', co.yearsInOperation)}
-      ${infoCard('Registered Address', co.registeredAddress)}
-      ${infoCard('Address Type', co.addressType, addressColor(co.addressType))}
-    </div>
-    <div class="section-header">Compliance & Risk</div>
-    <div class="info-grid">
-      ${infoCard('Sanctions Status', co.sanctionsStatus, checkColor(co.sanctionsStatus), null, co.sanctionsSource)}
-      ${infoCard('Blacklist / Debarment', co.blacklistStatus, checkColor(co.blacklistStatus))}
-      ${infoCard('Litigation', co.litigation)}
-      ${infoCard('Financial Status', co.financialStatus)}
-      ${infoCard('Trade History', co.tradeHistory)}
-    </div>
-    ${co.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${co.additionalFindings}</div>` : ''}
-  `;
-
-  const people = r.people || [];
-  let peopleHTML = '';
-  if (people.length === 0) {
-    peopleHTML = '<div class="prose">No individuals identified.</div>';
-  } else {
-    people.forEach(p => {
-      peopleHTML += `
-        <div class="person-card">
-          <div class="person-name">${p.name} ${confBadge(p.confidence)}</div>
-          <div class="person-role">${p.role} · Source: ${p.source}</div>
-          <div class="person-checks">
-            ${badge('Sanctions', p.sanctionsCheck)}
-            ${badge('PEP', p.pepCheck)}
-            ${badge('Court Records', p.courtRecords)}
-            ${badge('Bankruptcy', p.bankruptcyCheck)}
-            ${badge('Fraud Registry', p.fraudRegistry)}
-            ${badge('Adverse Media', p.adverseMedia)}
-          </div>
-          ${p.notes ? `<div class="prose" style="margin-top:12px;margin-bottom:0;">${p.notes}</div>` : ''}
-        </div>
-      `;
-    });
-  }
-  document.getElementById('tab-people').innerHTML = `<div class="section-header">Board Members & Key Individuals</div>${peopleHTML}`;
-
-  const mt = r.miningAndTrade || {};
-  document.getElementById('tab-mining').innerHTML = `
-    <div class="section-header">Mining Concessions</div>
-    <div class="info-grid">
-      ${infoCard('Concessions Claimed', mt.concessionsClaimed)}
-      ${infoCard('Concessions Verified', mt.concessionsVerified, mt.concessionsMatch === false ? 'bad' : mt.concessionsMatch === true ? 'ok' : '')}
-      ${infoCard('Mining Area', mt.miningArea)}
-      ${infoCard('Mining Area Status', mt.miningAreaStatus, miningColor(mt.miningAreaStatus))}
-    </div>
-    <div class="section-header">Export & Trade Records</div>
-    <div class="info-grid">
-      ${infoCard('Export Records', mt.exportRecords)}
-      ${infoCard('Trade Data Sources', mt.tradeDataSources)}
-    </div>
-    <div class="section-header">Registries Searched</div>
-    <div class="prose">${mt.governmentRegistriesChecked || 'See raw dump for details.'}</div>
-    ${mt.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${mt.additionalFindings}</div>` : ''}
-  `;
-
-  document.getElementById('tab-raw').innerHTML = `
-    <div class="section-header">Complete Raw Research Dump</div>
-    <div class="raw-dump">${r.rawDump || JSON.stringify(r, null, 2)}</div>
-  `;
-}
-
-function renderFlagBox(flags, title, color) {
-  return `
-    <div class="red-flags-box" style="border-left-color:${color};background:${color}18;border-color:${color}55;">
-      <div class="red-flags-title" style="color:${color};">⚑ &nbsp;${title} (${flags.length})</div>
-      ${flags.map(f => `
-        <div class="flag-item">
-          <div class="flag-icon" style="color:${color};">▲</div>
-          <div><strong style="color:${color};">[${f.category}]</strong> ${f.description} ${confBadge(f.confidence)}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function infoCard(label, value, colorClass, confidence, source) {
-  return `
-    <div class="info-card">
-      <div class="info-card-label">${label}</div>
-      <div class="info-card-value ${colorClass || ''}">${value || 'Not found'} ${confBadge(confidence)}</div>
-      ${source ? `<div class="evidence-trail"><span class="ev-source">Source:</span> ${source}</div>` : ''}
-    </div>
-  `;
-}
-
-function badge(label, status) {
-  const cls = status === 'clear' ? 'clear' : status === 'flagged' ? 'flagged' : 'unknown';
-  const icon = status === 'clear' ? '✓' : status === 'flagged' ? '✕' : '?';
-  return `<div class="check-badge ${cls}">${icon} ${label}</div>`;
-}
-
-function statusColor(s) {
-  if (!s) return '';
-  const l = s.toLowerCase();
-  if (l.includes('active')) return 'ok';
-  if (l.includes('inactive') || l.includes('not found')) return 'bad';
-  return 'warn';
-}
-
-function checkColor(s) {
-  if (!s) return '';
-  const l = s.toLowerCase();
-  if (l.includes('clear')) return 'ok';
-  if (l.includes('flagged')) return 'bad';
-  return 'warn';
-}
-
-function addressColor(s) {
-  if (!s) return '';
-  const l = s.toLowerCase();
-  if (l.includes('real') || l.includes('verified office')) return 'ok';
-  if (l.includes('virtual') || l.includes('flexi') || l.includes('residential')) return 'warn';
-  return '';
-}
-
-function miningColor(s) {
-  if (!s) return '';
-  const l = s.toLowerCase();
-  if (l.includes('verified active')) return 'ok';
-  if (l.includes('another entity') || l.includes('no record')) return 'bad';
-  return 'warn';
-}
-
-function formatDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-// ── History ─────────────────────────────────────────────────────────────
-function saveToHistory() {
-  if (!currentResult) return;
-  const idx = researchHistory.findIndex(h => h.company === currentResult.company && h.country === currentResult.country && h.date === currentResult.date);
-  if (idx === -1) researchHistory.unshift(currentResult);
-  localStorage.setItem('jdd_history', JSON.stringify(researchHistory.slice(0, 100)));
-  alert('Saved to history.');
-}
-
-function renderHistory() {
-  const el = document.getElementById('historyList');
-  if (researchHistory.length === 0) {
-    el.innerHTML = '<div class="empty-state">No research history yet.</div>';
-    return;
-  }
-
-  el.innerHTML = '<div class="history-list">' + researchHistory.map((h, i) => {
-    const score = h.raw?.score ?? '—';
-    const colorClass = typeof score === 'number' ? (score >= 76 ? 'green' : score >= 60 ? 'amber' : 'red') : '';
-    const runs = h.runs ? h.runs.length + 1 : 1;
-    return `
-      <div class="history-item">
-        <div class="history-left">
-          <div class="history-company">${h.company}</div>
-          <div class="history-meta">${h.country} · ${h.sectors?.join(', ') || 'General'} · Last run: ${formatDate(h.date)} · ${runs} run${runs > 1 ? 's' : ''}</div>
-        </div>
-        <div class="history-right">
-          <div class="score-pill ${colorClass}">${score}</div>
-          <div class="history-btns">
-            <button class="small-btn" onclick="loadFromHistory(${i})">View</button>
-            <button class="small-btn" onclick="rerunFromHistory(${i})">Re-run</button>
-            <button class="small-btn" onclick="showDocs(${i})">Docs</button>
-          </div>
-        </div>
-      </div>
-      <div id="docs-${i}" style="display:none;padding:0 0 12px;">
-        <div class="doc-upload-area" onclick="triggerUpload(${i})">
-          <div class="doc-upload-label">+ Attach Document (SGS, License, Past Performance...)</div>
-        </div>
-        <div class="doc-list" id="doclist-${i}">
-          ${(h.docs || []).map(d => `<div class="doc-item"><span>${d.name}</span><span style="color:var(--gray)">${d.date}</span></div>`).join('')}
-        </div>
-      </div>
-    `;
-  }).join('') + '</div>';
-}
-
-function loadFromHistory(i) {
-  currentResult = researchHistory[i];
-  showView('search', document.querySelector('.nav-btn'));
-  document.getElementById('companyName').value = currentResult.company;
-  document.getElementById('companyCountry').value = currentResult.country;
-  document.getElementById('companyWebsite').value = currentResult.website || '';
-  document.getElementById('keyPerson').value = currentResult.keyPerson || '';
-  document.getElementById('resultsPanel').classList.add('active');
-  renderResults(currentResult);
-}
-
-async function rerunFromHistory(i) {
-  const h = researchHistory[i];
-  document.getElementById('companyName').value = h.company;
-  document.getElementById('companyCountry').value = h.country;
-  document.getElementById('companyWebsite').value = h.website || '';
-  document.getElementById('keyPerson').value = h.keyPerson || '';
-  showView('search', document.querySelector('.nav-btn'));
-  await runResearch();
-  if (!researchHistory[i].runs) researchHistory[i].runs = [];
-  researchHistory[i].runs.push({ date: new Date().toISOString(), score: currentResult.raw?.score });
-  researchHistory[i].date = new Date().toISOString();
-  researchHistory[i].raw = currentResult.raw;
-  localStorage.setItem('jdd_history', JSON.stringify(researchHistory));
-}
-
-function showDocs(i) {
-  const el = document.getElementById('docs-' + i);
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-function triggerUpload(i) {
-  const fi = document.getElementById('fileInput');
-  fi.onchange = () => {
-    const files = [...fi.files];
-    if (!researchHistory[i].docs) researchHistory[i].docs = [];
-    files.forEach(f => {
-      researchHistory[i].docs.push({ name: f.name, date: formatDate(new Date().toISOString()) });
-    });
-    localStorage.setItem('jdd_history', JSON.stringify(researchHistory));
-    renderHistory();
-  };
-  fi.click();
-}
-
-// ── Export PDF ───────────────────────────────────────────────────────────
-function exportPDF() {
-  if (!currentResult || !currentResult.raw) { alert('No results to export.'); return; }
-  const r = currentResult.raw;
-  const score = r.score || 0;
-  const colorLabel = score >= 76 ? 'LOW RISK' : score >= 60 ? 'MODERATE RISK' : 'HIGH RISK';
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
-<title>Due Diligence — ${currentResult.company}</title>
-<style>
-  body { font-family: Georgia, serif; color: #1a1a2e; max-width: 780px; margin: 40px auto; padding: 0 30px; }
-  .header { border-bottom: 3px solid #0a1628; padding-bottom: 20px; margin-bottom: 30px; }
-  .co-name { font-size: 28px; font-weight: bold; color: #0a1628; }
-  .meta { font-size: 12px; color: #666; margin-top: 6px; font-family: monospace; letter-spacing: 1px; }
-  .score-box { display: inline-block; padding: 12px 24px; border-radius: 4px; margin: 20px 0; }
-  .score-box.green { background: #e8f5ee; border: 2px solid #27ae60; color: #1a7a4a; }
-  .score-box.amber { background: #fdf3e3; border: 2px solid #d4861a; color: #a0620a; }
-  .score-box.red { background: #fdecea; border: 2px solid #e74c3c; color: #c0392b; }
-  .score-num { font-size: 36px; font-weight: bold; }
-  h2 { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #0a1628; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin: 28px 0 14px; }
-  .prose { font-size: 13px; line-height: 1.8; color: #333; }
-  .flag { padding: 10px 14px; margin-bottom: 8px; border-left: 4px solid #e74c3c; background: #fff5f5; font-size: 12px; }
-  .flag.medium { border-color: #d4861a; background: #fdf8f0; }
-  .flag.low { border-color: #aaa; background: #f8f8f8; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
-  td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-  td:first-child { font-weight: bold; color: #0a1628; width: 35%; }
-  .footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 10px; color: #999; font-family: monospace; }
-  .confidential { color: #c0392b; font-weight: bold; letter-spacing: 2px; font-size: 11px; }
-</style>
-</head>
-<body>
-<div class="header">
-  <div style="font-family:monospace;font-size:11px;letter-spacing:3px;color:#c0392b;margin-bottom:12px;">STRICTLY CONFIDENTIAL</div>
-  <div class="co-name">${currentResult.company}</div>
-  <div class="meta">${currentResult.country} · ${currentResult.sectors?.join(', ') || 'General'} · Report Date: ${formatDate(currentResult.date)}</div>
-  <div class="meta" style="margin-top:4px;">Prepared by: Jericho Due Diligence Engine</div>
-  <div class="score-box ${score >= 76 ? 'green' : score >= 60 ? 'amber' : 'red'}" style="margin-top:16px;">
-    <div class="score-num">${score}/100</div>
-    <div style="font-size:11px;letter-spacing:2px;font-family:monospace;">${colorLabel}</div>
-  </div>
-</div>
-
-<h2>Executive Summary</h2>
-<div class="prose">${(r.executiveSummary || '').replace(/\n/g, '<br>')}</div>
-
-<h2>Score Rationale</h2>
-<div class="prose">${r.scoreRationale || ''}</div>
-
-${(r.redFlags || []).length ? `
-<h2>Red Flags</h2>
-${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong> (${f.confidence || 'unrated'})<br>${f.description}</div>`).join('')}
-` : ''}
-
-${(r.conflicts || []).length ? `
-<h2>Claim vs. Independent Findings</h2>
-${(r.conflicts || []).map(c => `<div class="flag medium"><strong>${c.field}</strong><br>Claimed: ${c.claimed}<br>Found: ${c.found}</div>`).join('')}
-` : ''}
-
-<h2>Company Information</h2>
-<table>
-${Object.entries(r.company || {}).map(([k, v]) => v ? `<tr><td>${k.replace(/([A-Z])/g,' $1').trim()}</td><td>${v}</td></tr>` : '').join('')}
-</table>
-
-<h2>People — Board Members & Directors</h2>
-${(r.people || []).map(p => `
-<table>
-<tr><td>Name</td><td>${p.name}</td></tr>
-<tr><td>Role</td><td>${p.role}</td></tr>
-<tr><td>Confidence</td><td>${p.confidence || 'unrated'}</td></tr>
-<tr><td>Sanctions</td><td>${p.sanctionsCheck}</td></tr>
-<tr><td>PEP</td><td>${p.pepCheck}</td></tr>
-<tr><td>Court Records</td><td>${p.courtRecords}</td></tr>
-<tr><td>Bankruptcy</td><td>${p.bankruptcyCheck}</td></tr>
-<tr><td>Fraud Registry</td><td>${p.fraudRegistry}</td></tr>
-<tr><td>Notes</td><td>${p.notes || '—'}</td></tr>
-</table>`).join('')}
-
-<h2>Mining & Trade</h2>
-<table>
-${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== undefined ? `<tr><td>${k.replace(/([A-Z])/g,' $1').trim()}</td><td>${v}</td></tr>` : '').join('')}
-</table>
-
-<div class="footer">
-  <div class="confidential">STRICTLY CONFIDENTIAL — JERICHO DUE DILIGENCE ENGINE</div>
-  <div style="margin-top:6px;">This report is generated for internal screening purposes only. All findings should be verified by qualified legal and compliance professionals before commercial decisions are made. © Jericho ${new Date().getFullYear()}</div>
-</div>
-</body>
-</html>
-  `);
-  printWindow.document.close();
-  setTimeout(() => printWindow.print(), 800);
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────
-function resetSearch() {
-  document.getElementById('companyName').value = '';
-  document.getElementById('companyCountry').value = '';
-  document.getElementById('companyWebsite').value = '';
-  document.getElementById('keyPerson').value = '';
-  document.getElementById('extraNotes').value = '';
-  document.querySelectorAll('.sector-tag').forEach(t => t.classList.remove('selected'));
-  document.getElementById('resultsPanel').classList.remove('active');
-  document.getElementById('progressPanel').classList.remove('active');
-  currentResult = null;
-}
-
-initSetupBanner();
-</script>
-
-</body>
-</html>
