@@ -620,7 +620,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v22</div>
+      <div class="logo-sub">Due Diligence Engine · v23</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -800,7 +800,7 @@ const MANUAL_REGISTRY_SITES = {
   "uae": { label: "Open UAE National Economic Register", url: "https://ner.economy.ae/Search_By_BN.aspx" },
   "united arab emirates": { label: "Open UAE National Economic Register", url: "https://ner.economy.ae/Search_By_BN.aspx" },
   "drc": { label: "OHADA regional registry (may not list DRC entries - RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "democratic republic of congo": { label: "OHADA regional registry (may not list DRC entries - RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
+  "democratic republic of the congo": { label: "OHADA regional registry (may not list DRC entries - RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
   "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" },
   "belgium": { label: "Open KBO/BCE (Belgium)", url: "https://kbopub.economie.fgov.be" },
   "netherlands": { label: "Open KVK (Netherlands)", url: "https://www.kvk.nl/zoeken" },
@@ -909,7 +909,7 @@ async function runResearch() {
   document.getElementById('resultsPanel').classList.remove('active');
 
   const steps = [
-    'Checking sanctions lists (OFAC, UN, EU, UK via OpenSanctions)',
+    'Checking sanctions reference lists (OFAC, UN, EU, UK) and GLEIF',
     'Searching independent corporate registries',
     'Searching independent news and adverse media',
     'Cross-referencing company website claims vs. independent sources',
@@ -1121,18 +1121,29 @@ async function callWorker(prompt, companyName, companyCountry, keyPerson) {
   try {
     return normalizeReport(JSON.parse(text));
   } catch (e) {
-    // Some models occasionally add extra characters after the JSON object
-    // (e.g. a stray closing brace). A simple greedy regex match can grab
-    // too much and still fail to parse. Instead, count braces from the
-    // first '{' to find exactly where the real object ends, and parse
-    // only that slice.
+    // Some models occasionally add extra characters before/after the JSON
+    // object, or the object contains a literal '{' or '}' inside a string
+    // value (e.g. an address or note). A naive brace-counter miscounts in
+    // that case. This version tracks whether it is currently inside a JSON
+    // string literal (and correctly skips escaped characters like \" )
+    // so only structural braces are counted, never ones inside real text.
     const start = text.indexOf('{');
     if (start !== -1) {
       let depth = 0;
       let end = -1;
+      let inString = false;
+      let escaped = false;
       for (let i = start; i < text.length; i++) {
-        if (text[i] === '{') depth++;
-        else if (text[i] === '}') {
+        const ch = text[i];
+        if (inString) {
+          if (escaped) { escaped = false; }
+          else if (ch === '\\') { escaped = true; }
+          else if (ch === '"') { inString = false; }
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '{') depth++;
+        else if (ch === '}') {
           depth--;
           if (depth === 0) { end = i; break; }
         }
