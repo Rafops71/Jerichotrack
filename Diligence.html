@@ -620,7 +620,7 @@ color: #6b4a0a;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v15</div>
+      <div class="logo-sub">Due Diligence Engine · v16</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="showView('search',this)">New Research</button>
@@ -1089,6 +1089,13 @@ async function callWorker(prompt, companyName, companyCountry, keyPerson) {
   }
 
   const data = await response.json();
+
+  if (data.error === 'truncated') {
+    return { error: true, rawText: data.message || 'The AI response was cut off before finishing.' };
+  }
+  if (data.error) {
+    return { error: true, rawText: (data.message || data.error) + (data.detail ? ' - ' + data.detail : '') };
+  }
 
   let text = '';
   if (data.content) {
@@ -1655,15 +1662,24 @@ ${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== und
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function resetSearch() {
-  document.getElementById('companyName').value = '';
-  document.getElementById('companyCountry').value = '';
-  document.getElementById('companyWebsite').value = '';
-  document.getElementById('keyPerson').value = '';
-  document.getElementById('extraNotes').value = '';
-  document.querySelectorAll('.sector-tag').forEach(t => t.classList.remove('selected'));
-  document.getElementById('resultsPanel').classList.remove('active');
-  document.getElementById('progressPanel').classList.remove('active');
-  currentResult = null;
+  try {
+    const fieldIds = ['companyName', 'companyCountry', 'companyWebsite', 'keyPerson', 'extraNotes'];
+    fieldIds.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.querySelectorAll('.sector-tag.selected').forEach(function (t) { t.classList.remove('selected'); });
+    const results = document.getElementById('resultsPanel');
+    if (results) results.classList.remove('active');
+    const progress = document.getElementById('progressPanel');
+    if (progress) progress.classList.remove('active');
+    const manualBox = document.getElementById('manualRegistryButtonBox');
+    if (manualBox) { manualBox.style.display = 'none'; manualBox.innerHTML = ''; }
+    currentResult = null;
+  } catch (e) {
+    console.error('resetSearch failed:', e);
+    alert('Something went wrong clearing the form - please refresh the page and try again.');
+  }
 }
 
 initSetupBanner();
