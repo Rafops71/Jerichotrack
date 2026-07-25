@@ -620,7 +620,7 @@ color: #6b4a0a;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v16</div>
+      <div class="logo-sub">Due Diligence Engine · v17</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="showView('search',this)">New Research</button>
@@ -1676,6 +1676,9 @@ function resetSearch() {
     const manualBox = document.getElementById('manualRegistryButtonBox');
     if (manualBox) { manualBox.style.display = 'none'; manualBox.innerHTML = ''; }
     currentResult = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const nameField = document.getElementById('companyName');
+    if (nameField) nameField.focus();
   } catch (e) {
     console.error('resetSearch failed:', e);
     alert('Something went wrong clearing the form - please refresh the page and try again.');
