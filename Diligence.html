@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jericho Due Diligence Engine</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --navy: #0a1628;
@@ -56,7 +56,7 @@ z-index: 0;
 
 .logo-block { display: flex; flex-direction: column; }
 .logo-name {
-font-family: 'Playfair Display', serif;
+font-family: 'DM Sans', sans-serif;
 font-size: 28px;
 font-weight: 900;
 letter-spacing: 3px;
@@ -104,7 +104,7 @@ margin-bottom: 32px;
 box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 .panel-title {
-font-family: 'Playfair Display', serif;
+font-family: 'DM Sans', sans-serif;
 font-size: 20px;
 color: #c9a84c;
 margin-bottom: 28px;
@@ -175,7 +175,7 @@ width: 100%;
 background: #0a1628;
 border: none;
 color: #ffffff;
-font-family: 'Playfair Display', serif;
+font-family: 'DM Sans', sans-serif;
 font-size: 16px;
 font-weight: 700;
 letter-spacing: 3px;
@@ -262,10 +262,10 @@ border: 1px solid;
 .score-banner.red { background: rgba(192,57,43,0.15); border-color: var(--red-soft); }
 
 .score-left { display: flex; flex-direction: column; gap: 6px; }
-.score-company { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; }
+.score-company { font-family: 'DM Sans', sans-serif; font-size: 24px; font-weight: 700; }
 .score-meta { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--gray); }
 .score-right { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.score-number { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 900; line-height: 1; }
+.score-number { font-family: 'DM Sans', sans-serif; font-size: 56px; font-weight: 900; line-height: 1; }
 .score-banner.green .score-number { color: var(--green-soft); }
 .score-banner.amber .score-number { color: var(--amber); }
 .score-banner.red .score-number { color: var(--red-soft); }
@@ -405,7 +405,7 @@ padding: 20px;
 margin-bottom: 16px;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.person-name { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
+.person-name { font-family: 'DM Sans', sans-serif; font-size: 17px; margin-bottom: 4px; color: #111111; }
 .person-role { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; margin-bottom: 14px; }
 .person-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .check-badge {
@@ -493,11 +493,11 @@ transition: border-color 0.2s;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .history-item:hover { border-color: #c9a84c; }
-.history-company { font-family: 'Playfair Display', serif; font-size: 17px; color: #111111; }
+.history-company { font-family: 'DM Sans', sans-serif; font-size: 17px; color: #111111; }
 .history-meta { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #777777; text-transform: uppercase; }
 .history-right { display: flex; align-items: center; gap: 16px; }
 .score-pill {
-font-family: 'Playfair Display', serif;
+font-family: 'DM Sans', sans-serif;
 font-size: 20px;
 font-weight: 700;
 min-width: 48px;
@@ -620,7 +620,7 @@ color: #6b4a0a;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v14</div>
+      <div class="logo-sub">Due Diligence Engine · v15</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="showView('search',this)">New Research</button>
@@ -939,11 +939,19 @@ async function runResearch() {
   stopTimer();
   currentResult = { company, country, website, keyPerson, sectors, notes, raw, date: new Date().toISOString() };
 
-  renderResults(currentResult);
-  document.getElementById('progressPanel').classList.remove('active');
-  document.getElementById('resultsPanel').classList.add('active');
-  document.getElementById('runBtn').disabled = false;
-  document.getElementById('runBtn').innerHTML = '⬡ &nbsp; Run Full Due Diligence';
+  try {
+    renderResults(currentResult);
+  } catch (renderErr) {
+    document.getElementById('tab-summary').innerHTML =
+      '<div class="prose">Something broke while displaying this report (' +
+      (renderErr && renderErr.message ? renderErr.message : 'unknown error') +
+      '). The data was still received from the Worker - try Export PDF, or Save to History and check the Raw tab.</div>';
+  } finally {
+    document.getElementById('progressPanel').classList.remove('active');
+    document.getElementById('resultsPanel').classList.add('active');
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runBtn').innerHTML = '⬡ &nbsp; Run Full Due Diligence';
+  }
 }
 
 function renderProgressSteps(steps) {
@@ -1411,7 +1419,7 @@ function infoCard(label, value, colorClass, confidence, source) {
 }
 
 function badge(label, status) {
-  const s = (status || '').toLowerCase();
+  const s = (typeof status === 'string') ? status.toLowerCase() : '';
   const cls = s === 'clear' ? 'clear' : s === 'flagged' ? 'flagged' : 'unknown';
   const icon = s === 'clear' ? '✓' : s === 'flagged' ? '✕' : '?';
   return `<div class="check-badge ${cls}">${icon} ${label}</div>`;
