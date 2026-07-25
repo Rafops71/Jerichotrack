@@ -620,7 +620,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v21</div>
+      <div class="logo-sub">Due Diligence Engine · v22</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -1020,8 +1020,9 @@ VERIFICATION RULES — CRITICAL:
 6. Be thorough but honest about the limits of what the evidence shows. Missing information is itself worth noting, not something to paper over with confident-sounding language.
 7. For every named finding, briefly note where it came from (e.g. "South African CIPC registry", "Reuters, March 2026", "company website — unverified claim") so the finding is traceable.
 8. If evidence is genuinely ambiguous or contradictory and you cannot responsibly resolve it into a clear verified/unverified judgment, do NOT force a confident-sounding conclusion. Instead, explicitly say the finding requires manual human review, and explain exactly what is unclear and what a human should check. It is always better to say "this needs a human to verify" than to guess and sound certain.
+9. CRITICAL — SANCTIONS: no automated sanctions database match was performed for this report. You have only been given official reference LINKS (OFAC/EU/UK/UN/ICIJ) for a human to check manually themselves - you do NOT have actual match results from any of those lists. You are STRICTLY FORBIDDEN from stating that a company or person appears on, or is clear from, any sanctions list, unless a specific match was explicitly present in the WEB SEARCH RESULTS or ARTICLE TEXT evidence below (e.g. a news article reporting a real designation). Never invent a sanctions listing, a different alias/name, a designation date, or any specific identifying detail that was not literally present in the evidence provided. If no such evidence exists, sanctionsStatus MUST be "not_checked - see reference links" and sanctionsSource MUST say manual verification via the provided links is required. Fabricating a sanctions match is a severe error with real legal and business consequences - when in doubt, always say the check was not performed rather than inventing a result.
 
-Regarding the sanctions data provided to you below: this was retrieved directly from OpenSanctions, an authoritative database combining OFAC, UN, EU, UK and other official sanctions and PEP watchlists. Treat this data as ground truth for the sanctionsStatus and sanctionsSource fields — do not independently re-search for sanctions information, use exactly what is provided.
+Regarding the GLEIF LEI data provided to you below: this comes from a real, live, automated lookup - if it returned no record, that alone is not a red flag (most private trading companies never register for an LEI), but if it returned a real match, that IS ground truth and should be cited by its actual LEI number.
 
 Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) with exactly this structure:
 
@@ -1046,8 +1047,8 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
     "directors": "<names found in registries, noting source>",
     "financialStatus": "<any public financial info, noting source>",
     "litigation": "<any lawsuits, disputes, legal issues, noting source>",
-    "sanctionsStatus": "<clear/flagged/not found>",
-    "sanctionsSource": "<e.g. 'OpenSanctions (OFAC/UN/EU/UK consolidated)'>",
+    "sanctionsStatus": "<not_checked - see reference links, unless a real match was found in actual search/article evidence>",
+    "sanctionsSource": "<if not_checked: 'No automated match - manual check required via provided OFAC/EU/UK/UN links'. If a real match was found in evidence: cite the actual article/source.>",
     "blacklistStatus": "<clear/flagged/not found>",
     "tradeHistory": "<any export/import records found, noting source>",
     "yearsInOperation": "<calculated from verified registration date, or 'unknown — registration date not independently confirmed'>",
@@ -1059,7 +1060,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
       "role": "<their role>",
       "source": "website|registry|both|other",
       "confidence": "verified|probable|unverified|not_found",
-      "sanctionsCheck": "clear|flagged|not found",
+      "sanctionsCheck": "not_checked|flagged_in_evidence",
       "pepCheck": "clear|flagged|not found",
       "courtRecords": "clear|flagged|not found",
       "bankruptcyCheck": "clear|flagged|not found",
@@ -1349,6 +1350,9 @@ function renderResults(result) {
       ${infoCard('Address Type', co.addressType, addressColor(co.addressType))}
     </div>
     <div class="section-header">Compliance & Risk</div>
+    <div class="prose" style="background:#fef2f2;border-left:4px solid #f87171;padding:14px 18px;margin-bottom:16px;font-size:13px;">
+      <strong>⚠ No automated sanctions database check was performed.</strong> Any sanctions status below came from the AI's reading of general web search results, not a real-time sanctions list match. Always independently confirm sanctions status yourself via the official OFAC/EU/UK/UN links before relying on it for a real decision.
+    </div>
     <div class="info-grid">
       ${infoCard('Sanctions Status', co.sanctionsStatus, checkColor(co.sanctionsStatus), null, co.sanctionsSource)}
       ${infoCard('Blacklist / Debarment', co.blacklistStatus, checkColor(co.blacklistStatus))}
