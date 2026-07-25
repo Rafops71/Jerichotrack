@@ -620,7 +620,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v23</div>
+      <div class="logo-sub">Due Diligence Engine · v24</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -662,6 +662,10 @@ color: #4f46e5;
           <input type="text" id="keyPerson" placeholder="Full Name" autocomplete="off">
         </div>
         <div class="form-group full">
+          <label>Known Registration Number (optional, but strongly recommended if you already have it - e.g. from KYC documents)</label>
+          <input type="text" id="knownRegNumber" placeholder="e.g. DMCC798948" autocomplete="off">
+        </div>
+        <div class="form-group full">
           <label>Industry / Commodity Sector</label>
           <div class="sector-grid" id="sectorGrid">
             <div class="sector-tag" onclick="toggleSector(this)">Chrome Ore</div>
@@ -694,7 +698,7 @@ color: #4f46e5;
     <div class="progress-panel" id="progressPanel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
         <div class="progress-title" style="margin-bottom:0;">⬡ &nbsp; Research in progress — please wait</div>
-        <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#818cf8;letter-spacing:2px;background:#1e3a5f;padding:8px 16px;border-radius:4px;border:2px solid #818cf8;" id="runTimer">00:00</div>
+        <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:bold;color:#000000;letter-spacing:2px;background:#ffffff;padding:8px 16px;border-radius:4px;border:2px solid #000000;" id="runTimer">00:00</div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
       <div class="progress-steps" id="progressSteps"></div>
@@ -900,6 +904,7 @@ async function runResearch() {
 
   const website = document.getElementById('companyWebsite').value.trim();
   const keyPerson = document.getElementById('keyPerson').value.trim();
+  const knownRegNumber = document.getElementById('knownRegNumber').value.trim();
   const sectors = [...document.querySelectorAll('.sector-tag.selected')].map(e => e.textContent);
   const notes = document.getElementById('extraNotes').value.trim();
 
@@ -924,11 +929,11 @@ async function runResearch() {
   renderProgressSteps(steps);
   startTimer();
 
-  const prompt = buildPrompt(company, country, website, keyPerson, sectors, notes);
+  const prompt = buildPrompt(company, country, website, keyPerson, knownRegNumber, sectors, notes);
   let raw;
   try {
     const [result] = await Promise.all([
-      callWorker(prompt, company, country, keyPerson),
+      callWorker(prompt, company, country, keyPerson, knownRegNumber),
       animateProgress(steps)
     ]);
     raw = result;
@@ -937,7 +942,7 @@ async function runResearch() {
   }
 
   stopTimer();
-  currentResult = { company, country, website, keyPerson, sectors, notes, raw, date: new Date().toISOString() };
+  currentResult = { company, country, website, keyPerson, knownRegNumber, sectors, notes, raw, date: new Date().toISOString() };
 
   if (!raw || !raw.error) {
     try {
@@ -988,15 +993,21 @@ async function animateProgress(steps) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── Prompt Builder ──────────────────────────────────────────────────────
-function buildPrompt(company, country, website, keyPerson, sectors, notes) {
+function buildPrompt(company, country, website, keyPerson, knownRegNumber, sectors, notes) {
   return `You are a rigorous due diligence analyst specializing in commodities, mining, and international trade counterparties. Your task is to conduct an evidence-based investigation of the following entity.
 
 COMPANY: ${company}
 COUNTRY: ${country}
 ${website ? 'WEBSITE (claimed by the company — see verification rules below): ' + website : ''}
 ${keyPerson ? 'KEY PERSON: ' + keyPerson : ''}
+${knownRegNumber ? 'KNOWN REGISTRATION NUMBER (already confirmed by the user, e.g. from KYC documents - treat as ground truth for THIS field only, and use it as the primary anchor for entity matching): ' + knownRegNumber : ''}
 ${sectors.length ? 'SECTOR: ' + sectors.join(', ') : ''}
 ${notes ? 'ADDITIONAL CONTEXT: ' + notes : ''}
+
+ENTITY DISAMBIGUATION — READ THIS FIRST, IT IS THE MOST COMMON WAY THIS REPORT GOES WRONG:
+Company names are frequently reused, similar, or ambiguous across jurisdictions (e.g. many unrelated "XYZ Trading DMCC"-style companies exist). Before attributing ANY finding, especially a sanctions match, red flag, or negative news item, to the target company above, you MUST confirm the evidence explicitly and specifically refers to THIS exact company - matching on name AND country, and matching the registration number above if one was given.
+${knownRegNumber ? 'Since a registration number was provided, that is your primary anchor: if a piece of evidence names a similar or identical company but does NOT show this registration number (or shows a different one), you MUST treat it as a DIFFERENT, unrelated entity and explicitly say so - do not attribute its findings to the target company under any circumstances.' : 'No registration number was provided, so name-matching alone is weaker evidence. If a similarly-named company appears in search results, you MUST explicitly flag the ambiguity ("a similarly-named company was found but could not be confirmed as the same entity without a registration number") rather than presenting it as a confirmed match.'}
+Never merge, combine, or average findings from what might be two different companies. When genuinely uncertain whether evidence is about the target company, say so plainly instead of picking the more dramatic interpretation.
 
 CORE PRINCIPLE — THE ENTITY CANNOT PROVE ITSELF:
 The company's own website, press releases, and any company-controlled social media (LinkedIn, Facebook, Instagram, TikTok, YouTube) may ONLY be used as a source of CLAIMS to be independently verified. They must NEVER be treated as evidence of legitimacy, reputation, ownership, financial health, or trustworthiness. If the website says "25 years of experience" or "leading mining company," that is a claim, not a fact, until independently corroborated.
@@ -1085,11 +1096,11 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
 }
 
 // ── Worker API Call (replaces direct Anthropic call — key is never exposed here) ──
-async function callWorker(prompt, companyName, companyCountry, keyPerson) {
+async function callWorker(prompt, companyName, companyCountry, keyPerson, knownRegNumber) {
   const response = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson })
+    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson, knownRegNumber })
   });
 
   if (!response.ok) {
@@ -1525,6 +1536,7 @@ function renderHistory() {
             <button class="small-btn" onclick="loadFromHistory(${i})">View</button>
             <button class="small-btn" onclick="rerunFromHistory(${i})">Re-run</button>
             <button class="small-btn" onclick="showDocs(${i})">Docs</button>
+            <button class="small-btn" onclick="deleteFromHistory(${i})" style="border-color:#f87171;color:#f87171;">Delete</button>
           </div>
         </div>
       </div>
@@ -1540,6 +1552,15 @@ function renderHistory() {
   }).join('') + '</div>';
 }
 
+function deleteFromHistory(i) {
+  const item = researchHistory[i];
+  if (!item) return;
+  if (!confirm('Delete "' + item.company + '" from history? This cannot be undone.')) return;
+  researchHistory.splice(i, 1);
+  localStorage.setItem('jdd_history', JSON.stringify(researchHistory));
+  renderHistory();
+}
+
 function loadFromHistory(i) {
   currentResult = researchHistory[i];
   showView('search', document.querySelector('.nav-btn'));
@@ -1547,6 +1568,7 @@ function loadFromHistory(i) {
   document.getElementById('companyCountry').value = currentResult.country;
   document.getElementById('companyWebsite').value = currentResult.website || '';
   document.getElementById('keyPerson').value = currentResult.keyPerson || '';
+  document.getElementById('knownRegNumber').value = currentResult.knownRegNumber || '';
   document.getElementById('resultsPanel').classList.add('active');
   renderResults(currentResult);
 }
@@ -1557,6 +1579,7 @@ async function rerunFromHistory(i) {
   document.getElementById('companyCountry').value = h.country;
   document.getElementById('companyWebsite').value = h.website || '';
   document.getElementById('keyPerson').value = h.keyPerson || '';
+  document.getElementById('knownRegNumber').value = h.knownRegNumber || '';
   showView('search', document.querySelector('.nav-btn'));
   await runResearch();
   if (!researchHistory[i].runs) researchHistory[i].runs = [];
@@ -1698,7 +1721,7 @@ initSetupBanner();
 // again on pageshow (covers back-forward-cache restores too), so "New
 // Search" is guaranteed to actually present an empty form.
 function forceEmptyForm() {
-  ['companyName', 'companyCountry', 'companyWebsite', 'keyPerson', 'extraNotes'].forEach(function (id) {
+  ['companyName', 'companyCountry', 'companyWebsite', 'keyPerson', 'knownRegNumber', 'extraNotes'].forEach(function (id) {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
