@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========== HELPERS ==========
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOperator() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'operator';
+    }
+
+    function isApproved() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ========== USERS ==========
+    match /users/{userId} {
+      // Operators can read all profiles
+      // Users can read only their own profile
+      allow read: if isOperator() || isOwner(userId);
+
+      // Operators can create / update any user
+      allow create, update: if isOperator();
+
+      // A newly registered user may create ONLY their own profile,
+      // and only with forced safe values (participant + pending)
+      allow create: if isAuthenticated()
+                    && request.auth.uid == userId
+                    && request.resource.data.role == 'participant'
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.email == request.auth.token.email;
+
+      // Participants may update a very limited set of their own fields
+      allow update: if isOwner(userId)
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['firstName', 'lastName', 'telephone', 'company', 'country']);
+
+      // No deletions
+      allow delete: if false;
+    }
+
+    // ========== INVITATIONS ==========
+    match /invitations/{inviteId} {
+      // CRITICAL FIX:
+      // Allow reading a SINGLE invitation by its exact ID (needed for register.html)
+      // but FORBID listing / querying the whole collection.
+      allow get: if true;
+      allow list: if isOperator();
+
+      // Only operators can create invitations
+      allow create: if isOperator();
+
+      // Operators can update anything.
+      // A user redeeming the invite can mark it as used (once).
+      allow update: if isOperator()
+                    || (isAuthenticated()
+                        && resource.data.used == false
+                        && request.resource.data.used == true
+                        && request.resource.data.usedBy == request.auth.uid);
+
+      allow delete: if isOperator();
+    }
+
+    // ========== COMMODITIES ==========
+    match /commodities/{commodityId} {
+      allow read: if isAuthenticated() && isApproved();
+      allow create, update, delete: if isOperator();
+    }
+
+    // ========== LISTINGS ==========
+    match /listings/{listingId} {
+      // Approved users and operators can read listings
+      // (identity fields are NO LONGER stored in the document)
+      allow read: if isOperator() || (isAuthenticated() && isApproved());
+
+      // Only approved users can create, and they must set createdBy to themselves
+      allow create: if isAuthenticated()
+                    && isApproved()
+                    && request.resource.data.createdBy == request.auth.uid
+                    // Extra safety: these identity fields must never be written
+                    && !('createdByName' in request.resource.data)
+                    && !('createdByCompany' in request.resource.data);
+
+      // Owner or operator can update
+      allow update: if isOperator()
+                    || (isOwner(resource.data.createdBy) && isApproved());
+
+      // Only operators can hard-delete
+      allow delete: if isOperator();
+    }
+
+    // ========== VERSION HISTORY ==========
+    match /listingHistory/{historyId} {
+      allow read: if isOperator();
+      allow create: if isAuthenticated() && isApproved();
+      allow update, delete: if false;
+    }
+
+    // ========== DOCUMENTS METADATA ==========
+    match /documents/{docId} {
+      allow read: if isOperator()
+                  || (isAuthenticated() && isApproved()
+                      && resource.data.uploadedBy == request.auth.uid);
+
+      allow create: if isAuthenticated()
+                    && isApproved()
+                    && request.resource.data.uploadedBy == request.auth.uid;
+
+      allow update: if isOperator() || isOwner(resource.data.uploadedBy);
+      allow delete: if isOperator();
+    }
+
+    // ========== COUNTERS (sequential references) ==========
+    match /counters/{counterId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isApproved();
+    }
+
+    // ========== ACTIVITY LOG ==========
+    match /activity/{activityId} {
+      allow read: if isOperator();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    // ========== EMAIL QUEUE (Trigger Email extension) ==========
+    match /mail/{mailId} {
+      allow create: if isOperator() || isAuthenticated();
+      allow read, update, delete: if false;
+    }
+  }
+}
