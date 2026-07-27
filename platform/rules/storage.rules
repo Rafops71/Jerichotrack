@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper: check if user is operator
+    function isOperator() {
+      return request.auth != null && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'operator';
+    }
+
+    function isApproved() {
+      return request.auth != null && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // Documents folder
+    match /documents/{userId}/{listingId}/{fileName} {
+      // Operators can read everything
+      allow read: if isOperator();
+      
+      // Owner can read their own documents
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Approved users can upload to their own folder
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && isApproved()
+                    && request.resource.size < 20 * 1024 * 1024  // 20 MB
+                    && (request.resource.contentType.matches('application/pdf')
+                        || request.resource.contentType.matches('application/msword')
+                        || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                        || request.resource.contentType.matches('application/vnd.ms-excel')
+                        || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                        || request.resource.contentType.matches('image/jpeg')
+                        || request.resource.contentType.matches('image/png')
+                        || request.resource.contentType.matches('application/zip')
+                        || request.resource.contentType.matches('application/x-zip-compressed'));
+      
+      // Owner or operator can delete
+      allow delete: if isOperator() || (request.auth != null && request.auth.uid == userId);
+      
+      allow update: if false; // No updates, only create/delete
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
