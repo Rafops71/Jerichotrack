@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jericho – Accept Invitation</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card" style="max-width:480px;">
+      <div class="auth-header">
+        <div class="auth-logo">Jericho</div>
+        <p class="auth-subtitle">Complete your registration</p>
+      </div>
+
+      <div class="auth-body">
+        <div id="alert-area"></div>
+        <div id="loading-state" class="text-center text-muted" style="padding:2rem 0;">
+          <div class="spinner" style="margin:0 auto 1rem;"></div>
+          Validating invitation…
+        </div>
+
+        <form id="register-form" class="hidden" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="firstName">First name <span class="required">*</span></label>
+            <input class="form-input" type="text" id="firstName" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lastName">Last name <span class="required">*</span></label>
+            <input class="form-input" type="text" id="lastName" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="company">Company name <span class="required">*</span></label>
+            <input class="form-input" type="text" id="company" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="country">Country <span class="required">*</span></label>
+            <input class="form-input" type="text" id="country" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Professional email <span class="required">*</span></label>
+            <input class="form-input" type="email" id="email" required />
+            <p class="form-hint">This will be your login email.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="telephone">Telephone number <span class="required">*</span></label>
+            <input class="form-input" type="tel" id="telephone" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password <span class="required">*</span></label>
+            <input class="form-input" type="password" id="password" required minlength="8" />
+            <p class="form-hint">Minimum 8 characters, at least one letter and one number.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="confirmPassword">Confirm password <span class="required">*</span></label>
+            <input class="form-input" type="password" id="confirmPassword" required />
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;" id="register-btn">
+            Create Account
+          </button>
+        </form>
+
+        <div id="success-state" class="hidden text-center" style="padding:1.5rem 0;">
+          <div class="alert alert-success">
+            Your account has been created and is now pending operator approval.<br>
+            You will be notified once approved.
+          </div>
+          <a href="index.html" class="btn btn-secondary" style="margin-top:1rem;">Go to Sign In</a>
+        </div>
+      </div>
+
+      <div class="auth-footer">
+        Invitation only · Verified professionals
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/invitations.js"></script>
+
+  <script>
+    firebase.initializeApp(window.JERICHO_FIREBASE_CONFIG);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    JerichoAuth.init(auth, db);
+    JerichoInvitations.init(db);
+
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('invite');
+
+    const loadingState = document.getElementById('loading-state');
+    const registerForm = document.getElementById('register-form');
+    const successState = document.getElementById('success-state');
+    const alertArea = document.getElementById('alert-area');
+
+    function showAlert(msg, type = 'danger') {
+      alertArea.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+
+    async function validateInvite() {
+      if (!inviteToken) {
+        loadingState.classList.add('hidden');
+        showAlert('No invitation token found. Please use the link you received.');
+        return;
+      }
+
+      try {
+        const invite = await JerichoInvitations.getInvitation(inviteToken);
+        if (!invite) {
+          loadingState.classList.add('hidden');
+          showAlert('This invitation link is invalid.');
+          return;
+        }
+        if (invite.used) {
+          loadingState.classList.add('hidden');
+          showAlert('This invitation link has already been used.');
+          return;
+        }
+        if (invite.expiresAt && invite.expiresAt.toDate() < new Date()) {
+          loadingState.classList.add('hidden');
+          showAlert('This invitation link has expired.');
+          return;
+        }
+
+        // Pre-fill email if present on the invite
+        if (invite.email) {
+          document.getElementById('email').value = invite.email;
+        }
+
+        loadingState.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        loadingState.classList.add('hidden');
+        showAlert('Could not validate invitation. Please try again later.');
+      }
+    }
+
+    validateInvite();
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertArea.innerHTML = '';
+
+      const formData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        company: document.getElementById('company').value.trim(),
+        country: document.getElementById('country').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        password: document.getElementById('password').value,
+        confirmPassword: document.getElementById('confirmPassword').value
+      };
+
+      // Validation
+      if (!formData.firstName || !formData.lastName || !formData.company || !formData.country || !formData.telephone) {
+        showAlert('Please fill in all required fields.');
+        return;
+      }
+      if (!JerichoUtils.isValidEmail(formData.email)) {
+        showAlert('Please enter a valid email address.');
+        return;
+      }
+      if (!JerichoUtils.isStrongPassword(formData.password)) {
+        showAlert('Password must be at least 8 characters and contain both letters and numbers.');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        showAlert('Passwords do not match.');
+        return;
+      }
+
+      const btn = document.getElementById('register-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating account…';
+
+      try {
+        await JerichoAuth.registerWithInvite(inviteToken, formData);
+        registerForm.classList.add('hidden');
+        successState.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        let msg = err.message || 'Registration failed. Please try again.';
+        if (err.code === 'auth/email-already-in-use') {
+          msg = 'This email is already registered.';
+        }
+        showAlert(msg);
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    });
+  </script>
+</body>
+</html>
