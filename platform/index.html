@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jericho – Sign In</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">Jericho</div>
+        <p class="auth-subtitle">Private commodity network</p>
+      </div>
+
+      <div class="auth-body">
+        <div id="alert-area"></div>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="email">Email address</label>
+            <input class="form-input" type="email" id="email" name="email" required autocomplete="email" placeholder="you@company.com" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-input" type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+            <a href="#" id="forgot-link" class="text-sm">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;" id="login-btn">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Forgot password form (hidden by default) -->
+        <form id="forgot-form" class="hidden" novalidate>
+          <p class="text-sm text-secondary mb-4">Enter your email and we will send you a password reset link.</p>
+          <div class="form-group">
+            <label class="form-label" for="forgot-email">Email address</label>
+            <input class="form-input" type="email" id="forgot-email" required placeholder="you@company.com" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;">Send Reset Link</button>
+          <button type="button" class="btn btn-ghost" style="width:100%;" id="back-to-login">Back to Sign In</button>
+        </form>
+      </div>
+
+      <div class="auth-footer">
+        Invitation only · Verified professionals
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (compat for simplicity & reliability on GitHub Pages) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    // Initialize Firebase
+    firebase.initializeApp(window.JERICHO_FIREBASE_CONFIG);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    JerichoAuth.init(auth, db);
+
+    // Redirect if already logged in
+    window.addEventListener('jericho-auth-changed', (e) => {
+      const { user, profile } = e.detail;
+      if (user && profile) {
+        if (profile.status === 'approved' || profile.role === 'operator') {
+          window.location.href = 'app.html';
+        } else if (profile.status === 'pending') {
+          showAlert('Your account is pending operator approval.', 'warning');
+        }
+      }
+    });
+
+    const loginForm = document.getElementById('login-form');
+    const forgotForm = document.getElementById('forgot-form');
+    const alertArea = document.getElementById('alert-area');
+
+    function showAlert(msg, type = 'danger') {
+      alertArea.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('login-btn');
+
+      if (!JerichoUtils.isValidEmail(email)) {
+        showAlert('Please enter a valid email address.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+
+      try {
+        await JerichoAuth.login(email, password);
+        // Redirect handled by auth state listener
+      } catch (err) {
+        console.error(err);
+        let msg = 'Sign in failed. Please check your credentials.';
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+          msg = 'Invalid email or password.';
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = 'Too many attempts. Please try again later.';
+        }
+        showAlert(msg);
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+
+    document.getElementById('forgot-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.classList.add('hidden');
+      forgotForm.classList.remove('hidden');
+      alertArea.innerHTML = '';
+    });
+
+    document.getElementById('back-to-login').addEventListener('click', () => {
+      forgotForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      alertArea.innerHTML = '';
+    });
+
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!JerichoUtils.isValidEmail(email)) {
+        showAlert('Please enter a valid email address.');
+        return;
+      }
+      try {
+        await JerichoAuth.sendPasswordReset(email);
+        showAlert('Password reset email sent. Please check your inbox.', 'success');
+      } catch (err) {
+        showAlert('Could not send reset email. Please verify the address.');
+      }
+    });
+  </script>
+</body>
+</html>
