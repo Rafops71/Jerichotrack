@@ -384,6 +384,8 @@ vertical-align: middle;
 .confidence-badge.probable { background: rgba(129,140,248,0.15); color: var(--amber); border: 1px solid rgba(129,140,248,0.3); }
 .confidence-badge.unverified { background: rgba(100,116,139,0.15); color: var(--gray); border: 1px solid rgba(100,116,139,0.3); }
 .confidence-badge.notfound { background: rgba(248,113,113,0.1); color: #999; border: 1px solid rgba(100,116,139,0.3); }
+.evidence-tag { color: var(--indigo); text-decoration: none; font-weight: 600; font-size: 11px; padding: 0 1px; border-bottom: 1px dotted var(--indigo); }
+.evidence-tag:hover { color: var(--navy); border-bottom-style: solid; }
 
 .evidence-trail {
 margin-top: 10px;
@@ -620,7 +622,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v25</div>
+      <div class="logo-sub">Due Diligence Engine · v26</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -918,6 +920,7 @@ async function runResearch() {
     'Identifying conflicts between claims and evidence',
     'Assessing mining/trade-specific red flags',
     'Scoring confidence per finding',
+    'Running independent verification pass',
     'Compiling final report'
   ];
 
@@ -1230,6 +1233,24 @@ function normalizeReport(obj) {
     });
   }
 
+  // selfCheck comes from a second, separate AI call (the verification
+  // pass) and evidenceIndex is built directly by the Worker from real
+  // search results (never AI-generated) - both pass through untouched
+  // except for coercing the audit call's own free-text fields to strings,
+  // same as everything else the AI returns.
+  if (safe.selfCheck && typeof safe.selfCheck === 'object' && Array.isArray(safe.selfCheck.unsupportedClaims)) {
+    safe.selfCheck = Object.assign({}, safe.selfCheck, {
+      unsupportedClaims: safe.selfCheck.unsupportedClaims.map(function (c) {
+        if (!c || typeof c !== 'object') return c;
+        return {
+          location: normalizeScalar(c.location) || '',
+          claim: normalizeScalar(c.claim) || '',
+          issue: normalizeScalar(c.issue) || ''
+        };
+      })
+    });
+  }
+
   return safe;
 }
 
@@ -1267,6 +1288,51 @@ function formatFindings(val) {
     return Object.keys(val).map(function (k) { return val[k]; }).filter(Boolean).join(', ');
   }
   return String(val);
+}
+
+// Turns citation tags like [E3] left in the AI's text into small clickable
+// links back to the actual source (using the evidenceIndex map the Worker
+// builds itself from real search results - never from anything the AI
+// invents). Any [E#] tag not present in evidenceIndex is left as plain
+// text rather than turned into a broken/fabricated link.
+function linkifyEvidence(text, evidenceIndex) {
+  if (!text || typeof text !== 'string' || !evidenceIndex) return text;
+  return text.replace(/\[E(\d+)\]/g, function (match, num) {
+    const item = evidenceIndex['E' + num];
+    if (!item || !item.url) return match;
+    const safeTitle = (item.title || item.url).replace(/"/g, '&quot;');
+    return `<a href="${item.url}" target="_blank" rel="noopener" class="evidence-tag" title="${safeTitle}">[${num}]</a>`;
+  });
+}
+
+// Renders the automated verification pass box for the Red Flags tab. This
+// is a SEPARATE model call auditing the first one against the same
+// evidence - not proof, just a second-opinion cross-check - so the wording
+// stays honest about what it is and isn't.
+function renderSelfCheck(r) {
+  const sc = r.selfCheck;
+  if (!sc) return '';
+  if (!sc.performed) {
+    return `<div class="section-header" style="margin-top:28px;">Automated Verification Pass</div>
+      <div class="prose" style="color:var(--gray);">${sc.note || 'The automated verification pass did not complete for this run.'}</div>`;
+  }
+  const claims = Array.isArray(sc.unsupportedClaims) ? sc.unsupportedClaims : [];
+  let html = '<div class="section-header" style="margin-top:28px;">Automated Verification Pass</div>';
+  html += `<div class="prose" style="color:var(--gray);font-size:12px;margin-bottom:14px;">A second, independent AI pass checked the report above against the same evidence, looking only for claims that aren't actually backed by it. This is a cross-check, not a guarantee - always use your own judgment.</div>`;
+  if (claims.length === 0) {
+    html += '<div class="prose">No unsupported claims flagged.</div>';
+  } else {
+    html += `<div class="red-flags-box" style="border-left-color:var(--amber);background:rgba(129,140,248,0.08);border-color:rgba(129,140,248,0.35);">`;
+    html += `<div class="red-flags-title" style="color:var(--amber);">⚑ &nbsp;POSSIBLY UNSUPPORTED CLAIMS (${claims.length})</div>`;
+    claims.forEach(function (c) {
+      const loc = (c && c.location) || '';
+      const claim = (c && c.claim) || '';
+      const issue = (c && c.issue) || '';
+      html += `<div class="flag-item"><div class="flag-icon" style="color:var(--amber);">▲</div><div>${loc ? `<strong style="color:var(--amber);">[${loc}]</strong> ` : ''}${claim}${issue ? ' — ' + issue : ''}</div></div>`;
+    });
+    html += '</div>';
+  }
+  return html;
 }
 
 function confBadge(conf) {
@@ -1310,7 +1376,7 @@ function renderResults(result) {
 
   document.getElementById('tab-summary').innerHTML = `
     <div class="section-header">Executive Summary</div>
-    <div class="prose">${(r.executiveSummary || 'No summary available.').replace(/\n/g, '<br>')}</div>
+    <div class="prose">${linkifyEvidence((r.executiveSummary || 'No summary available.').replace(/\n/g, '<br>'), r.evidenceIndex)}</div>
     <div class="section-header">Score Rationale</div>
     <div class="prose">${r.scoreRationale || ''}</div>
   `;
@@ -1324,9 +1390,9 @@ function renderResults(result) {
     const med = flags.filter(f => f.severity === 'medium');
     const low = flags.filter(f => f.severity === 'low');
 
-    if (high.length) rfHTML += renderFlagBox(high, 'HIGH SEVERITY FLAGS', 'var(--red-soft)');
-    if (med.length) rfHTML += renderFlagBox(med, 'MEDIUM SEVERITY FLAGS', 'var(--amber)');
-    if (low.length) rfHTML += renderFlagBox(low, 'LOW SEVERITY FLAGS', 'var(--gray)');
+    if (high.length) rfHTML += renderFlagBox(high, 'HIGH SEVERITY FLAGS', 'var(--red-soft)', r.evidenceIndex);
+    if (med.length) rfHTML += renderFlagBox(med, 'MEDIUM SEVERITY FLAGS', 'var(--amber)', r.evidenceIndex);
+    if (low.length) rfHTML += renderFlagBox(low, 'LOW SEVERITY FLAGS', 'var(--gray)', r.evidenceIndex);
   } else {
     rfHTML += '<div class="prose">No significant red flags identified.</div>';
   }
@@ -1340,12 +1406,14 @@ function renderResults(result) {
           <div class="conflict-row">
             <div class="conflict-claim">Claimed: <span>${c.claimed}</span></div>
             <div style="color:var(--gray)">→</div>
-            <div class="conflict-found">Found: ${c.found}</div>
+            <div class="conflict-found">Found: ${linkifyEvidence(c.found, r.evidenceIndex)}</div>
           </div>
         </div>
       `;
     });
   }
+
+  rfHTML += renderSelfCheck(r);
 
   document.getElementById('tab-redflags').innerHTML = rfHTML;
 
@@ -1371,7 +1439,7 @@ function renderResults(result) {
       ${infoCard('Financial Status', co.financialStatus)}
       ${infoCard('Trade History', co.tradeHistory)}
     </div>
-    ${co.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${formatFindings(co.additionalFindings)}</div>` : ''}
+    ${co.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${linkifyEvidence(formatFindings(co.additionalFindings), r.evidenceIndex)}</div>` : ''}
   `;
 
   const people = r.people || [];
@@ -1392,7 +1460,7 @@ function renderResults(result) {
             ${badge('Fraud Registry', p.fraudRegistry)}
             ${badge('Adverse Media', p.adverseMedia)}
           </div>
-          ${p.notes ? `<div class="prose" style="margin-top:12px;margin-bottom:0;">${p.notes}</div>` : ''}
+          ${p.notes ? `<div class="prose" style="margin-top:12px;margin-bottom:0;">${linkifyEvidence(p.notes, r.evidenceIndex)}</div>` : ''}
         </div>
       `;
     });
@@ -1410,12 +1478,12 @@ function renderResults(result) {
     </div>
     <div class="section-header">Export & Trade Records</div>
     <div class="info-grid">
-      ${infoCard('Export Records', mt.exportRecords)}
+      ${infoCard('Export Records', linkifyEvidence(formatFindings(mt.exportRecords), r.evidenceIndex))}
       ${infoCard('Trade Data Sources', mt.tradeDataSources)}
     </div>
     <div class="section-header">Registries Searched</div>
     <div class="prose">${formatFindings(mt.governmentRegistriesChecked) || 'See raw dump for details.'}</div>
-    ${mt.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${formatFindings(mt.additionalFindings)}</div>` : ''}
+    ${mt.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${linkifyEvidence(formatFindings(mt.additionalFindings), r.evidenceIndex)}</div>` : ''}
   `;
 
   document.getElementById('tab-raw').innerHTML = `
@@ -1424,14 +1492,14 @@ function renderResults(result) {
   `;
 }
 
-function renderFlagBox(flags, title, color) {
+function renderFlagBox(flags, title, color, evidenceIndex) {
   return `
     <div class="red-flags-box" style="border-left-color:${color};background:${color}18;border-color:${color}55;">
       <div class="red-flags-title" style="color:${color};">⚑ &nbsp;${title} (${flags.length})</div>
       ${flags.map(f => `
         <div class="flag-item">
           <div class="flag-icon" style="color:${color};">▲</div>
-          <div><strong style="color:${color};">[${f.category}]</strong> ${f.description} ${confBadge(f.confidence)}</div>
+          <div><strong style="color:${color};">[${f.category}]</strong> ${linkifyEvidence(f.description, evidenceIndex)} ${confBadge(f.confidence)}</div>
         </div>
       `).join('')}
     </div>
