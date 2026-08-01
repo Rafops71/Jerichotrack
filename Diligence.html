@@ -622,7 +622,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v26</div>
+      <div class="logo-sub">Due Diligence Engine · v28</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -664,19 +664,17 @@ color: #4f46e5;
           <input type="text" id="keyPerson" placeholder="Full Name" autocomplete="off">
         </div>
         <div class="form-group full">
-          <label>Industry / Commodity Sector</label>
+          <label>Industry / Sector (optional)</label>
           <div class="sector-grid" id="sectorGrid">
-            <div class="sector-tag" onclick="toggleSector(this)">Chrome Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Manganese</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Iron Ore</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Ferrochrome</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Copper</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Cobalt</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Lithium</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Fuels</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Gold</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Antimony</div>
-            <div class="sector-tag" onclick="toggleSector(this)">Trading / Broker</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Mining & Metals</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Energy / Fuels</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Oil & Gas</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Manufacturing</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Logistics / Shipping</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Finance / Banking</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Trading / Brokerage</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Technology</div>
+            <div class="sector-tag" onclick="toggleSector(this)">Professional Services</div>
             <div class="sector-tag" onclick="toggleSector(this)">Other</div>
           </div>
           <button type="button" class="small-btn" onclick="window.open('https://www.responsiblemineralsinitiative.org/facilities-lists/public-list/','_blank')" style="width:100%;margin-top:10px;">🔗 Check RMI Public List — smelter/refiner responsible-sourcing status (free, covers cobalt, copper, lithium and other minerals)</button>
@@ -712,7 +710,7 @@ color: #4f46e5;
         <button class="result-tab" onclick="showTab('redflags',this)">Red Flags</button>
         <button class="result-tab" onclick="showTab('company',this)">Company</button>
         <button class="result-tab" onclick="showTab('people',this)">People</button>
-        <button class="result-tab" onclick="showTab('mining',this)">Mining & Trade</button>
+        <button class="result-tab" onclick="showTab('business',this)">Business & Operations</button>
         <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
       </div>
 
@@ -721,7 +719,7 @@ color: #4f46e5;
         <div class="result-section" id="tab-redflags"></div>
         <div class="result-section" id="tab-company"></div>
         <div class="result-section" id="tab-people"></div>
-        <div class="result-section" id="tab-mining"></div>
+        <div class="result-section" id="tab-business"></div>
         <div class="result-section" id="tab-raw"></div>
       </div>
 
@@ -918,7 +916,7 @@ async function runResearch() {
     'Verifying registered address and legal status',
     'Checking directors and key persons individually',
     'Identifying conflicts between claims and evidence',
-    'Assessing mining/trade-specific red flags',
+    'Assessing industry-specific and operational red flags',
     'Scoring confidence per finding',
     'Running independent verification pass',
     'Compiling final report'
@@ -992,7 +990,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── Prompt Builder ──────────────────────────────────────────────────────
 function buildPrompt(company, country, website, keyPerson, sectors, notes) {
-  return `You are a rigorous due diligence analyst specializing in commodities, mining, and international trade counterparties. Your task is to conduct an evidence-based investigation of the following entity.
+  return `You are a rigorous due diligence analyst specializing in corporate intelligence, compliance, and counterparty risk assessment for companies in any industry. Your task is to conduct an evidence-based investigation of the following entity.
 
 COMPANY: ${company}
 COUNTRY: ${country}
@@ -1002,7 +1000,7 @@ ${sectors.length ? 'SECTOR: ' + sectors.join(', ') : ''}
 ${notes ? 'ADDITIONAL CONTEXT: ' + notes : ''}
 
 CORE PRINCIPLE — THE ENTITY CANNOT PROVE ITSELF:
-The company's own website, press releases, and any company-controlled social media (LinkedIn, Facebook, Instagram, TikTok, YouTube) may ONLY be used as a source of CLAIMS to be independently verified. They must NEVER be treated as evidence of legitimacy, reputation, ownership, financial health, or trustworthiness. If the website says "25 years of experience" or "leading mining company," that is a claim, not a fact, until independently corroborated.
+The company's own website, press releases, and any company-controlled social media (LinkedIn, Facebook, Instagram, TikTok, YouTube) may ONLY be used as a source of CLAIMS to be independently verified. They must NEVER be treated as evidence of legitimacy, reputation, ownership, financial health, or trustworthiness. If the website says "25 years of experience" or "leading company in its field," that is a claim, not a fact, until independently corroborated.
 
 SOURCE HIERARCHY (apply this when weighing every piece of evidence):
 - HIGHEST CONFIDENCE: government registries, regulators, official sanctions lists (OFAC/UN/EU/UK), court records, official public filings
@@ -1012,7 +1010,12 @@ SOURCE HIERARCHY (apply this when weighing every piece of evidence):
 
 VERIFICATION RULES — CRITICAL:
 1. You will be given pre-gathered evidence below (sanctions data, registry data, search results, and full article text collected by separate tools before this message). Base your findings on this evidence — do not claim you independently searched anything yourself, and do not invent sources that were not provided to you.
-2. All output must be in English, even where the underlying evidence includes non-English sources.
+2. LANGUAGE AND TRANSLATION — CRITICAL:
+   - Do NOT limit yourself to English-language sources. Official registries, mining cadastres, court records, news and government notices in the local language of the country of registration are often the highest-value evidence and MUST be used when available.
+   - All findings, descriptions, red flags, conflicts and the executive summary MUST be written in clear English.
+   - When a key fact comes from a non-English source, translate it accurately into English and briefly note the original language (e.g. "Portuguese registry extract", "French court notice", "Spanish mining title").
+   - Never discard or ignore a relevant source just because it is not in English.
+   - Machine translation of legal or technical terms can be imperfect — if a critical official document (licence, court judgment, registry extract) is in another language, flag that a human should verify the original wording when the finding is material.
 3. For every finding, you must classify it as one of exactly four states:
    - "verified": confirmed by at least one independent, authoritative source in the evidence provided
    - "probable": suggested by independent sources in the evidence but not fully corroborated, or corroborated only by medium-confidence sources
@@ -1024,6 +1027,10 @@ VERIFICATION RULES — CRITICAL:
 7. For every named finding, briefly note where it came from (e.g. "South African CIPC registry", "Reuters, March 2026", "company website — unverified claim") so the finding is traceable.
 8. If evidence is genuinely ambiguous or contradictory and you cannot responsibly resolve it into a clear verified/unverified judgment, do NOT force a confident-sounding conclusion. Instead, explicitly say the finding requires manual human review, and explain exactly what is unclear and what a human should check. It is always better to say "this needs a human to verify" than to guess and sound certain.
 9. CRITICAL — SANCTIONS: no automated sanctions database match was performed for this report. You have only been given official reference LINKS (OFAC/EU/UK/UN/ICIJ) for a human to check manually themselves - you do NOT have actual match results from any of those lists. You are STRICTLY FORBIDDEN from stating that a company or person appears on, or is clear from, any sanctions list, unless a specific match was explicitly present in the WEB SEARCH RESULTS or ARTICLE TEXT evidence below (e.g. a news article reporting a real designation). Never invent a sanctions listing, a different alias/name, a designation date, or any specific identifying detail that was not literally present in the evidence provided. If no such evidence exists, sanctionsStatus MUST be "not_checked - see reference links" and sanctionsSource MUST say manual verification via the provided links is required. Fabricating a sanctions match is a severe error with real legal and business consequences - when in doubt, always say the check was not performed rather than inventing a result.
+
+9. CRITICAL — INDUSTRY NEUTRALITY: This tool is a GENERAL corporate due-diligence engine, not a mining or commodities tool. Absence of mining concessions, mining licences, commodity trade records, or any industry-specific permit is COMPLETELY NORMAL for the majority of companies and MUST NOT lower the score, create red flags, or be treated as adverse. Only genuine negative findings (sanctions matches present in evidence, litigation, false claims contradicted by evidence, inactive/struck-off registration, verified adverse media, etc.) affect the score. Do not invent industry-specific expectations.
+
+
 
 Regarding the GLEIF LEI data provided to you below: this comes from a real, live, automated lookup - if it returned no record, that alone is not a red flag (most private trading companies never register for an LEI), but if it returned a real match, that IS ground truth and should be cited by its actual LEI number.
 
@@ -1072,16 +1079,15 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
       "notes": "<any specific findings about this person, noting source>"
     }
   ],
-  "miningAndTrade": {
-    "concessionsClaimed": "<what company claims to hold>",
-    "concessionsVerified": "<what government registries show, or 'no independent registry checked/available'>",
-    "concessionsMatch": true|false|null,
-    "miningArea": "<geographic area claimed>",
-    "miningAreaStatus": "<verified active / belongs to another entity / no record / not applicable>",
-    "exportRecords": "<any customs or trade data found, noting source>",
-    "tradeDataSources": "<which databases were checked>",
+  "businessAndOperations": {
+    "claimedActivities": "<what the company claims to do / its business description>",
+    "verifiedActivities": "<what independent sources confirm about its actual activities, or 'no independent confirmation found'>",
+    "activitiesMatch": true|false|null,
+    "licencesAndPermits": "<any licences, permits, regulatory authorisations, or operating approvals found, noting source; or 'none identified'>",
+    "tradeAndSupplyChain": "<any export/import, customs, supply-chain or trade records found, noting source; absence is normal for many companies>",
+    "tradeDataSources": "<which databases or sources were checked for trade/supply-chain data>",
     "governmentRegistriesChecked": "<list of registries actually searched>",
-    "additionalFindings": "<any other mining/trade findings, each noting confidence level>"
+    "additionalFindings": "<any other relevant operational or industry findings, each noting confidence level and source>"
   },
   "rawDump": "<complete unstructured dump of ALL raw findings, sources consulted, searches performed, and any other data collected — formatted as plain text with section headers>"
 }`;
@@ -1160,14 +1166,6 @@ async function callWorker(prompt, companyName, companyCountry, keyPerson) {
 }
 
 // ── Normalize AI response ────────────────────────────────────────────────
-// The model is instructed to return specific fields as plain strings, but
-// in practice sometimes returns an array or object instead (this is what
-// caused garbled/duplicated-looking report text in earlier versions).
-// Rather than defending against this separately in every single place the
-// report gets displayed (renderResults, PDF export, history list, etc —
-// about 20 spots), every field is normalized ONCE, right here, immediately
-// after parsing. Everything downstream can then safely assume plain
-// strings (or, for the one true boolean field, a real boolean/null).
 function normalizeScalar(v) {
   if (v === null || v === undefined) return v;
   if (typeof v === 'boolean' || typeof v === 'number') return v;
@@ -1189,14 +1187,12 @@ function normalizeReport(obj) {
     safe.company = co;
   }
 
-  if (safe.miningAndTrade && typeof safe.miningAndTrade === 'object' && !Array.isArray(safe.miningAndTrade)) {
-    const mt = {};
-    Object.keys(safe.miningAndTrade).forEach(function (k) {
-      // concessionsMatch is meant to be a real true/false/null, used in a
-      // strict === comparison elsewhere - never coerce it to a string.
-      mt[k] = (k === 'concessionsMatch') ? safe.miningAndTrade[k] : normalizeScalar(safe.miningAndTrade[k]);
+  if (safe.businessAndOperations && typeof safe.businessAndOperations === 'object' && !Array.isArray(safe.businessAndOperations)) {
+    const bo = {};
+    Object.keys(safe.businessAndOperations).forEach(function (k) {
+      bo[k] = (k === 'activitiesMatch') ? safe.businessAndOperations[k] : normalizeScalar(safe.businessAndOperations[k]);
     });
-    safe.miningAndTrade = mt;
+    safe.businessAndOperations = bo;
   }
 
   if (Array.isArray(safe.redFlags)) {
@@ -1233,11 +1229,6 @@ function normalizeReport(obj) {
     });
   }
 
-  // selfCheck comes from a second, separate AI call (the verification
-  // pass) and evidenceIndex is built directly by the Worker from real
-  // search results (never AI-generated) - both pass through untouched
-  // except for coercing the audit call's own free-text fields to strings,
-  // same as everything else the AI returns.
   if (safe.selfCheck && typeof safe.selfCheck === 'object' && Array.isArray(safe.selfCheck.unsupportedClaims)) {
     safe.selfCheck = Object.assign({}, safe.selfCheck, {
       unsupportedClaims: safe.selfCheck.unsupportedClaims.map(function (c) {
@@ -1262,8 +1253,6 @@ function formatFindings(val) {
     return val.map(function (item) {
       if (typeof item === 'string' || typeof item === 'number') return String(item);
       if (item && typeof item === 'object') {
-        // Handle known shapes first (finding+confidence, name+role), then
-        // fall back to joining any other key/value pairs the model used.
         if (item.finding) {
           const parts = [item.finding];
           if (item.confidence) parts.push('(' + item.confidence + (item.source ? ', ' + item.source : '') + ')');
@@ -1275,14 +1264,12 @@ function formatFindings(val) {
           if (item.confidence) parts.push('(' + item.confidence + (item.source ? ', ' + item.source : '') + ')');
           return parts.join(' ');
         }
-        // Generic fallback: join every key/value pair in the object
         return Object.keys(item).map(function (k) { return item[k]; }).filter(Boolean).join(', ');
       }
       return String(item);
     }).join('<br>');
   }
   if (typeof val === 'object') {
-    // A single object rather than an array - same generic fallback logic
     if (val.finding) return val.finding + (val.confidence ? ' (' + val.confidence + ')' : '');
     if (val.name) return val.name + (val.role ? ' - ' + val.role : '');
     return Object.keys(val).map(function (k) { return val[k]; }).filter(Boolean).join(', ');
@@ -1290,11 +1277,6 @@ function formatFindings(val) {
   return String(val);
 }
 
-// Turns citation tags like [E3] left in the AI's text into small clickable
-// links back to the actual source (using the evidenceIndex map the Worker
-// builds itself from real search results - never from anything the AI
-// invents). Any [E#] tag not present in evidenceIndex is left as plain
-// text rather than turned into a broken/fabricated link.
 function linkifyEvidence(text, evidenceIndex) {
   if (!text || typeof text !== 'string' || !evidenceIndex) return text;
   return text.replace(/\[E(\d+)\]/g, function (match, num) {
@@ -1305,10 +1287,6 @@ function linkifyEvidence(text, evidenceIndex) {
   });
 }
 
-// Renders the automated verification pass box for the Red Flags tab. This
-// is a SEPARATE model call auditing the first one against the same
-// evidence - not proof, just a second-opinion cross-check - so the wording
-// stays honest about what it is and isn't.
 function renderSelfCheck(r) {
   const sc = r.selfCheck;
   if (!sc) return '';
@@ -1352,7 +1330,7 @@ function renderResults(result) {
   const r = result.raw;
   if (!r || r.error) {
     document.getElementById('tab-summary').innerHTML = `<div class="prose">Research completed, but the response could not be read as a structured report.<br><br><strong>Details:</strong><br>${r?.rawText || 'No data'}</div>`;
-    ['redflags','company','people','mining','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
+    ['redflags','company','people','business','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
     document.getElementById('scoreBanner').innerHTML = '';
     return;
   }
@@ -1467,23 +1445,21 @@ function renderResults(result) {
   }
   document.getElementById('tab-people').innerHTML = `<div class="section-header">Board Members & Key Individuals</div>${peopleHTML}`;
 
-  const mt = r.miningAndTrade || {};
-  document.getElementById('tab-mining').innerHTML = `
-    <div class="section-header">Mining Concessions</div>
+  const bo = r.businessAndOperations || {};
+  document.getElementById('tab-business').innerHTML = `
+    <div class="section-header">Business Activities</div>
     <div class="info-grid">
-      ${infoCard('Concessions Claimed', mt.concessionsClaimed)}
-      ${infoCard('Concessions Verified', mt.concessionsVerified, mt.concessionsMatch === false ? 'bad' : mt.concessionsMatch === true ? 'ok' : '')}
-      ${infoCard('Mining Area', mt.miningArea)}
-      ${infoCard('Mining Area Status', mt.miningAreaStatus, miningColor(mt.miningAreaStatus))}
+      ${infoCard('Claimed Activities', bo.claimedActivities)}
+      ${infoCard('Verified Activities', bo.verifiedActivities, bo.activitiesMatch === false ? 'bad' : bo.activitiesMatch === true ? 'ok' : '')}
+      ${infoCard('Licences & Permits', bo.licencesAndPermits)}
+      ${infoCard('Trade & Supply Chain', linkifyEvidence(formatFindings(bo.tradeAndSupplyChain), r.evidenceIndex))}
     </div>
-    <div class="section-header">Export & Trade Records</div>
+    <div class="section-header">Data Sources & Registries</div>
     <div class="info-grid">
-      ${infoCard('Export Records', linkifyEvidence(formatFindings(mt.exportRecords), r.evidenceIndex))}
-      ${infoCard('Trade Data Sources', mt.tradeDataSources)}
+      ${infoCard('Trade Data Sources', bo.tradeDataSources)}
+      ${infoCard('Registries Searched', formatFindings(bo.governmentRegistriesChecked) || 'See raw dump for details.')}
     </div>
-    <div class="section-header">Registries Searched</div>
-    <div class="prose">${formatFindings(mt.governmentRegistriesChecked) || 'See raw dump for details.'}</div>
-    ${mt.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${linkifyEvidence(formatFindings(mt.additionalFindings), r.evidenceIndex)}</div>` : ''}
+    ${bo.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${linkifyEvidence(formatFindings(bo.additionalFindings), r.evidenceIndex)}</div>` : ''}
   `;
 
   document.getElementById('tab-raw').innerHTML = `
@@ -1547,11 +1523,11 @@ function addressColor(s) {
   return '';
 }
 
-function miningColor(s) {
+function activityColor(s) {
   if (!s) return '';
   const l = String(s).toLowerCase();
-  if (l.includes('verified active')) return 'ok';
-  if (l.includes('another entity') || l.includes('no record')) return 'bad';
+  if (l.includes('verified') || l.includes('active') || l.includes('match')) return 'ok';
+  if (l.includes('mismatch') || l.includes('no record') || l.includes('not found')) return 'bad';
   return 'warn';
 }
 
@@ -1745,9 +1721,9 @@ ${(r.people || []).map(p => `
 <tr><td>Notes</td><td>${p.notes || '—'}</td></tr>
 </table>`).join('')}
 
-<h2>Mining & Trade</h2>
+<h2>Business & Operations</h2>
 <table>
-${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== undefined ? `<tr><td>${k.replace(/([A-Z])/g,' $1').trim()}</td><td>${v}</td></tr>` : '').join('')}
+${Object.entries(r.businessAndOperations || {}).map(([k, v]) => v !== null && v !== undefined ? `<tr><td>${k.replace(/([A-Z])/g,' $1').trim()}</td><td>${v}</td></tr>` : '').join('')}
 </table>
 
 <div class="footer">
@@ -1763,18 +1739,11 @@ ${Object.entries(r.miningAndTrade || {}).map(([k, v]) => v !== null && v !== und
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function resetSearch() {
-  // A full reload guarantees every field and result is cleared, with no
-  // dependency on class-toggle logic that could fail silently. Worker URL
-  // and History are stored separately in localStorage and survive this.
   window.location.reload();
 }
 
 initSetupBanner();
 
-// Safari (especially iPadOS) sometimes restores previously-typed form values
-// on reload despite autocomplete="off". Force every field blank on load and
-// again on pageshow (covers back-forward-cache restores too), so "New
-// Search" is guaranteed to actually present an empty form.
 function forceEmptyForm() {
   ['companyName', 'companyCountry', 'companyWebsite', 'keyPerson', 'extraNotes'].forEach(function (id) {
     const el = document.getElementById(id);
