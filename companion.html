@@ -107,6 +107,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .tag-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .tag-opt { background: white; border: 1.5px solid #ddd; color: #666; font-size: 12px; padding: 7px 12px; border-radius: 10px; }
 .tag-opt.selected { background: #1a2e4a; border-color: #1a2e4a; color: white; }
+
+/* AI Inbox review cards */
+.review-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #1a2e4a; }
+.review-card.low-conf { border-left-color: #e8a020; }
+.rc-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #1a2e4a; margin-bottom: 8px; }
+.rc-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; color: white; margin-left: 4px; font-weight: 600; }
+.badge-merge { background: #e8a020; }
+.badge-new { background: #3498db; }
+.badge-low { background: #e74c3c; }
+.rc-field { margin-bottom: 8px; }
+.rc-label { font-size: 11px; color: #888; font-weight: 600; display: block; margin-bottom: 2px; }
+.rc-field input, .rc-field select, .rc-field textarea { width: 100%; padding: 7px 9px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fafbfc; }
+.rc-field textarea { height: 55px; resize: vertical; }
+.rc-snippet { font-size: 11px; color: #999; font-style: italic; background: #f7f8fa; padding: 6px 8px; border-radius: 6px; margin: 6px 0; line-height: 1.4; }
+.rc-include-row { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; color: #555; }
+.ingest-error-box { background: #fdecea; border: 1px solid #f5b7b1; border-radius: 12px; padding: 14px; font-size: 13px; color: #922; }
+.ingest-error-box textarea { width: 100%; height: 90px; margin-top: 8px; font-size: 11px; font-family: monospace; border: 1px solid #f0c4c0; border-radius: 8px; padding: 8px; background: white; color: #444; }
+.ingest-setup-note { background: #fff8ea; border: 1px solid #f0d38a; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #7a5c10; margin-bottom: 12px; line-height: 1.5; }
 </style>
 
 </head>
@@ -143,6 +161,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
     <button class="tile" onclick="openNoteSheet()">
       <span class="tile-icon">📝</span>
       <span class="tile-label">Quick Note</span>
+    </button>
+    <button class="tile primary" onclick="openIngestSheet()">
+      <span class="tile-icon">🤖</span>
+      <span class="tile-label">AI Inbox</span>
     </button>
   </div>
 
@@ -307,6 +329,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
   </div>
 </div>
 
+<!-- AI INBOX INPUT SHEET -->
+
+<div class="sheet-overlay" id="ingestOverlay" onclick="closeIngestSheet()"></div>
+<div class="sheet" id="ingestSheet">
+  <div class="sheet-handle"></div>
+  <h3>🤖 AI Inbox</h3>
+  <div class="field" id="ingestSetupField" style="display:none;">
+    <div class="ingest-setup-note">One-time setup: paste your AI Inbox Worker URL below. It's remembered on this device — you won't need to do this again.</div>
+    <label>AI Inbox Worker URL</label>
+    <input id="ingestWorkerUrlInput" type="text" placeholder="https://your-ai-inbox-worker.workers.dev" autocomplete="off">
+    <button type="button" class="btn-sheet-save" style="width:100%;margin-top:8px;" onclick="saveIngestWorkerUrl()">Save URL</button>
+  </div>
+  <div class="field">
+    <label>Paste text, WhatsApp, email, or a call transcript</label>
+    <textarea id="ingestSourceText" placeholder="Paste anything here — the AI will pull out contacts, tasks, quotes and updates for you to review before anything is saved." style="height:150px;"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeIngestSheet()">Cancel</button>
+    <button class="btn-sheet-save" id="ingestProcessBtn" onclick="processIngest()">Process</button>
+  </div>
+</div>
+
+<!-- AI INBOX REVIEW SHEET -->
+
+<div class="sheet-overlay" id="ingestReviewOverlay" onclick="closeIngestReviewSheet()"></div>
+<div class="sheet" id="ingestReviewSheet" style="max-height:92vh;">
+  <div class="sheet-handle"></div>
+  <h3>Review Extracted Items</h3>
+  <div id="ingestReviewList"></div>
+  <label class="rc-include-row" style="margin:12px 0;">
+    <input type="checkbox" id="keepTranscriptCheckbox" checked> Keep original transcript as a note
+  </label>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeIngestReviewSheet()">Cancel</button>
+    <button class="btn-sheet-save" id="ingestConfirmBtn" onclick="confirmAndSaveIngest()">Confirm &amp; Save</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
@@ -335,7 +395,9 @@ const SYNCED_COLLECTIONS = {
   tasks: 'jericho_tasks',
   pipeline: 'jericho_pipeline',
   meetings: 'jericho_meetings',
-  notes: 'jericho_companion_notes'
+  notes: 'jericho_companion_notes',
+  commslog: 'jericho_commslog',
+  brokerQuotes: 'jericho_broker_quotes'
 };
 
 window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, SYNCED_COLLECTIONS };
@@ -523,10 +585,10 @@ window.addEventListener('offline',()=>setSyncPill('offline'));
 // ============================================================
 // DATA
 // ============================================================
-let leads=[],tasks=[],pipeline=[],meetings=[],notes=[];
+let leads=[],tasks=[],pipeline=[],meetings=[],notes=[],commsLog=[],brokerQuotes=[];
 const today=new Date().toISOString().split('T')[0];
 
-const LS_KEYS={leads:'jericho_leads',tasks:'jericho_tasks',pipeline:'jericho_pipeline',meetings:'jericho_meetings',notes:'jericho_companion_notes'};
+const LS_KEYS={leads:'jericho_leads',tasks:'jericho_tasks',pipeline:'jericho_pipeline',meetings:'jericho_meetings',notes:'jericho_companion_notes',commslog:'jericho_commslog',brokerQuotes:'jericho_broker_quotes'};
 
 function loadLocal(){
   leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
@@ -534,6 +596,8 @@ function loadLocal(){
   pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
   meetings=JSON.parse(localStorage.getItem('jericho_meetings'))||[];
   notes=JSON.parse(localStorage.getItem('jericho_companion_notes'))||[];
+  commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
+  brokerQuotes=JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
 }
 loadLocal();
 
@@ -569,6 +633,8 @@ function startSync(){
       else if(key==='pipeline')pipeline=items;
       else if(key==='meetings')meetings=items;
       else if(key==='notes')notes=items;
+      else if(key==='commslog')commsLog=items;
+      else if(key==='brokerQuotes')brokerQuotes=items;
       persistLocal(key,items);
       renderAll();
       setSyncPill('online');
@@ -924,6 +990,290 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('#myLocSearch')&&!e.target.closest('#myLocResults'))document.getElementById('myLocResults').style.display='none';
   if(!e.target.closest('#attendeeLocSearch')&&!e.target.closest('#attendeeLocResults'))document.getElementById('attendeeLocResults').style.display='none';
 });
+
+// ============================================================
+// AI INBOX
+// ============================================================
+let INGEST_WORKER_URL=localStorage.getItem('jericho_ingest_worker_url')||'';
+let currentIngestData=null;
+let currentIngestSourceText='';
+const ALLOWED_STAGES_CLIENT=["New","Waiting Documents","Waiting Financials","Negotiation","Final SPA","Closed Won","Closed Not Monetized","Lost"];
+
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openIngestSheet(){
+  document.getElementById('ingestSetupField').style.display=INGEST_WORKER_URL?'none':'block';
+  document.getElementById('ingestWorkerUrlInput').value=INGEST_WORKER_URL;
+  document.getElementById('ingestSourceText').value='';
+  const btn=document.getElementById('ingestProcessBtn');
+  btn.disabled=false;btn.textContent='Process';
+  document.getElementById('ingestOverlay').classList.add('show');
+  document.getElementById('ingestSheet').classList.add('show');
+}
+function closeIngestSheet(){
+  document.getElementById('ingestOverlay').classList.remove('show');
+  document.getElementById('ingestSheet').classList.remove('show');
+}
+function saveIngestWorkerUrl(){
+  const val=document.getElementById('ingestWorkerUrlInput').value.trim().replace(/\/$/,'');
+  if(!val){toast('Please enter a Worker URL','error');return;}
+  INGEST_WORKER_URL=val;
+  localStorage.setItem('jericho_ingest_worker_url',val);
+  document.getElementById('ingestSetupField').style.display='none';
+  toast('Worker URL saved ✓');
+}
+
+async function processIngest(){
+  if(!INGEST_WORKER_URL){toast('Please save your Worker URL first','error');return;}
+  const text=document.getElementById('ingestSourceText').value.trim();
+  if(!text){toast('Please paste some text first','error');return;}
+
+  const btn=document.getElementById('ingestProcessBtn');
+  btn.disabled=true;btn.textContent='Processing...';
+  currentIngestSourceText=text;
+
+  try{
+    const resp=await fetch(INGEST_WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
+    });
+    if(!resp.ok){
+      const errText=await resp.text().catch(()=>'');
+      throw new Error('Worker returned status '+resp.status+(errText?': '+errText.slice(0,200):''));
+    }
+    const data=await resp.json();
+
+    if(data.error==='truncated'){
+      showIngestError('The AI response was cut off before finishing. Try again with shorter text, or split it into smaller pieces.',data.partialText||'');
+      return;
+    }
+    if(data.error==='parse_failed'){
+      showIngestError('The AI response could not be read as structured data. Your original text is safe below — copy it and try again.',data.rawText||'');
+      return;
+    }
+    if(data.error){
+      showIngestError('Something went wrong: '+(data.message||data.error),'');
+      return;
+    }
+    if(!data.ok||!data.data){
+      showIngestError('Unexpected response from the Worker.',JSON.stringify(data));
+      return;
+    }
+
+    currentIngestData=data.data;
+    closeIngestSheet();
+    renderIngestReview();
+  }catch(err){
+    showIngestError('Request failed: '+(err.message||'unknown error')+'. Check your Worker URL and try again.','');
+  }finally{
+    btn.disabled=false;btn.textContent='Process';
+  }
+}
+
+function showIngestError(msg,rawText){
+  closeIngestSheet();
+  currentIngestData=null;
+  const el=document.getElementById('ingestReviewList');
+  let extra='';
+  if(currentIngestSourceText){
+    extra+=`<div style="font-size:11px;margin-top:10px;color:#888;">Your original text (copy it to try again):</div><textarea readonly>${escapeHtml(currentIngestSourceText)}</textarea>`;
+
+}
+if(rawText&&rawText!==currentIngestSourceText){
+extra+=`<div style="font-size:11px;margin-top:10px;color:#888;">Raw AI response:</div><textarea readonly>${escapeHtml(rawText)}</textarea>`;
+}
+el.innerHTML=`<div class="ingest-error-box"><strong>⚠ ${escapeHtml(msg)}</strong>${extra}</div>`;
+document.getElementById(‘keepTranscriptCheckbox’).closest(’.rc-include-row’).style.display=‘none’;
+document.getElementById(‘ingestConfirmBtn’).style.display=‘none’;
+document.getElementById(‘ingestReviewOverlay’).classList.add(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.add(‘show’);
+}
+
+// Deterministic duplicate detection: exact email or exact phone match only.
+// Everything else is always treated as a new lead — no fuzzy guessing.
+function findExistingLead(item){
+if(item.email){
+const m=leads.find(l=>l.email&&l.email.trim().toLowerCase()===item.email.trim().toLowerCase());
+if(m)return m;
+}
+if(item.phone){
+const m=leads.find(l=>l.phone&&l.phone.trim()===item.phone.trim());
+if(m)return m;
+}
+return null;
+}
+
+function renderIngestReview(){
+const el=document.getElementById(‘ingestReviewList’);
+document.getElementById(‘keepTranscriptCheckbox’).closest(’.rc-include-row’).style.display=‘flex’;
+document.getElementById(‘ingestConfirmBtn’).style.display=‘block’;
+document.getElementById(‘ingestConfirmBtn’).disabled=false;
+document.getElementById(‘ingestConfirmBtn’).textContent=‘Confirm & Save’;
+
+const d=currentIngestData;
+let html=’’;
+let totalItems=0;
+
+(d.leads||[]).forEach((item,idx)=>{
+totalItems++;
+const existing=findExistingLead(item);
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="leads" data-idx="${idx}" data-merge-id="${existing?existing.id:''}"> <div class="rc-header"><span>👤 Lead</span><span>${existing?'<span class="rc-badge badge-merge">Merge</span>':'<span class="rc-badge badge-new">New</span>'}${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Name</span><input class="edit-name" value="${escapeHtml(item.name)}"></div> <div class="rc-field"><span class="rc-label">Company</span><input class="edit-company" value="${escapeHtml(item.company)}"></div> <div class="rc-field"><span class="rc-label">Email</span><input class="edit-email" value="${escapeHtml(item.email)}"></div> <div class="rc-field"><span class="rc-label">Phone</span><input class="edit-phone" value="${escapeHtml(item.phone)}"></div> <div class="rc-field"><span class="rc-label">Country</span><input class="edit-country" value="${escapeHtml(item.country)}"></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+(d.tasks||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="tasks" data-idx="${idx}"> <div class="rc-header"><span>✅ Task</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Title</span><input class="edit-title" value="${escapeHtml(item.title)}"></div> <div class="rc-field"><span class="rc-label">Category</span><input class="edit-category" value="${escapeHtml(item.category)}"></div> <div class="rc-field"><span class="rc-label">Due date</span><input class="edit-due" type="date" value="${item.due||''}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+(d.commslog||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+const ctypes=[‘Call’,‘Email’,‘WhatsApp’,‘Meeting’,‘Note’];
+const dirs=[‘Outgoing’,‘Incoming’];
+const outcomes=[‘Positive’,‘Neutral’,‘Negative’,‘Waiting’];
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="commslog" data-idx="${idx}"> <div class="rc-header"><span>💬 Communication Log</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Contact</span><input class="edit-contact" value="${escapeHtml(item.contact)}"></div> <div class="rc-field"><span class="rc-label">Type</span><select class="edit-ctype"><option value="">-</option>${ctypes.map(t=>`<option ${item.type===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Summary</span><textarea class="edit-summary">${escapeHtml(item.summary)}</textarea></div> <div class="rc-field"><span class="rc-label">Outcome</span><select class="edit-outcome"><option value="">-</option>${outcomes.map(t=>`<option ${item.outcome===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Follow-up date</span><input class="edit-followupdate" type="date" value="${item.followupDate||''}"></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+(d.broker_quotes||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+const dirs=[‘Offer’,‘Bid’,‘Reference’];
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="broker_quotes" data-idx="${idx}"> <div class="rc-header"><span>📋 Broker Quote</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div> <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div> <div class="rc-field"><span class="rc-label">Terms</span><input class="edit-terms" value="${escapeHtml(item.terms)}"></div> <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-qty" value="${escapeHtml(item.qty)}"></div> <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Source</span><input class="edit-source" value="${escapeHtml(item.source)}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+(d.pipeline||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="pipeline" data-idx="${idx}"> <div class="rc-header"><span>📊 Pipeline Update</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Broker</span><input class="edit-broker" value="${escapeHtml(item.broker)}"></div> <div class="rc-field"><span class="rc-label">Buyer</span><input class="edit-buyer" value="${escapeHtml(item.buyer)}"></div> <div class="rc-field"><span class="rc-label">Seller</span><input class="edit-seller" value="${escapeHtml(item.seller)}"></div> <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-quantity" value="${escapeHtml(item.quantity)}"></div> <div class="rc-field"><span class="rc-label">Unit</span><input class="edit-unit" value="${escapeHtml(item.unit)}"></div> <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div> <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div> <div class="rc-field"><span class="rc-label">Stage</span><select class="edit-stage"><option value="">-</option>${ALLOWED_STAGES_CLIENT.map(s=>`<option ${item.stage===s?‘selected’:’’}>${s}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+(d.notes||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="notes" data-idx="${idx}"> <div class="rc-header"><span>📝 Note</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><textarea class="edit-text">${escapeHtml(item.text)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
+
+if(totalItems===0){
+html=’<div class="empty-note">Nothing was found to extract from that text. You can still keep it as a note below.</div>’;
+}
+
+el.innerHTML=html;
+document.getElementById(‘ingestReviewOverlay’).classList.add(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.add(‘show’);
+}
+
+function closeIngestReviewSheet(){
+document.getElementById(‘ingestReviewOverlay’).classList.remove(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.remove(‘show’);
+currentIngestData=null;
+}
+
+async function confirmAndSaveIngest(){
+if(!currentIngestData){closeIngestReviewSheet();return;}
+const btn=document.getElementById(‘ingestConfirmBtn’);
+btn.disabled=true;btn.textContent=‘Saving…’;
+
+const cards=document.querySelectorAll(’#ingestReviewList .review-card’);
+let savedCount=0;
+
+try{
+for(const card of cards){
+const checkbox=card.querySelector(’.include-checkbox’);
+if(!checkbox||!checkbox.checked)continue;
+const type=card.dataset.type;
+
+```
+  if(type==='leads'){
+    const name=card.querySelector('.edit-name')?.value.trim()||'';
+    if(!name)continue;
+    const mergeId=card.dataset.mergeId;
+    const fields={
+      company:card.querySelector('.edit-company')?.value.trim()||'',
+      email:card.querySelector('.edit-email')?.value.trim()||'',
+      phone:card.querySelector('.edit-phone')?.value.trim()||'',
+      country:card.querySelector('.edit-country')?.value.trim()||'',
+      commodity:card.querySelector('.edit-commodity')?.value.trim()||'',
+      notes:card.querySelector('.edit-notes')?.value.trim()||''
+    };
+    if(mergeId){
+      const existing=leads.find(l=>String(l.id)===String(mergeId));
+      if(existing){
+        // Merge-only rule: fill only currently-empty fields, never overwrite existing data
+        Object.keys(fields).forEach(k=>{
+          if((!existing[k]||!String(existing[k]).trim())&&fields[k])existing[k]=fields[k];
+        });
+        persistLocal('leads',leads);
+        await saveToCloud('leads',existing);
+        savedCount++;
+        continue;
+      }
+    }
+    const item={id:Date.now()+Math.floor(Math.random()*1000),name,...fields,type:'',status:'New',followup:'',introBy:'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    leads.push(item);persistLocal('leads',leads);await saveToCloud('leads',item);
+    savedCount++;
+
+  }else if(type==='tasks'){
+    const title=card.querySelector('.edit-title')?.value.trim()||'';
+    if(!title)continue;
+    const item={id:Date.now()+Math.floor(Math.random()*1000),title,category:card.querySelector('.edit-category')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',due:card.querySelector('.edit-due')?.value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,fromAIInbox:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+    tasks.push(item);persistLocal('tasks',tasks);await saveToCloud('tasks',item);
+    savedCount++;
+
+  }else if(type==='commslog'){
+    const summary=card.querySelector('.edit-summary')?.value.trim()||'';
+    const contact=card.querySelector('.edit-contact')?.value.trim()||'';
+    if(!summary||!contact)continue;
+    const item={id:Date.now()+Math.floor(Math.random()*1000),contact,type:card.querySelector('.edit-ctype')?.value||'Note',date:new Date().toISOString().split('T')[0],direction:card.querySelector('.edit-direction')?.value||'Outgoing',linked:'',followup:'No',followupDate:card.querySelector('.edit-followupdate')?.value||'',outcome:card.querySelector('.edit-outcome')?.value||'Neutral',summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    await saveToCloud('commslog',item);
+    savedCount++;
+
+  }else if(type==='broker_quotes'){
+    const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
+    if(!commodity)continue;
+    const item={id:Date.now()+Math.floor(Math.random()*1000),commodity,price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',terms:card.querySelector('.edit-terms')?.value.trim()||'',qty:card.querySelector('.edit-qty')?.value.trim()||'',direction:card.querySelector('.edit-direction')?.value||'Reference / Market',source:card.querySelector('.edit-source')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    await saveToCloud('brokerQuotes',item);
+    savedCount++;
+
+  }else if(type==='pipeline'){
+    const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
+    if(!commodity)continue;
+    let stage=card.querySelector('.edit-stage')?.value||'New';
+    if(!ALLOWED_STAGES_CLIENT.includes(stage))stage='New'; // defensive check, never trust unvalidated input
+    const item={id:Date.now()+Math.floor(Math.random()*1000),commodity,broker:card.querySelector('.edit-broker')?.value.trim()||'',buyer:card.querySelector('.edit-buyer')?.value.trim()||'',seller:card.querySelector('.edit-seller')?.value.trim()||'',quantity:card.querySelector('.edit-quantity')?.value.trim()||'',unit:card.querySelector('.edit-unit')?.value.trim()||'',price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',stage,trust:'Yellow',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    pipeline.push(item);persistLocal('pipeline',pipeline);await saveToCloud('pipeline',item);
+    savedCount++;
+
+  }else if(type==='notes'){
+    const text=card.querySelector('.edit-text')?.value.trim()||'';
+    if(!text)continue;
+    const item={id:Date.now()+Math.floor(Math.random()*1000),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+    notes.push(item);persistLocal('notes',notes);await saveToCloud('notes',item);
+    savedCount++;
+  }
+}
+
+const keepCb=document.getElementById('keepTranscriptCheckbox');
+if(keepCb&&keepCb.checked&&currentIngestSourceText){
+  const noteItem={id:Date.now()+9999,text:'Original transcript:\n\n'+currentIngestSourceText,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+  notes.push(noteItem);persistLocal('notes',notes);await saveToCloud('notes',noteItem);
+}
+
+closeIngestReviewSheet();
+renderAll();
+toast(savedCount+' item(s) saved ✓');
+```
+
+}catch(err){
+toast(’Save failed: ’+(err.message||‘unknown error’),‘error’);
+}finally{
+btn.disabled=false;btn.textContent=‘Confirm & Save’;
+}
+}
 
 renderAll();
 </script>
