@@ -336,10 +336,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
   <div class="sheet-handle"></div>
   <h3>🤖 AI Inbox</h3>
   <div class="field" id="ingestSetupField" style="display:none;">
-    <div class="ingest-setup-note">One-time setup: paste your AI Inbox Worker URL below. It's remembered on this device — you won't need to do this again.</div>
+    <div class="ingest-setup-note">One-time setup: paste your AI Inbox Worker URL and the auth key you set in Cloudflare. Both are remembered on this device — you won't need to do this again.</div>
     <label>AI Inbox Worker URL</label>
     <input id="ingestWorkerUrlInput" type="text" placeholder="https://your-ai-inbox-worker.workers.dev" autocomplete="off">
-    <button type="button" class="btn-sheet-save" style="width:100%;margin-top:8px;" onclick="saveIngestWorkerUrl()">Save URL</button>
+    <label style="margin-top:10px;">Auth Key (from Cloudflare INGEST_AUTH_KEY)</label>
+    <input id="ingestAuthKeyInput" type="text" placeholder="Same value set in Cloudflare" autocomplete="off">
+    <button type="button" class="btn-sheet-save" style="width:100%;margin-top:8px;" onclick="saveIngestWorkerUrl()">Save</button>
   </div>
   <div class="field">
     <label>Paste text, WhatsApp, email, or a call transcript</label>
@@ -359,7 +361,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
   <h3>Review Extracted Items</h3>
   <div id="ingestReviewList"></div>
   <label class="rc-include-row" style="margin:12px 0;">
-    <input type="checkbox" id="keepTranscriptCheckbox" checked> Keep original transcript as a note
+    <input type="checkbox" id="keepTranscriptCheckbox"> Keep original transcript as a note (may contain sensitive info)
   </label>
   <div class="sheet-actions">
     <button class="btn-sheet-cancel" onclick="closeIngestReviewSheet()">Cancel</button>
@@ -586,7 +588,11 @@ window.addEventListener('offline',()=>setSyncPill('offline'));
 // DATA
 // ============================================================
 let leads=[],tasks=[],pipeline=[],meetings=[],notes=[],commsLog=[],brokerQuotes=[];
-const today=new Date().toISOString().split('T')[0];
+function todayLocal(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+const today=todayLocal();
 
 const LS_KEYS={leads:'jericho_leads',tasks:'jericho_tasks',pipeline:'jericho_pipeline',meetings:'jericho_meetings',notes:'jericho_companion_notes',commslog:'jericho_commslog',brokerQuotes:'jericho_broker_quotes'};
 
@@ -604,12 +610,13 @@ loadLocal();
 function persistLocal(key,arr){localStorage.setItem(LS_KEYS[key],JSON.stringify(arr));}
 
 async function saveToCloud(key,item){
-  if(!window._fbReady)return;
+  if(!window._fbReady)return false;
   try{
     const {db,collection,doc,setDoc,SYNCED_COLLECTIONS}=window._fb;
     await setDoc(doc(collection(db,SYNCED_COLLECTIONS[key]),String(item.id)),item);
     setSyncPill('online');
-  }catch(e){console.warn('Cloud save failed, saved locally:',e);setSyncPill('offline');}
+    return true;
+  }catch(e){console.warn('Cloud save failed, saved locally:',e);setSyncPill('offline');return false;}
 }
 async function deleteFromCloud(key,id){
   if(!window._fbReady)return;
@@ -686,7 +693,7 @@ function renderUpcoming(){
     const relLabel=relativeTimeLabel(m.date,m.time);
     const dateLabel=m.date===today?'Today':new Date(m.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const dayLabel=relLabel||dateLabel;
-    return `<div class="upcoming-row"><span class="upcoming-time">${m.time}</span><div class="upcoming-info"><div class="u-title">${m.purpose||'Call'}</div><div class="u-sub">${dayLabel} · ${(m.attendees||[]).map(a=>a.name).join(', ')||'No attendees added'}</div></div></div>`;
+    return `<div class="upcoming-row"><span class="upcoming-time">${escapeHtml(m.time)}</span><div class="upcoming-info"><div class="u-title">${escapeHtml(m.purpose||'Call')}</div><div class="u-sub">${escapeHtml(dayLabel)} · ${(m.attendees||[]).map(a=>escapeHtml(a.name)).join(', ')||'No attendees added'}</div></div></div>`;
   }).join('');
 }
 
@@ -698,7 +705,7 @@ function taskCardHTML(t){
   if(t.due&&t.due<today)cls='overdue';
   else if(t.due===today)cls='today';
   const dueLabel=t.due?(t.due<today?'Overdue — was due '+t.due:t.due===today?'Due today':'Due '+t.due):'No date set';
-  return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${t.category||t.actionType||'Follow-up'}</span></div><div class="item-title">${t.title}</div>${t.notes?`<div class="item-note">${t.notes}</div>`:''}<div class="item-due">${dueLabel}</div><div class="item-actions"><button class="btn-done" onclick="completeAction(${t.id})">✓ Done</button><button class="btn-del" onclick="deleteAction(${t.id})">Delete</button></div></div>`;
+  return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${escapeHtml(t.category||t.actionType||'Follow-up')}</span></div><div class="item-title">${escapeHtml(t.title)}</div>${t.notes?`<div class="item-note">${escapeHtml(t.notes)}</div>`:''}<div class="item-due">${escapeHtml(dueLabel)}</div><div class="item-actions"><button class="btn-done" onclick="completeAction(${t.id})">✓ Done</button><button class="btn-del" onclick="deleteAction(${t.id})">Delete</button></div></div>`;
 }
 function renderFollowups(){
   const activeCompanionTasks=tasks.filter(t=>!t.completed&&t.fromCompanion);
@@ -724,7 +731,7 @@ function renderPipelineQuick(){
   const el=document.getElementById('pipelineQuickList');
   const active=pipeline.filter(d=>d.stage!=='Closed Won'&&d.stage!=='Lost'&&d.stage!=='Closed Not Monetized');
   if(!active.length){el.innerHTML='<div class="empty-note">No active deals.</div>';return;}
-  el.innerHTML=active.map(d=>`<div class="pipe-row"><span class="pipe-dot" style="background:${stageColors[d.stage]||'#999'}"></span><div class="pipe-info"><div class="pipe-title">${d.commodity}${d.buyer?' — '+d.buyer:''}</div><div class="pipe-stage">${d.stage}</div></div></div>`).join('');
+  el.innerHTML=active.map(d=>`<div class="pipe-row"><span class="pipe-dot" style="background:${stageColors[d.stage]||'#999'}"></span><div class="pipe-info"><div class="pipe-title">${escapeHtml(d.commodity)}${d.buyer?' — '+escapeHtml(d.buyer):''}</div><div class="pipe-stage">${escapeHtml(d.stage)}</div></div></div>`).join('');
 }
 
 // ============================================================
@@ -734,7 +741,7 @@ function renderNotes(){
   const el=document.getElementById('notesList');
   const sorted=[...notes].sort((a,b)=>b.id-a.id);
   if(!sorted.length){el.innerHTML='<div class="empty-note">No notes yet.</div>';return;}
-  el.innerHTML=sorted.map(n=>`<div class="item-card"><div class="item-note" style="margin-top:0;">${n.text}</div><div class="item-due">${n.dateLabel||''}</div><div class="item-actions"><button class="btn-del" onclick="deleteNote(${n.id})">Delete</button></div></div>`).join('');
+  el.innerHTML=sorted.map(n=>`<div class="item-card"><div class="item-note" style="margin-top:0;">${escapeHtml(n.text)}</div><div class="item-due">${escapeHtml(n.dateLabel||'')}</div><div class="item-actions"><button class="btn-del" onclick="deleteNote(${n.id})">Delete</button></div></div>`).join('');
 }
 function deleteNote(id){notes=notes.filter(n=>n.id!==id);persistLocal('notes',notes);deleteFromCloud('notes',id);renderAll();toast('Note deleted','error');}
 
@@ -995,6 +1002,7 @@ document.addEventListener('click',e=>{
 // AI INBOX
 // ============================================================
 let INGEST_WORKER_URL=localStorage.getItem('jericho_ingest_worker_url')||'';
+let INGEST_AUTH_KEY=localStorage.getItem('jericho_ingest_auth_key')||'';
 let currentIngestData=null;
 let currentIngestSourceText='';
 const ALLOWED_STAGES_CLIENT=["New","Waiting Documents","Waiting Financials","Negotiation","Final SPA","Closed Won","Closed Not Monetized","Lost"];
@@ -1004,8 +1012,9 @@ function escapeHtml(s){
 }
 
 function openIngestSheet(){
-  document.getElementById('ingestSetupField').style.display=INGEST_WORKER_URL?'none':'block';
+  document.getElementById('ingestSetupField').style.display=(INGEST_WORKER_URL&&INGEST_AUTH_KEY)?'none':'block';
   document.getElementById('ingestWorkerUrlInput').value=INGEST_WORKER_URL;
+  document.getElementById('ingestAuthKeyInput').value=INGEST_AUTH_KEY;
   document.getElementById('ingestSourceText').value='';
   const btn=document.getElementById('ingestProcessBtn');
   btn.disabled=false;btn.textContent='Process';
@@ -1018,15 +1027,19 @@ function closeIngestSheet(){
 }
 function saveIngestWorkerUrl(){
   const val=document.getElementById('ingestWorkerUrlInput').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('ingestAuthKeyInput').value.trim();
   if(!val){toast('Please enter a Worker URL','error');return;}
+  if(!key){toast('Please enter the auth key too — it must match what you set in Cloudflare','error');return;}
   INGEST_WORKER_URL=val;
+  INGEST_AUTH_KEY=key;
   localStorage.setItem('jericho_ingest_worker_url',val);
+  localStorage.setItem('jericho_ingest_auth_key',key);
   document.getElementById('ingestSetupField').style.display='none';
-  toast('Worker URL saved ✓');
+  toast('Saved ✓');
 }
 
 async function processIngest(){
-  if(!INGEST_WORKER_URL){toast('Please save your Worker URL first','error');return;}
+  if(!INGEST_WORKER_URL||!INGEST_AUTH_KEY){toast('Please save your Worker URL and auth key first','error');return;}
   const text=document.getElementById('ingestSourceText').value.trim();
   if(!text){toast('Please paste some text first','error');return;}
 
@@ -1037,9 +1050,12 @@ async function processIngest(){
   try{
     const resp=await fetch(INGEST_WORKER_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-API-Key':INGEST_AUTH_KEY},
       body:JSON.stringify({text})
     });
+    if(resp.status===401){
+      throw new Error('Unauthorized — the auth key does not match what is set in the Worker. Check both match exactly.');
+    }
     if(!resp.ok){
       const errText=await resp.text().catch(()=>'');
       throw new Error('Worker returned status '+resp.status+(errText?': '+errText.slice(0,200):''));
@@ -1064,6 +1080,7 @@ async function processIngest(){
     }
 
     currentIngestData=data.data;
+    currentIngestData.leads=dedupeExtractedLeads(currentIngestData.leads||[]);
     closeIngestSheet();
     renderIngestReview();
   }catch(err){
@@ -1094,6 +1111,25 @@ document.getElementById(‘ingestReviewSheet’).classList.add(‘show’);
 
 // Deterministic duplicate detection: exact email or exact phone match only.
 // Everything else is always treated as a new lead — no fuzzy guessing.
+// Deduplicate leads that appear more than once within the SAME extraction batch
+// (e.g. the same person mentioned twice in one transcript). Uses the same exact
+// email/phone matching rule as duplicate detection against already-saved leads.
+function dedupeExtractedLeads(items){
+const seenEmails=new Set();
+const seenPhones=new Set();
+const out=[];
+items.forEach(item=>{
+const emailKey=item.email?item.email.trim().toLowerCase():null;
+const phoneKey=item.phone?item.phone.trim():null;
+if(emailKey&&seenEmails.has(emailKey))return;
+if(phoneKey&&seenPhones.has(phoneKey))return;
+if(emailKey)seenEmails.add(emailKey);
+if(phoneKey)seenPhones.add(phoneKey);
+out.push(item);
+});
+return out;
+}
+
 function findExistingLead(item){
 if(item.email){
 const m=leads.find(l=>l.email&&l.email.trim().toLowerCase()===item.email.trim().toLowerCase());
@@ -1173,13 +1209,33 @@ document.getElementById(‘ingestReviewSheet’).classList.remove(‘show’);
 currentIngestData=null;
 }
 
+function makeId(){
+// crypto.randomUUID is supported in all modern mobile browsers (iOS Safari 15.4+,
+// Chrome/Android equivalent range) - falls back only if genuinely unavailable.
+if(window.crypto&&typeof window.crypto.randomUUID===‘function’){
+return window.crypto.randomUUID();
+}
+return Date.now()+’-’+Math.floor(Math.random()*100000);
+}
+
+// Match an extracted pipeline update against an existing deal by commodity+buyer+seller.
+// If found, the existing deal is updated (stage/notes/etc only overwritten if the new
+// value is non-empty) rather than creating a duplicate entry for the same deal.
+function findExistingPipeline(item){
+return pipeline.find(p=>
+(p.commodity||’’).trim().toLowerCase()===(item.commodity||’’).trim().toLowerCase()&&
+(p.buyer||’’).trim().toLowerCase()===(item.buyer||’’).trim().toLowerCase()&&
+(p.seller||’’).trim().toLowerCase()===(item.seller||’’).trim().toLowerCase()
+);
+}
+
 async function confirmAndSaveIngest(){
 if(!currentIngestData){closeIngestReviewSheet();return;}
 const btn=document.getElementById(‘ingestConfirmBtn’);
 btn.disabled=true;btn.textContent=‘Saving…’;
 
 const cards=document.querySelectorAll(’#ingestReviewList .review-card’);
-let savedCount=0;
+let savedCount=0,failedCount=0,skippedCount=0;
 
 try{
 for(const card of cards){
@@ -1190,8 +1246,7 @@ const type=card.dataset.type;
 ```
   if(type==='leads'){
     const name=card.querySelector('.edit-name')?.value.trim()||'';
-    if(!name)continue;
-    const mergeId=card.dataset.mergeId;
+    if(!name){skippedCount++;continue;}
     const fields={
       company:card.querySelector('.edit-company')?.value.trim()||'',
       email:card.querySelector('.edit-email')?.value.trim()||'',
@@ -1200,72 +1255,100 @@ const type=card.dataset.type;
       commodity:card.querySelector('.edit-commodity')?.value.trim()||'',
       notes:card.querySelector('.edit-notes')?.value.trim()||''
     };
-    if(mergeId){
-      const existing=leads.find(l=>String(l.id)===String(mergeId));
-      if(existing){
-        // Merge-only rule: fill only currently-empty fields, never overwrite existing data
-        Object.keys(fields).forEach(k=>{
-          if((!existing[k]||!String(existing[k]).trim())&&fields[k])existing[k]=fields[k];
-        });
-        persistLocal('leads',leads);
-        await saveToCloud('leads',existing);
-        savedCount++;
-        continue;
-      }
+    // Recalculate the merge target from the CURRENT edited email/phone, not the
+    // original AI-extracted values. Prevents a case where the user edits the
+    // email to a different person's after the card already showed "Merge".
+    const existing=findExistingLead(fields);
+    if(existing){
+      Object.keys(fields).forEach(k=>{
+        if((!existing[k]||!String(existing[k]).trim())&&fields[k])existing[k]=fields[k];
+      });
+      persistLocal('leads',leads);
+      const ok=await saveToCloud('leads',existing);
+      if(ok)savedCount++;else failedCount++;
+      continue;
     }
-    const item={id:Date.now()+Math.floor(Math.random()*1000),name,...fields,type:'',status:'New',followup:'',introBy:'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-    leads.push(item);persistLocal('leads',leads);await saveToCloud('leads',item);
-    savedCount++;
+    const item={id:makeId(),name,...fields,type:'',status:'New',followup:'',introBy:'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    leads.push(item);persistLocal('leads',leads);
+    const ok=await saveToCloud('leads',item);
+    if(ok)savedCount++;else failedCount++;
 
   }else if(type==='tasks'){
     const title=card.querySelector('.edit-title')?.value.trim()||'';
-    if(!title)continue;
-    const item={id:Date.now()+Math.floor(Math.random()*1000),title,category:card.querySelector('.edit-category')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',due:card.querySelector('.edit-due')?.value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,fromAIInbox:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
-    tasks.push(item);persistLocal('tasks',tasks);await saveToCloud('tasks',item);
-    savedCount++;
+    if(!title){skippedCount++;continue;}
+    const item={id:makeId(),title,category:card.querySelector('.edit-category')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',due:card.querySelector('.edit-due')?.value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,fromAIInbox:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+    tasks.push(item);persistLocal('tasks',tasks);
+    const ok=await saveToCloud('tasks',item);
+    if(ok)savedCount++;else failedCount++;
 
   }else if(type==='commslog'){
     const summary=card.querySelector('.edit-summary')?.value.trim()||'';
     const contact=card.querySelector('.edit-contact')?.value.trim()||'';
-    if(!summary||!contact)continue;
-    const item={id:Date.now()+Math.floor(Math.random()*1000),contact,type:card.querySelector('.edit-ctype')?.value||'Note',date:new Date().toISOString().split('T')[0],direction:card.querySelector('.edit-direction')?.value||'Outgoing',linked:'',followup:'No',followupDate:card.querySelector('.edit-followupdate')?.value||'',outcome:card.querySelector('.edit-outcome')?.value||'Neutral',summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-    await saveToCloud('commslog',item);
-    savedCount++;
+    if(!summary||!contact){skippedCount++;continue;}
+    const item={id:makeId(),contact,type:card.querySelector('.edit-ctype')?.value||'Note',date:todayLocal(),direction:card.querySelector('.edit-direction')?.value||'Outgoing',linked:'',followup:'No',followupDate:card.querySelector('.edit-followupdate')?.value||'',outcome:card.querySelector('.edit-outcome')?.value||'Neutral',summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    const ok=await saveToCloud('commslog',item);
+    if(ok)savedCount++;else failedCount++;
 
   }else if(type==='broker_quotes'){
     const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
-    if(!commodity)continue;
-    const item={id:Date.now()+Math.floor(Math.random()*1000),commodity,price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',terms:card.querySelector('.edit-terms')?.value.trim()||'',qty:card.querySelector('.edit-qty')?.value.trim()||'',direction:card.querySelector('.edit-direction')?.value||'Reference / Market',source:card.querySelector('.edit-source')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-    await saveToCloud('brokerQuotes',item);
-    savedCount++;
+    if(!commodity){skippedCount++;continue;}
+    const item={id:makeId(),commodity,price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',terms:card.querySelector('.edit-terms')?.value.trim()||'',qty:card.querySelector('.edit-qty')?.value.trim()||'',direction:card.querySelector('.edit-direction')?.value||'Reference / Market',source:card.querySelector('.edit-source')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    const ok=await saveToCloud('brokerQuotes',item);
+    if(ok)savedCount++;else failedCount++;
 
   }else if(type==='pipeline'){
     const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
-    if(!commodity)continue;
+    if(!commodity){skippedCount++;continue;}
     let stage=card.querySelector('.edit-stage')?.value||'New';
     if(!ALLOWED_STAGES_CLIENT.includes(stage))stage='New'; // defensive check, never trust unvalidated input
-    const item={id:Date.now()+Math.floor(Math.random()*1000),commodity,broker:card.querySelector('.edit-broker')?.value.trim()||'',buyer:card.querySelector('.edit-buyer')?.value.trim()||'',seller:card.querySelector('.edit-seller')?.value.trim()||'',quantity:card.querySelector('.edit-quantity')?.value.trim()||'',unit:card.querySelector('.edit-unit')?.value.trim()||'',price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',stage,trust:'Yellow',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-    pipeline.push(item);persistLocal('pipeline',pipeline);await saveToCloud('pipeline',item);
-    savedCount++;
+    const fields={
+      broker:card.querySelector('.edit-broker')?.value.trim()||'',
+      buyer:card.querySelector('.edit-buyer')?.value.trim()||'',
+      seller:card.querySelector('.edit-seller')?.value.trim()||'',
+      quantity:card.querySelector('.edit-quantity')?.value.trim()||'',
+      unit:card.querySelector('.edit-unit')?.value.trim()||'',
+      price:card.querySelector('.edit-price')?.value.trim()||'',
+      origin:card.querySelector('.edit-origin')?.value.trim()||'',
+      notes:card.querySelector('.edit-notes')?.value.trim()||''
+    };
+    const existingDeal=findExistingPipeline({commodity,...fields});
+    if(existingDeal){
+      // Update: only overwrite a field if the new value is non-empty.
+      Object.keys(fields).forEach(k=>{ if(fields[k])existingDeal[k]=fields[k]; });
+      if(stage)existingDeal.stage=stage;
+      persistLocal('pipeline',pipeline);
+      const ok=await saveToCloud('pipeline',existingDeal);
+      if(ok)savedCount++;else failedCount++;
+      continue;
+    }
+    const item={id:makeId(),commodity,...fields,stage,trust:'Yellow',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    pipeline.push(item);persistLocal('pipeline',pipeline);
+    const ok=await saveToCloud('pipeline',item);
+    if(ok)savedCount++;else failedCount++;
 
   }else if(type==='notes'){
     const text=card.querySelector('.edit-text')?.value.trim()||'';
-    if(!text)continue;
-    const item={id:Date.now()+Math.floor(Math.random()*1000),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
-    notes.push(item);persistLocal('notes',notes);await saveToCloud('notes',item);
-    savedCount++;
+    if(!text){skippedCount++;continue;}
+    const item={id:makeId(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+    notes.push(item);persistLocal('notes',notes);
+    const ok=await saveToCloud('notes',item);
+    if(ok)savedCount++;else failedCount++;
   }
 }
 
 const keepCb=document.getElementById('keepTranscriptCheckbox');
 if(keepCb&&keepCb.checked&&currentIngestSourceText){
-  const noteItem={id:Date.now()+9999,text:'Original transcript:\n\n'+currentIngestSourceText,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+  const noteItem={id:makeId(),text:'Original transcript:\n\n'+currentIngestSourceText,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
   notes.push(noteItem);persistLocal('notes',notes);await saveToCloud('notes',noteItem);
 }
 
 closeIngestReviewSheet();
 renderAll();
-toast(savedCount+' item(s) saved ✓');
+
+let msg=savedCount+' item(s) saved';
+if(failedCount)msg+=' — ⚠ '+failedCount+' failed to reach the cloud (saved on this device only, will retry when online)';
+if(skippedCount)msg+=' — '+skippedCount+' skipped (missing a required field)';
+toast(msg,failedCount?'error':'success',failedCount?5000:2500);
 ```
 
 }catch(err){
