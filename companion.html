@@ -442,7 +442,7 @@ onAuthStateChanged(auth, (user) => {
 });
 signInAnonymously(auth).catch((err) => {
   console.error('Anonymous sign-in failed:', err);
-  setSyncPill('offline');
+  window.dispatchEvent(new Event('firebase-auth-failed'));
 });
 </script>
 
@@ -622,6 +622,10 @@ function setSyncPill(state){
 }
 window.addEventListener('online',()=>setSyncPill('online'));
 window.addEventListener('offline',()=>setSyncPill('offline'));
+window.addEventListener('firebase-auth-failed',()=>{
+  setSyncPill('offline');
+  showFatalError('Sign-in to the database failed. This usually means Anonymous authentication is not enabled in the Firebase Console (Authentication > Sign-in method > Anonymous must be turned on).');
+});
 
 // ============================================================
 // DATA
