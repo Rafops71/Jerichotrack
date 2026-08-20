@@ -540,6 +540,9 @@ import {
   getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot,
   enableIndexedDbPersistence, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzcOYuhKN2bSZ_rOIJPwBJcamjNiTd9Mo",
@@ -552,6 +555,7 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 
 // Offline persistence — lets the app keep working if internet drops,
 // then syncs automatically once back online.
@@ -573,8 +577,21 @@ const SYNCED_COLLECTIONS = {
 };
 
 window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, SYNCED_COLLECTIONS };
-window._fbReady = true;
-window.dispatchEvent(new Event('firebase-ready'));
+
+// Anonymous auth: no login screen, no password to manage, but every request to
+// Firestore now carries a real auth token instead of being completely open.
+// This is what lets the Firestore rule require "request.auth != null" instead
+// of staying wide open to the internet. Sync only starts once sign-in succeeds.
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window._fbReady = true;
+    window.dispatchEvent(new Event('firebase-ready'));
+  }
+});
+signInAnonymously(auth).catch((err) => {
+  console.error('Anonymous sign-in failed:', err);
+  setSyncStatus('offline');
+});
 </script>
 
 <script>
