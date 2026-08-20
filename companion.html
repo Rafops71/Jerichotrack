@@ -130,6 +130,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 </head>
 <body>
 
+<div id="fatalErrorBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e74c3c;color:white;padding:14px 16px;font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;"></div>
+<script>
+// Catches any JavaScript error anywhere on the page and shows it on screen.
+// Without this, one broken line anywhere below can make the ENTIRE app go
+// silent/unresponsive with zero visible sign of why - this makes the actual
+// error visible directly on an iPad with no way to open a dev console.
+function showFatalError(msg) {
+  const el = document.getElementById('fatalErrorBanner');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '⚠ Something broke and the app may not work correctly.<br>Error: ' + msg +
+    '<br><span style="font-size:11px;opacity:0.85;">Copy this exact message and send it to Claude/Grok.</span>';
+}
+window.addEventListener('error', function (e) {
+  showFatalError((e.message || 'Unknown error') + ' (line ' + (e.lineno || '?') + ')');
+});
+window.addEventListener('unhandledrejection', function (e) {
+  showFatalError('Async error: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+});
+</script>
+
 <div class="header">
   <h1>⚡ Jericho Companion</h1>
   <span class="sync-pill syncing" id="syncPill">🔄 Connecting...</span>
