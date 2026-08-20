@@ -375,6 +375,9 @@ import {
   getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzcOYuhKN2bSZ_rOIJPwBJcamjNiTd9Mo",
@@ -387,6 +390,7 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 enableIndexedDbPersistence(db).catch((err) => console.warn('Offline persistence not enabled:', err.code));
 
 // Same collections as JerichoTrack — companion writes leads/tasks into the SAME
@@ -403,8 +407,22 @@ const SYNCED_COLLECTIONS = {
 };
 
 window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, SYNCED_COLLECTIONS };
-window._fbReady = true;
-window.dispatchEvent(new Event('firebase-ready'));
+
+// Anonymous auth: no login screen, no password for Rafael/Rodrigo to manage, but
+// every request to Firestore now carries a real auth token instead of being
+// completely open. This is what allows the Firestore rule to require
+// "request.auth != null" instead of staying wide open to the internet.
+// Sync is only started once sign-in actually succeeds, not before.
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window._fbReady = true;
+    window.dispatchEvent(new Event('firebase-ready'));
+  }
+});
+signInAnonymously(auth).catch((err) => {
+  console.error('Anonymous sign-in failed:', err);
+  setSyncPill('offline');
+});
 </script>
 
 <script>
