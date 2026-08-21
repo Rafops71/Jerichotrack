@@ -1,0 +1,415 @@
+<!-- jericho-speech-diagnostic-v1.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jericho Speech Diagnostic v1</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f1115;
+    color: #e6e6e6;
+    margin: 0;
+    padding: 16px;
+    padding-bottom: 60px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px 0;
+    color: #fff;
+  }
+  .sub {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 16px;
+  }
+  .card {
+    background: #1a1d24;
+    border: 1px solid #2a2e38;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 14px;
+    margin: 0 0 10px 0;
+    color: #8ab4ff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #23262f;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .label { color: #aaa; }
+  .row .value { font-weight: 600; text-align: right; }
+  .ok { color: #4ade80; }
+  .bad { color: #f87171; }
+  .warn { color: #fbbf24; }
+  button {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    margin-top: 8px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .btn-primary {
+    background: #2563eb;
+    color: white;
+  }
+  .btn-primary:active { background: #1d4ed8; }
+  .btn-danger {
+    background: #dc2626;
+    color: white;
+  }
+  .btn-danger:active { background: #b91c1c; }
+  .btn-secondary {
+    background: #374151;
+    color: white;
+  }
+  .btn-secondary:active { background: #1f2937; }
+  button:disabled {
+    background: #2a2e38;
+    color: #666;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pill-idle { background: #374151; color: #ccc; }
+  .pill-recording { background: #dc2626; color: white; animation: pulse 1s infinite; }
+  .pill-done { background: #16a34a; color: white; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  #transcript {
+    width: 100%;
+    min-height: 90px;
+    background: #0f1115;
+    border: 1px solid #2a2e38;
+    border-radius: 8px;
+    color: #e6e6e6;
+    font-size: 14px;
+    padding: 10px;
+    margin-top: 10px;
+    resize: vertical;
+  }
+  #log {
+    background: #0a0b0e;
+    border: 1px solid #2a2e38;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    max-height: 260px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #9ca3af;
+  }
+  .log-error { color: #f87171; }
+  .log-good { color: #4ade80; }
+  .log-warn { color: #fbbf24; }
+  .timer {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    margin: 6px 0;
+  }
+  .small-note {
+    font-size: 11px;
+    color: #777;
+    margin-top: 6px;
+  }
+  .clear-btn {
+    background: none;
+    border: 1px solid #444;
+    color: #999;
+    font-size: 12px;
+    padding: 6px 10px;
+    width: auto;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎙️ Jericho Speech Diagnostic</h1>
+<div class="sub">Standalone test page — not connected to Companion or Firestore. Nothing here touches production Jericho.</div>
+
+<div class="card">
+  <h2>Device &amp; Browser Info</h2>
+  <div class="row"><span class="label">User Agent</span><span class="value" id="ua" style="font-size:10px; max-width:60%;">-</span></div>
+  <div class="row"><span class="label">webkitSpeechRecognition</span><span class="value" id="feat-webkit">-</span></div>
+  <div class="row"><span class="label">SpeechRecognition</span><span class="value" id="feat-standard">-</span></div>
+  <div class="row"><span class="label">MediaDevices/getUserMedia</span><span class="value" id="feat-media">-</span></div>
+  <div class="row"><span class="label">Secure context (https)</span><span class="value" id="feat-secure">-</span></div>
+</div>
+
+<div class="card">
+  <h2>Test 1 — Single Short Session (~20s)</h2>
+  <div class="small-note">Tests whether recognition works at all, and whether it produces a final result within a short, uninterrupted burst. Hold nothing — just tap Start, speak a sentence, then tap Stop (or wait).</div>
+  <div style="text-align:center; margin-top:10px;">
+    <span class="status-pill pill-idle" id="pill1">IDLE</span>
+  </div>
+  <div class="timer" id="timer1">0.0s</div>
+  <button class="btn-primary" id="btnStart1" onclick="startTest1()">Start Test 1</button>
+  <button class="btn-danger" id="btnStop1" onclick="stopTest1()" disabled>Stop Test 1</button>
+  <textarea id="transcript1" class="transcript-box" placeholder="Transcript will appear here..." readonly style="width:100%; min-height:60px; background:#0f1115; border:1px solid #2a2e38; border-radius:8px; color:#e6e6e6; font-size:14px; padding:10px; margin-top:10px;"></textarea>
+</div>
+
+<div class="card">
+  <h2>Test 2 — Chunked / Auto-Restart Session</h2>
+  <div class="small-note">Simulates the "hold to record" approach: short recognition bursts (~10s) that automatically restart, building one continuous transcript. Tap Start, speak naturally for as long as you want (try 1-3 minutes), then tap Stop. Watch the log for restarts, errors, or gaps.</div>
+  <div style="text-align:center; margin-top:10px;">
+    <span class="status-pill pill-idle" id="pill2">IDLE</span>
+  </div>
+  <div class="timer" id="timer2">0.0s</div>
+  <div class="small-note" style="text-align:center;">Chunks completed: <span id="chunkCount">0</span> &nbsp;|&nbsp; Errors: <span id="errorCount">0</span></div>
+  <button class="btn-primary" id="btnStart2" onclick="startTest2()">Start Test 2</button>
+  <button class="btn-danger" id="btnStop2" onclick="stopTest2()" disabled>Stop Test 2</button>
+  <textarea id="transcript" placeholder="Accumulated transcript will appear here..." readonly></textarea>
+</div>
+
+<div class="card">
+  <h2>Event Log</h2>
+  <div id="log">Waiting for a test to start...</div>
+  <button class="clear-btn" onclick="clearLog()">Clear Log</button>
+</div>
+
+<script>
+  var logEl = document.getElementById('log');
+  var startTimeGlobal = 0;
+
+  function nowStamp() {
+    var d = new Date();
+    return d.toTimeString().split(' ')[0] + '.' + String(d.getMilliseconds()).padStart(3, '0');
+  }
+
+  function log(msg, cls) {
+    var line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = '[' + nowStamp() + '] ' + msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function clearLog() {
+    logEl.innerHTML = '';
+    log('Log cleared.');
+  }
+
+  // ---- Feature detection ----
+  document.getElementById('ua').textContent = navigator.userAgent;
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  document.getElementById('feat-webkit').innerHTML = window.webkitSpeechRecognition
+    ? '<span class="ok">YES</span>' : '<span class="bad">NO</span>';
+  document.getElementById('feat-standard').innerHTML = window.SpeechRecognition
+    ? '<span class="ok">YES</span>' : '<span class="bad">NO</span>';
+  document.getElementById('feat-media').innerHTML = (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+    ? '<span class="ok">YES</span>' : '<span class="bad">NO</span>';
+  document.getElementById('feat-secure').innerHTML = window.isSecureContext
+    ? '<span class="ok">YES</span>' : '<span class="bad">NO (recognition may be blocked)</span>';
+
+  log('Page loaded. Feature detection complete.');
+  if (!SR) {
+    log('No SpeechRecognition API detected in this browser at all. Both tests will fail immediately.', 'log-error');
+  }
+
+  // =========================================================
+  // TEST 1: Single short session
+  // =========================================================
+  var rec1 = null;
+  var test1Timer = null;
+  var test1Start = 0;
+
+  function setPill(id, state, text) {
+    var el = document.getElementById(id);
+    el.className = 'status-pill pill-' + state;
+    el.textContent = text;
+  }
+
+  function startTest1() {
+    if (!SR) { log('TEST 1: Cannot start — no SpeechRecognition API.', 'log-error'); return; }
+    document.getElementById('transcript1').value = '';
+    document.getElementById('btnStart1').disabled = true;
+    document.getElementById('btnStop1').disabled = false;
+    setPill('pill1', 'recording', 'RECORDING');
+    log('TEST 1: Starting single session...', 'log-good');
+
+    rec1 = new SR();
+    rec1.continuous = false;
+    rec1.interimResults = true;
+    rec1.lang = 'en-US';
+
+    test1Start = Date.now();
+    test1Timer = setInterval(function() {
+      var elapsed = ((Date.now() - test1Start) / 1000).toFixed(1);
+      document.getElementById('timer1').textContent = elapsed + 's';
+    }, 100);
+
+    rec1.onstart = function() { log('TEST 1: onstart fired — recognition engine is active.', 'log-good'); };
+    rec1.onaudiostart = function() { log('TEST 1: onaudiostart fired.'); };
+    rec1.onspeechstart = function() { log('TEST 1: onspeechstart fired — speech detected.'); };
+    rec1.onresult = function(e) {
+      var text = '';
+      for (var i = 0; i < e.results.length; i++) {
+        text += e.results[i][0].transcript;
+      }
+      document.getElementById('transcript1').value = text;
+      var isFinal = e.results[e.results.length - 1].isFinal;
+      log('TEST 1: onresult fired — isFinal=' + isFinal + ' — "' + text + '"', isFinal ? 'log-good' : '');
+    };
+    rec1.onerror = function(e) {
+      log('TEST 1: onerror fired — error="' + e.error + '" message="' + (e.message || 'none') + '"', 'log-error');
+    };
+    rec1.onend = function() {
+      log('TEST 1: onend fired — session ended.', 'log-warn');
+      clearInterval(test1Timer);
+      setPill('pill1', 'done', 'DONE');
+      document.getElementById('btnStart1').disabled = false;
+      document.getElementById('btnStop1').disabled = true;
+    };
+
+    try {
+      rec1.start();
+    } catch (err) {
+      log('TEST 1: start() threw an exception — ' + err.message, 'log-error');
+      setPill('pill1', 'idle', 'IDLE');
+      document.getElementById('btnStart1').disabled = false;
+      document.getElementById('btnStop1').disabled = true;
+    }
+  }
+
+  function stopTest1() {
+    if (rec1) {
+      log('TEST 1: Manual stop requested.');
+      rec1.stop();
+    }
+  }
+
+  // =========================================================
+  // TEST 2: Chunked / auto-restart session
+  // =========================================================
+  var rec2 = null;
+  var test2Active = false;
+  var test2Timer = null;
+  var test2Start = 0;
+  var chunkCount = 0;
+  var errorCount = 0;
+  var masterTranscript = '';
+  var CHUNK_TARGET_MS = 10000; // informational only; actual chunk length is decided by the recognizer itself (interimResults off, continuous off)
+
+  function startTest2() {
+    if (!SR) { log('TEST 2: Cannot start — no SpeechRecognition API.', 'log-error'); return; }
+    test2Active = true;
+    chunkCount = 0;
+    errorCount = 0;
+    masterTranscript = '';
+    document.getElementById('transcript').value = '';
+    document.getElementById('chunkCount').textContent = '0';
+    document.getElementById('errorCount').textContent = '0';
+    document.getElementById('btnStart2').disabled = true;
+    document.getElementById('btnStop2').disabled = false;
+    setPill('pill2', 'recording', 'RECORDING');
+    log('TEST 2: Starting chunked session. Speak naturally — this will auto-restart in the background.', 'log-good');
+
+    test2Start = Date.now();
+    test2Timer = setInterval(function() {
+      var elapsed = ((Date.now() - test2Start) / 1000).toFixed(1);
+      document.getElementById('timer2').textContent = elapsed + 's';
+    }, 100);
+
+    runChunk();
+  }
+
+  function runChunk() {
+    if (!test2Active) return;
+
+    rec2 = new SR();
+    rec2.continuous = false;
+    rec2.interimResults = false; // final results only, per the reviewed engineering consensus
+    rec2.lang = 'en-US';
+
+    var chunkStartTime = Date.now();
+
+    rec2.onstart = function() {
+      log('TEST 2: chunk #' + (chunkCount + 1) + ' started.');
+    };
+    rec2.onresult = function(e) {
+      var text = '';
+      for (var i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          text += e.results[i][0].transcript + ' ';
+        }
+      }
+      if (text.trim().length > 0) {
+        masterTranscript += text;
+        document.getElementById('transcript').value = masterTranscript;
+        log('TEST 2: chunk #' + (chunkCount + 1) + ' result — "' + text.trim() + '"', 'log-good');
+      }
+    };
+    rec2.onerror = function(e) {
+      errorCount++;
+      document.getElementById('errorCount').textContent = errorCount;
+      log('TEST 2: chunk #' + (chunkCount + 1) + ' ERROR — "' + e.error + '"', 'log-error');
+    };
+    rec2.onend = function() {
+      var chunkDuration = ((Date.now() - chunkStartTime) / 1000).toFixed(1);
+      chunkCount++;
+      document.getElementById('chunkCount').textContent = chunkCount;
+      log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's.');
+      if (test2Active) {
+        // Immediate restart — no gap, per the reviewed chunking pattern
+        setTimeout(function() {
+          if (test2Active) runChunk();
+        }, 50);
+      }
+    };
+
+    try {
+      rec2.start();
+    } catch (err) {
+      errorCount++;
+      document.getElementById('errorCount').textContent = errorCount;
+      log('TEST 2: start() threw an exception on chunk #' + (chunkCount + 1) + ' — ' + err.message, 'log-error');
+      if (test2Active) {
+        setTimeout(function() {
+          if (test2Active) runChunk();
+        }, 500);
+      }
+    }
+  }
+
+  function stopTest2() {
+    test2Active = false;
+    if (rec2) {
+      log('TEST 2: Manual stop requested. Total chunks: ' + chunkCount + ', total errors: ' + errorCount + '.', 'log-warn');
+      rec2.stop();
+    }
+    clearInterval(test2Timer);
+    setPill('pill2', 'done', 'DONE');
+    document.getElementById('btnStart2').disabled = false;
+    document.getElementById('btnStop2').disabled = true;
+  }
+</script>
+
+</body>
+</html>
