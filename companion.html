@@ -1,4 +1,7 @@
+<!-- companion-v17.html -->
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -124,6 +127,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .ingest-error-box { background: #fdecea; border: 1px solid #f5b7b1; border-radius: 12px; padding: 14px; font-size: 13px; color: #922; }
 .ingest-error-box textarea { width: 100%; height: 90px; margin-top: 8px; font-size: 11px; font-family: monospace; border: 1px solid #f0c4c0; border-radius: 8px; padding: 8px; background: white; color: #444; }
 .ingest-setup-note { background: #fff8ea; border: 1px solid #f0d38a; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #7a5c10; margin-bottom: 12px; line-height: 1.5; }
+/* Voice dictation controls (companion-v17) */
+.dictation-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.btn-dictate { flex: 0 0 auto; padding: 8px 14px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; background: #1a2e4a; color: white; cursor: pointer; }
+.btn-dictate.recording { background: #c0392b; }
+.btn-dictate:disabled { background: #ccc; color: #888; }
+.dictation-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; display: inline-block; background: #eee; color: #777; }
+.dictation-pill.recording { background: rgba(231,76,60,0.25); color: #c0392b; animation: dictPulse 1s infinite; }
+@keyframes dictPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+#ingestSourceText.dictating { border: 2px solid #c0392b; background: #fff6f5; }
+.dictation-hint { display: none; font-size: 11px; color: #a0620c; background: #fff8ea; border: 1px solid #f0d38a; border-radius: 8px; padding: 8px 10px; margin-top: 8px; line-height: 1.5; }
+.dictation-hint.show { display: block; }
 </style>
 
 </head>
@@ -365,7 +379,12 @@ window.addEventListener('unhandledrejection', function (e) {
   </div>
   <div class="field">
     <label>Paste text, WhatsApp, email, or a call transcript</label>
-    <textarea id="ingestSourceText" placeholder="Paste anything here — the AI will pull out contacts, tasks, quotes and updates for you to review before anything is saved." style="height:150px;"></textarea>
+    <div class="dictation-row">
+      <button type="button" class="btn-dictate" id="btnDictate" onclick="toggleDictation()">🎙️ Start Dictation</button>
+      <span class="dictation-pill" id="dictationPill">Idle</span>
+    </div>
+    <textarea id="ingestSourceText" placeholder="Paste anything here, or tap 🎙️ Start Dictation to speak it — the AI will pull out contacts, tasks, quotes and updates for you to review before anything is saved." style="height:150px;"></textarea>
+    <div class="dictation-hint" id="dictationHint">Text in ⟨brackets⟩ was recovered at a pause and may not be fully accurate — please check it before tapping Process. Common trade-term mishears are corrected automatically, but always give it a read first.</div>
   </div>
   <div class="sheet-actions">
     <button class="btn-sheet-cancel" onclick="closeIngestSheet()">Cancel</button>
@@ -1060,10 +1079,12 @@ function openIngestSheet(){
   document.getElementById('ingestSourceText').value='';
   const btn=document.getElementById('ingestProcessBtn');
   btn.disabled=false;btn.textContent='Process';
+  resetDictationUI();
   document.getElementById('ingestOverlay').classList.add('show');
   document.getElementById('ingestSheet').classList.add('show');
 }
 function closeIngestSheet(){
+  if(dictActive){stopDictation(true);}
   document.getElementById('ingestOverlay').classList.remove('show');
   document.getElementById('ingestSheet').classList.remove('show');
 }
@@ -1139,15 +1160,16 @@ function showIngestError(msg,rawText){
   let extra='';
   if(currentIngestSourceText){
     extra+=`<div style="font-size:11px;margin-top:10px;color:#888;">Your original text (copy it to try again):</div><textarea readonly>${escapeHtml(currentIngestSourceText)}</textarea>`;
-  }
-  if(rawText&&rawText!==currentIngestSourceText){
-    extra+=`<div style="font-size:11px;margin-top:10px;color:#888;">Raw AI response:</div><textarea readonly>${escapeHtml(rawText)}</textarea>`;
-  }
-  el.innerHTML=`<div class="ingest-error-box"><strong>⚠ ${escapeHtml(msg)}</strong>${extra}</div>`;
-  document.getElementById('keepTranscriptCheckbox').closest('.rc-include-row').style.display='none';
-  document.getElementById('ingestConfirmBtn').style.display='none';
-  document.getElementById('ingestReviewOverlay').classList.add('show');
-  document.getElementById('ingestReviewSheet').classList.add('show');
+
+}
+if(rawText&&rawText!==currentIngestSourceText){
+extra+=`<div style="font-size:11px;margin-top:10px;color:#888;">Raw AI response:</div><textarea readonly>${escapeHtml(rawText)}</textarea>`;
+}
+el.innerHTML=`<div class="ingest-error-box"><strong>⚠ ${escapeHtml(msg)}</strong>${extra}</div>`;
+document.getElementById(‘keepTranscriptCheckbox’).closest(’.rc-include-row’).style.display=‘none’;
+document.getElementById(‘ingestConfirmBtn’).style.display=‘none’;
+document.getElementById(‘ingestReviewOverlay’).classList.add(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.add(‘show’);
 }
 
 // Deterministic duplicate detection: exact email or exact phone match only.
@@ -1156,310 +1178,497 @@ function showIngestError(msg,rawText){
 // (e.g. the same person mentioned twice in one transcript). Uses the same exact
 // email/phone matching rule as duplicate detection against already-saved leads.
 function dedupeExtractedLeads(items){
-  const seenEmails=new Set();
-  const seenPhones=new Set();
-  const out=[];
-  items.forEach(item=>{
-    const emailKey=item.email?item.email.trim().toLowerCase():null;
-    const phoneKey=item.phone?item.phone.trim():null;
-    if(emailKey&&seenEmails.has(emailKey))return;
-    if(phoneKey&&seenPhones.has(phoneKey))return;
-    if(emailKey)seenEmails.add(emailKey);
-    if(phoneKey)seenPhones.add(phoneKey);
-    out.push(item);
-  });
-  return out;
+const seenEmails=new Set();
+const seenPhones=new Set();
+const out=[];
+items.forEach(item=>{
+const emailKey=item.email?item.email.trim().toLowerCase():null;
+const phoneKey=item.phone?item.phone.trim():null;
+if(emailKey&&seenEmails.has(emailKey))return;
+if(phoneKey&&seenPhones.has(phoneKey))return;
+if(emailKey)seenEmails.add(emailKey);
+if(phoneKey)seenPhones.add(phoneKey);
+out.push(item);
+});
+return out;
 }
 
 function findExistingLead(item){
-  if(item.email){
-    const m=leads.find(l=>l.email&&l.email.trim().toLowerCase()===item.email.trim().toLowerCase());
-    if(m)return m;
-  }
-  if(item.phone){
-    const m=leads.find(l=>l.phone&&l.phone.trim()===item.phone.trim());
-    if(m)return m;
-  }
-  return null;
+if(item.email){
+const m=leads.find(l=>l.email&&l.email.trim().toLowerCase()===item.email.trim().toLowerCase());
+if(m)return m;
+}
+if(item.phone){
+const m=leads.find(l=>l.phone&&l.phone.trim()===item.phone.trim());
+if(m)return m;
+}
+return null;
 }
 
 function renderIngestReview(){
-  const el=document.getElementById('ingestReviewList');
-  document.getElementById('keepTranscriptCheckbox').closest('.rc-include-row').style.display='flex';
-  document.getElementById('ingestConfirmBtn').style.display='block';
-  document.getElementById('ingestConfirmBtn').disabled=false;
-  document.getElementById('ingestConfirmBtn').textContent='Confirm & Save';
+const el=document.getElementById(‘ingestReviewList’);
+document.getElementById(‘keepTranscriptCheckbox’).closest(’.rc-include-row’).style.display=‘flex’;
+document.getElementById(‘ingestConfirmBtn’).style.display=‘block’;
+document.getElementById(‘ingestConfirmBtn’).disabled=false;
+document.getElementById(‘ingestConfirmBtn’).textContent=‘Confirm & Save’;
 
-  const d=currentIngestData;
-  let html='';
-  let totalItems=0;
+const d=currentIngestData;
+let html=’’;
+let totalItems=0;
 
-  (d.leads||[]).forEach((item,idx)=>{
-    totalItems++;
-    const existing=findExistingLead(item);
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="leads" data-idx="${idx}" data-merge-id="${existing?existing.id:''}">
-        <div class="rc-header"><span>👤 Lead</span><span>${existing?'<span class="rc-badge badge-merge">Merge</span>':'<span class="rc-badge badge-new">New</span>'}${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><span class="rc-label">Name</span><input class="edit-name" value="${escapeHtml(item.name)}"></div>
-        <div class="rc-field"><span class="rc-label">Company</span><input class="edit-company" value="${escapeHtml(item.company)}"></div>
-        <div class="rc-field"><span class="rc-label">Email</span><input class="edit-email" value="${escapeHtml(item.email)}"></div>
-        <div class="rc-field"><span class="rc-label">Phone</span><input class="edit-phone" value="${escapeHtml(item.phone)}"></div>
-        <div class="rc-field"><span class="rc-label">Country</span><input class="edit-country" value="${escapeHtml(item.country)}"></div>
-        <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div>
-        <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.leads||[]).forEach((item,idx)=>{
+totalItems++;
+const existing=findExistingLead(item);
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="leads" data-idx="${idx}" data-merge-id="${existing?existing.id:''}"> <div class="rc-header"><span>👤 Lead</span><span>${existing?'<span class="rc-badge badge-merge">Merge</span>':'<span class="rc-badge badge-new">New</span>'}${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Name</span><input class="edit-name" value="${escapeHtml(item.name)}"></div> <div class="rc-field"><span class="rc-label">Company</span><input class="edit-company" value="${escapeHtml(item.company)}"></div> <div class="rc-field"><span class="rc-label">Email</span><input class="edit-email" value="${escapeHtml(item.email)}"></div> <div class="rc-field"><span class="rc-label">Phone</span><input class="edit-phone" value="${escapeHtml(item.phone)}"></div> <div class="rc-field"><span class="rc-label">Country</span><input class="edit-country" value="${escapeHtml(item.country)}"></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  (d.tasks||[]).forEach((item,idx)=>{
-    totalItems++;
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="tasks" data-idx="${idx}">
-        <div class="rc-header"><span>✅ Task</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><span class="rc-label">Title</span><input class="edit-title" value="${escapeHtml(item.title)}"></div>
-        <div class="rc-field"><span class="rc-label">Category</span><input class="edit-category" value="${escapeHtml(item.category)}"></div>
-        <div class="rc-field"><span class="rc-label">Due date</span><input class="edit-due" type="date" value="${item.due||''}"></div>
-        <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.tasks||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="tasks" data-idx="${idx}"> <div class="rc-header"><span>✅ Task</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Title</span><input class="edit-title" value="${escapeHtml(item.title)}"></div> <div class="rc-field"><span class="rc-label">Category</span><input class="edit-category" value="${escapeHtml(item.category)}"></div> <div class="rc-field"><span class="rc-label">Due date</span><input class="edit-due" type="date" value="${item.due||''}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  (d.commslog||[]).forEach((item,idx)=>{
-    totalItems++;
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    const ctypes=['Call','Email','WhatsApp','Meeting','Note'];
-    const dirs=['Outgoing','Incoming'];
-    const outcomes=['Positive','Neutral','Negative','Waiting'];
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="commslog" data-idx="${idx}">
-        <div class="rc-header"><span>💬 Communication Log</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><span class="rc-label">Contact</span><input class="edit-contact" value="${escapeHtml(item.contact)}"></div>
-        <div class="rc-field"><span class="rc-label">Type</span><select class="edit-ctype"><option value="">-</option>${ctypes.map(t=>`<option ${item.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
-        <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?'selected':''}>${t}</option>`).join('')}</select></div>
-        <div class="rc-field"><span class="rc-label">Summary</span><textarea class="edit-summary">${escapeHtml(item.summary)}</textarea></div>
-        <div class="rc-field"><span class="rc-label">Outcome</span><select class="edit-outcome"><option value="">-</option>${outcomes.map(t=>`<option ${item.outcome===t?'selected':''}>${t}</option>`).join('')}</select></div>
-        <div class="rc-field"><span class="rc-label">Follow-up date</span><input class="edit-followupdate" type="date" value="${item.followupDate||''}"></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.commslog||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+const ctypes=[‘Call’,‘Email’,‘WhatsApp’,‘Meeting’,‘Note’];
+const dirs=[‘Outgoing’,‘Incoming’];
+const outcomes=[‘Positive’,‘Neutral’,‘Negative’,‘Waiting’];
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="commslog" data-idx="${idx}"> <div class="rc-header"><span>💬 Communication Log</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Contact</span><input class="edit-contact" value="${escapeHtml(item.contact)}"></div> <div class="rc-field"><span class="rc-label">Type</span><select class="edit-ctype"><option value="">-</option>${ctypes.map(t=>`<option ${item.type===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Summary</span><textarea class="edit-summary">${escapeHtml(item.summary)}</textarea></div> <div class="rc-field"><span class="rc-label">Outcome</span><select class="edit-outcome"><option value="">-</option>${outcomes.map(t=>`<option ${item.outcome===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Follow-up date</span><input class="edit-followupdate" type="date" value="${item.followupDate||''}"></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  (d.broker_quotes||[]).forEach((item,idx)=>{
-    totalItems++;
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    const dirs=['Offer','Bid','Reference'];
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="broker_quotes" data-idx="${idx}">
-        <div class="rc-header"><span>📋 Broker Quote</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div>
-        <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div>
-        <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div>
-        <div class="rc-field"><span class="rc-label">Terms</span><input class="edit-terms" value="${escapeHtml(item.terms)}"></div>
-        <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-qty" value="${escapeHtml(item.qty)}"></div>
-        <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?'selected':''}>${t}</option>`).join('')}</select></div>
-        <div class="rc-field"><span class="rc-label">Source</span><input class="edit-source" value="${escapeHtml(item.source)}"></div>
-        <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.broker_quotes||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+const dirs=[‘Offer’,‘Bid’,‘Reference’];
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="broker_quotes" data-idx="${idx}"> <div class="rc-header"><span>📋 Broker Quote</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div> <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div> <div class="rc-field"><span class="rc-label">Terms</span><input class="edit-terms" value="${escapeHtml(item.terms)}"></div> <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-qty" value="${escapeHtml(item.qty)}"></div> <div class="rc-field"><span class="rc-label">Direction</span><select class="edit-direction"><option value="">-</option>${dirs.map(t=>`<option ${item.direction===t?‘selected’:’’}>${t}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Source</span><input class="edit-source" value="${escapeHtml(item.source)}"></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  (d.pipeline||[]).forEach((item,idx)=>{
-    totalItems++;
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="pipeline" data-idx="${idx}">
-        <div class="rc-header"><span>📊 Pipeline Update</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div>
-        <div class="rc-field"><span class="rc-label">Broker</span><input class="edit-broker" value="${escapeHtml(item.broker)}"></div>
-        <div class="rc-field"><span class="rc-label">Buyer</span><input class="edit-buyer" value="${escapeHtml(item.buyer)}"></div>
-        <div class="rc-field"><span class="rc-label">Seller</span><input class="edit-seller" value="${escapeHtml(item.seller)}"></div>
-        <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-quantity" value="${escapeHtml(item.quantity)}"></div>
-        <div class="rc-field"><span class="rc-label">Unit</span><input class="edit-unit" value="${escapeHtml(item.unit)}"></div>
-        <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div>
-        <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div>
-        <div class="rc-field"><span class="rc-label">Stage</span><select class="edit-stage"><option value="">-</option>${ALLOWED_STAGES_CLIENT.map(s=>`<option ${item.stage===s?'selected':''}>${s}</option>`).join('')}</select></div>
-        <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.pipeline||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="pipeline" data-idx="${idx}"> <div class="rc-header"><span>📊 Pipeline Update</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><span class="rc-label">Commodity</span><input class="edit-commodity" value="${escapeHtml(item.commodity)}"></div> <div class="rc-field"><span class="rc-label">Broker</span><input class="edit-broker" value="${escapeHtml(item.broker)}"></div> <div class="rc-field"><span class="rc-label">Buyer</span><input class="edit-buyer" value="${escapeHtml(item.buyer)}"></div> <div class="rc-field"><span class="rc-label">Seller</span><input class="edit-seller" value="${escapeHtml(item.seller)}"></div> <div class="rc-field"><span class="rc-label">Quantity</span><input class="edit-quantity" value="${escapeHtml(item.quantity)}"></div> <div class="rc-field"><span class="rc-label">Unit</span><input class="edit-unit" value="${escapeHtml(item.unit)}"></div> <div class="rc-field"><span class="rc-label">Price</span><input class="edit-price" value="${escapeHtml(item.price)}"></div> <div class="rc-field"><span class="rc-label">Origin</span><input class="edit-origin" value="${escapeHtml(item.origin)}"></div> <div class="rc-field"><span class="rc-label">Stage</span><select class="edit-stage"><option value="">-</option>${ALLOWED_STAGES_CLIENT.map(s=>`<option ${item.stage===s?‘selected’:’’}>${s}</option>`).join('')}</select></div> <div class="rc-field"><span class="rc-label">Notes</span><textarea class="edit-notes">${escapeHtml(item.notes)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  (d.notes||[]).forEach((item,idx)=>{
-    totalItems++;
-    const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
-    html+=`
-      <div class="review-card ${lowConf?'low-conf':''}" data-type="notes" data-idx="${idx}">
-        <div class="rc-header"><span>📝 Note</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div>
-        <div class="rc-field"><textarea class="edit-text">${escapeHtml(item.text)}</textarea></div>
-        ${item.sourceSnippet?`<div class="rc-snippet">"${escapeHtml(item.sourceSnippet)}"</div>`:''}
-        <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label>
-      </div>`;
-  });
+(d.notes||[]).forEach((item,idx)=>{
+totalItems++;
+const lowConf=(item.confidence!==undefined&&item.confidence<0.7);
+html+=` <div class="review-card ${lowConf?'low-conf':''}" data-type="notes" data-idx="${idx}"> <div class="rc-header"><span>📝 Note</span><span><span class="rc-badge badge-new">New</span>${lowConf?'<span class="rc-badge badge-low">Review</span>':''}</span></div> <div class="rc-field"><textarea class="edit-text">${escapeHtml(item.text)}</textarea></div> ${item.sourceSnippet?`<div class="rc-snippet">”${escapeHtml(item.sourceSnippet)}”</div>`:''} <label class="rc-include-row"><input type="checkbox" class="include-checkbox" checked> Include this item</label> </div>`;
+});
 
-  if(totalItems===0){
-    html='<div class="empty-note">Nothing was found to extract from that text. You can still keep it as a note below.</div>';
-  }
+if(totalItems===0){
+html=’<div class="empty-note">Nothing was found to extract from that text. You can still keep it as a note below.</div>’;
+}
 
-  el.innerHTML=html;
-  document.getElementById('ingestReviewOverlay').classList.add('show');
-  document.getElementById('ingestReviewSheet').classList.add('show');
+el.innerHTML=html;
+document.getElementById(‘ingestReviewOverlay’).classList.add(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.add(‘show’);
 }
 
 function closeIngestReviewSheet(){
-  document.getElementById('ingestReviewOverlay').classList.remove('show');
-  document.getElementById('ingestReviewSheet').classList.remove('show');
-  currentIngestData=null;
+document.getElementById(‘ingestReviewOverlay’).classList.remove(‘show’);
+document.getElementById(‘ingestReviewSheet’).classList.remove(‘show’);
+currentIngestData=null;
 }
 
 function makeId(){
-  // crypto.randomUUID is supported in all modern mobile browsers (iOS Safari 15.4+,
-  // Chrome/Android equivalent range) - falls back only if genuinely unavailable.
-  if(window.crypto&&typeof window.crypto.randomUUID==='function'){
-    return window.crypto.randomUUID();
-  }
-  return Date.now()+'-'+Math.floor(Math.random()*100000);
+// crypto.randomUUID is supported in all modern mobile browsers (iOS Safari 15.4+,
+// Chrome/Android equivalent range) - falls back only if genuinely unavailable.
+if(window.crypto&&typeof window.crypto.randomUUID===‘function’){
+return window.crypto.randomUUID();
+}
+return Date.now()+’-’+Math.floor(Math.random()*100000);
 }
 
 // Match an extracted pipeline update against an existing deal by commodity+buyer+seller.
 // If found, the existing deal is updated (stage/notes/etc only overwritten if the new
 // value is non-empty) rather than creating a duplicate entry for the same deal.
 function findExistingPipeline(item){
-  return pipeline.find(p=>
-    (p.commodity||'').trim().toLowerCase()===(item.commodity||'').trim().toLowerCase()&&
-    (p.buyer||'').trim().toLowerCase()===(item.buyer||'').trim().toLowerCase()&&
-    (p.seller||'').trim().toLowerCase()===(item.seller||'').trim().toLowerCase()
-  );
+return pipeline.find(p=>
+(p.commodity||’’).trim().toLowerCase()===(item.commodity||’’).trim().toLowerCase()&&
+(p.buyer||’’).trim().toLowerCase()===(item.buyer||’’).trim().toLowerCase()&&
+(p.seller||’’).trim().toLowerCase()===(item.seller||’’).trim().toLowerCase()
+);
 }
 
 async function confirmAndSaveIngest(){
-  if(!currentIngestData){closeIngestReviewSheet();return;}
-  const btn=document.getElementById('ingestConfirmBtn');
-  btn.disabled=true;btn.textContent='Saving...';
+if(!currentIngestData){closeIngestReviewSheet();return;}
+const btn=document.getElementById(‘ingestConfirmBtn’);
+btn.disabled=true;btn.textContent=‘Saving…’;
 
-  const cards=document.querySelectorAll('#ingestReviewList .review-card');
-  let savedCount=0,failedCount=0,skippedCount=0;
+const cards=document.querySelectorAll(’#ingestReviewList .review-card’);
+let savedCount=0,failedCount=0,skippedCount=0;
 
-  try{
-    for(const card of cards){
-      const checkbox=card.querySelector('.include-checkbox');
-      if(!checkbox||!checkbox.checked)continue;
-      const type=card.dataset.type;
+try{
+for(const card of cards){
+const checkbox=card.querySelector(’.include-checkbox’);
+if(!checkbox||!checkbox.checked)continue;
+const type=card.dataset.type;
 
-      if(type==='leads'){
-        const name=card.querySelector('.edit-name')?.value.trim()||'';
-        if(!name){skippedCount++;continue;}
-        const fields={
-          company:card.querySelector('.edit-company')?.value.trim()||'',
-          email:card.querySelector('.edit-email')?.value.trim()||'',
-          phone:card.querySelector('.edit-phone')?.value.trim()||'',
-          country:card.querySelector('.edit-country')?.value.trim()||'',
-          commodity:card.querySelector('.edit-commodity')?.value.trim()||'',
-          notes:card.querySelector('.edit-notes')?.value.trim()||''
-        };
-        // Recalculate the merge target from the CURRENT edited email/phone, not the
-        // original AI-extracted values. Prevents a case where the user edits the
-        // email to a different person's after the card already showed "Merge".
-        const existing=findExistingLead(fields);
-        if(existing){
-          Object.keys(fields).forEach(k=>{
-            if((!existing[k]||!String(existing[k]).trim())&&fields[k])existing[k]=fields[k];
-          });
-          persistLocal('leads',leads);
-          const ok=await saveToCloud('leads',existing);
-          if(ok)savedCount++;else failedCount++;
-          continue;
-        }
-        const item={id:makeId(),name,...fields,type:'',status:'New',followup:'',introBy:'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-        leads.push(item);persistLocal('leads',leads);
-        const ok=await saveToCloud('leads',item);
-        if(ok)savedCount++;else failedCount++;
-
-      }else if(type==='tasks'){
-        const title=card.querySelector('.edit-title')?.value.trim()||'';
-        if(!title){skippedCount++;continue;}
-        const item={id:makeId(),title,category:card.querySelector('.edit-category')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',due:card.querySelector('.edit-due')?.value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,fromAIInbox:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
-        tasks.push(item);persistLocal('tasks',tasks);
-        const ok=await saveToCloud('tasks',item);
-        if(ok)savedCount++;else failedCount++;
-
-      }else if(type==='commslog'){
-        const summary=card.querySelector('.edit-summary')?.value.trim()||'';
-        const contact=card.querySelector('.edit-contact')?.value.trim()||'';
-        if(!summary||!contact){skippedCount++;continue;}
-        const item={id:makeId(),contact,type:card.querySelector('.edit-ctype')?.value||'Note',date:todayLocal(),direction:card.querySelector('.edit-direction')?.value||'Outgoing',linked:'',followup:'No',followupDate:card.querySelector('.edit-followupdate')?.value||'',outcome:card.querySelector('.edit-outcome')?.value||'Neutral',summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-        const ok=await saveToCloud('commslog',item);
-        if(ok)savedCount++;else failedCount++;
-
-      }else if(type==='broker_quotes'){
-        const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
-        if(!commodity){skippedCount++;continue;}
-        const item={id:makeId(),commodity,price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',terms:card.querySelector('.edit-terms')?.value.trim()||'',qty:card.querySelector('.edit-qty')?.value.trim()||'',direction:card.querySelector('.edit-direction')?.value||'Reference / Market',source:card.querySelector('.edit-source')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-        const ok=await saveToCloud('brokerQuotes',item);
-        if(ok)savedCount++;else failedCount++;
-
-      }else if(type==='pipeline'){
-        const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
-        if(!commodity){skippedCount++;continue;}
-        let stage=card.querySelector('.edit-stage')?.value||'New';
-        if(!ALLOWED_STAGES_CLIENT.includes(stage))stage='New'; // defensive check, never trust unvalidated input
-        const fields={
-          broker:card.querySelector('.edit-broker')?.value.trim()||'',
-          buyer:card.querySelector('.edit-buyer')?.value.trim()||'',
-          seller:card.querySelector('.edit-seller')?.value.trim()||'',
-          quantity:card.querySelector('.edit-quantity')?.value.trim()||'',
-          unit:card.querySelector('.edit-unit')?.value.trim()||'',
-          price:card.querySelector('.edit-price')?.value.trim()||'',
-          origin:card.querySelector('.edit-origin')?.value.trim()||'',
-          notes:card.querySelector('.edit-notes')?.value.trim()||''
-        };
-        const existingDeal=findExistingPipeline({commodity,...fields});
-        if(existingDeal){
-          // Update: only overwrite a field if the new value is non-empty.
-          Object.keys(fields).forEach(k=>{ if(fields[k])existingDeal[k]=fields[k]; });
-          if(stage)existingDeal.stage=stage;
-          persistLocal('pipeline',pipeline);
-          const ok=await saveToCloud('pipeline',existingDeal);
-          if(ok)savedCount++;else failedCount++;
-          continue;
-        }
-        const item={id:makeId(),commodity,...fields,stage,trust:'Yellow',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
-        pipeline.push(item);persistLocal('pipeline',pipeline);
-        const ok=await saveToCloud('pipeline',item);
-        if(ok)savedCount++;else failedCount++;
-
-      }else if(type==='notes'){
-        const text=card.querySelector('.edit-text')?.value.trim()||'';
-        if(!text){skippedCount++;continue;}
-        const item={id:makeId(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
-        notes.push(item);persistLocal('notes',notes);
-        const ok=await saveToCloud('notes',item);
-        if(ok)savedCount++;else failedCount++;
-      }
+```
+  if(type==='leads'){
+    const name=card.querySelector('.edit-name')?.value.trim()||'';
+    if(!name){skippedCount++;continue;}
+    const fields={
+      company:card.querySelector('.edit-company')?.value.trim()||'',
+      email:card.querySelector('.edit-email')?.value.trim()||'',
+      phone:card.querySelector('.edit-phone')?.value.trim()||'',
+      country:card.querySelector('.edit-country')?.value.trim()||'',
+      commodity:card.querySelector('.edit-commodity')?.value.trim()||'',
+      notes:card.querySelector('.edit-notes')?.value.trim()||''
+    };
+    // Recalculate the merge target from the CURRENT edited email/phone, not the
+    // original AI-extracted values. Prevents a case where the user edits the
+    // email to a different person's after the card already showed "Merge".
+    const existing=findExistingLead(fields);
+    if(existing){
+      Object.keys(fields).forEach(k=>{
+        if((!existing[k]||!String(existing[k]).trim())&&fields[k])existing[k]=fields[k];
+      });
+      persistLocal('leads',leads);
+      const ok=await saveToCloud('leads',existing);
+      if(ok)savedCount++;else failedCount++;
+      continue;
     }
+    const item={id:makeId(),name,...fields,type:'',status:'New',followup:'',introBy:'',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    leads.push(item);persistLocal('leads',leads);
+    const ok=await saveToCloud('leads',item);
+    if(ok)savedCount++;else failedCount++;
 
-    const keepCb=document.getElementById('keepTranscriptCheckbox');
-    if(keepCb&&keepCb.checked&&currentIngestSourceText){
-      const noteItem={id:makeId(),text:'Original transcript:\n\n'+currentIngestSourceText,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
-      notes.push(noteItem);persistLocal('notes',notes);await saveToCloud('notes',noteItem);
+  }else if(type==='tasks'){
+    const title=card.querySelector('.edit-title')?.value.trim()||'';
+    if(!title){skippedCount++;continue;}
+    const item={id:makeId(),title,category:card.querySelector('.edit-category')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',due:card.querySelector('.edit-due')?.value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,fromAIInbox:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+    tasks.push(item);persistLocal('tasks',tasks);
+    const ok=await saveToCloud('tasks',item);
+    if(ok)savedCount++;else failedCount++;
+
+  }else if(type==='commslog'){
+    const summary=card.querySelector('.edit-summary')?.value.trim()||'';
+    const contact=card.querySelector('.edit-contact')?.value.trim()||'';
+    if(!summary||!contact){skippedCount++;continue;}
+    const item={id:makeId(),contact,type:card.querySelector('.edit-ctype')?.value||'Note',date:todayLocal(),direction:card.querySelector('.edit-direction')?.value||'Outgoing',linked:'',followup:'No',followupDate:card.querySelector('.edit-followupdate')?.value||'',outcome:card.querySelector('.edit-outcome')?.value||'Neutral',summary,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    const ok=await saveToCloud('commslog',item);
+    if(ok)savedCount++;else failedCount++;
+
+  }else if(type==='broker_quotes'){
+    const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
+    if(!commodity){skippedCount++;continue;}
+    const item={id:makeId(),commodity,price:card.querySelector('.edit-price')?.value.trim()||'',origin:card.querySelector('.edit-origin')?.value.trim()||'',terms:card.querySelector('.edit-terms')?.value.trim()||'',qty:card.querySelector('.edit-qty')?.value.trim()||'',direction:card.querySelector('.edit-direction')?.value||'Reference / Market',source:card.querySelector('.edit-source')?.value.trim()||'',notes:card.querySelector('.edit-notes')?.value.trim()||'',createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    const ok=await saveToCloud('brokerQuotes',item);
+    if(ok)savedCount++;else failedCount++;
+
+  }else if(type==='pipeline'){
+    const commodity=card.querySelector('.edit-commodity')?.value.trim()||'';
+    if(!commodity){skippedCount++;continue;}
+    let stage=card.querySelector('.edit-stage')?.value||'New';
+    if(!ALLOWED_STAGES_CLIENT.includes(stage))stage='New'; // defensive check, never trust unvalidated input
+    const fields={
+      broker:card.querySelector('.edit-broker')?.value.trim()||'',
+      buyer:card.querySelector('.edit-buyer')?.value.trim()||'',
+      seller:card.querySelector('.edit-seller')?.value.trim()||'',
+      quantity:card.querySelector('.edit-quantity')?.value.trim()||'',
+      unit:card.querySelector('.edit-unit')?.value.trim()||'',
+      price:card.querySelector('.edit-price')?.value.trim()||'',
+      origin:card.querySelector('.edit-origin')?.value.trim()||'',
+      notes:card.querySelector('.edit-notes')?.value.trim()||''
+    };
+    const existingDeal=findExistingPipeline({commodity,...fields});
+    if(existingDeal){
+      // Update: only overwrite a field if the new value is non-empty.
+      Object.keys(fields).forEach(k=>{ if(fields[k])existingDeal[k]=fields[k]; });
+      if(stage)existingDeal.stage=stage;
+      persistLocal('pipeline',pipeline);
+      const ok=await saveToCloud('pipeline',existingDeal);
+      if(ok)savedCount++;else failedCount++;
+      continue;
     }
+    const item={id:makeId(),commodity,...fields,stage,trust:'Yellow',createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB'),fromAIInbox:true};
+    pipeline.push(item);persistLocal('pipeline',pipeline);
+    const ok=await saveToCloud('pipeline',item);
+    if(ok)savedCount++;else failedCount++;
 
-    closeIngestReviewSheet();
-    renderAll();
-
-    let msg=savedCount+' item(s) saved';
-    if(failedCount)msg+=' — ⚠ '+failedCount+' failed to reach the cloud (saved on this device only, will retry when online)';
-    if(skippedCount)msg+=' — '+skippedCount+' skipped (missing a required field)';
-    toast(msg,failedCount?'error':'success',failedCount?5000:2500);
-  }catch(err){
-    toast('Save failed: '+(err.message||'unknown error'),'error');
-  }finally{
-    btn.disabled=false;btn.textContent='Confirm & Save';
+  }else if(type==='notes'){
+    const text=card.querySelector('.edit-text')?.value.trim()||'';
+    if(!text){skippedCount++;continue;}
+    const item={id:makeId(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+    notes.push(item);persistLocal('notes',notes);
+    const ok=await saveToCloud('notes',item);
+    if(ok)savedCount++;else failedCount++;
   }
+}
+
+const keepCb=document.getElementById('keepTranscriptCheckbox');
+if(keepCb&&keepCb.checked&&currentIngestSourceText){
+  const noteItem={id:makeId(),text:'Original transcript:\n\n'+currentIngestSourceText,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString(),fromAIInbox:true};
+  notes.push(noteItem);persistLocal('notes',notes);await saveToCloud('notes',noteItem);
+}
+
+closeIngestReviewSheet();
+renderAll();
+
+let msg=savedCount+' item(s) saved';
+if(failedCount)msg+=' — ⚠ '+failedCount+' failed to reach the cloud (saved on this device only, will retry when online)';
+if(skippedCount)msg+=' — '+skippedCount+' skipped (missing a required field)';
+toast(msg,failedCount?'error':'success',failedCount?5000:2500);
+```
+
+}catch(err){
+toast(’Save failed: ’+(err.message||‘unknown error’),‘error’);
+}finally{
+btn.disabled=false;btn.textContent=‘Confirm & Save’;
+}
+}
+
+// =========================================================
+// VOICE DICTATION — ported from jericho-speech-diagnostic-v5.html
+// after full device testing on iPad 9th gen and iPhone XR.
+// Writes directly into #ingestSourceText, which is already the
+// editable review step used before “Process” — no separate
+// review UI needed here.
+// =========================================================
+const DICT_SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const DICTATION_DICTIONARY = [
+{ find: /\bessay(s?)\b/gi, replace: ‘assay$1’ },
+{ find: /\bindicative bit\b/gi, replace: ‘indicative bid’ },
+{ find: /\bfright\b/gi, replace: ‘freight’ },
+{ find: /\bquotation period\b/gi, replace: ‘quotational period’ },
+{ find: /\ba couple grade\b/gi, replace: ‘a copper grade’ },
+{ find: /\bthe great that\b/gi, replace: ‘the grade that’ },
+{ find: /\bbeating offer\b/gi, replace: ‘competing offer’ }
+];
+
+function applyDictationDictionary(text){
+let corrected=text;
+let changed=0;
+DICTATION_DICTIONARY.forEach(entry=>{
+const before=corrected;
+corrected=corrected.replace(entry.find,entry.replace);
+entry.find.lastIndex=0;
+if(corrected!==before)changed++;
+});
+if(changed>0)dictCorrectionCount+=changed;
+return corrected;
+}
+
+let dictRec=null;
+let dictActive=false;
+let dictStopping=false;
+let dictChunkGeneration=0;
+let dictConsecutiveHardErrors=0;
+let dictFinishCalled=false;
+let dictMicWarmed=false;
+let dictAccumulated=’’;
+let dictCorrectionCount=0;
+let dictRecoveredCount=0;
+let dictMaxTimer=null;
+
+const DICT_CHUNK_MAX_MS=14000;
+const DICT_BASE_RESTART_MS=200;
+const DICT_MAX_RESTART_MS=1500;
+let dictRestartDelay=DICT_BASE_RESTART_MS;
+
+function setDictationPill(state,text){
+const el=document.getElementById(‘dictationPill’);
+el.className=‘dictation-pill’+(state?(’ ‘+state):’’);
+el.textContent=text;
+}
+
+function resetDictationUI(){
+dictActive=false;dictStopping=false;dictFinishCalled=true;
+clearTimeout(dictMaxTimer);
+const btn=document.getElementById(‘btnDictate’);
+btn.textContent=‘🎙️ Start Dictation’;btn.classList.remove(‘recording’);btn.disabled=false;
+setDictationPill(’’,‘Idle’);
+document.getElementById(‘ingestSourceText’).classList.remove(‘dictating’);
+document.getElementById(‘ingestSourceText’).readOnly=false;
+document.getElementById(‘dictationHint’).classList.remove(‘show’);
+}
+
+function warmupDictationMic(){
+if(dictMicWarmed)return;
+dictMicWarmed=true;
+if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
+navigator.mediaDevices.getUserMedia({audio:true})
+.then(stream=>{stream.getTracks().forEach(t=>t.stop());})
+.catch(()=>{/* permission not yet granted — first real start() will surface this */});
+}
+
+document.addEventListener(‘visibilitychange’,()=>{
+if(document.hidden&&dictActive&&!dictStopping){
+dictStopping=true;
+clearTimeout(dictMaxTimer);
+if(dictRec){try{dictRec.stop();}catch(e){}}else{finishDictation();}
+setTimeout(()=>{if(!dictFinishCalled)finishDictation();},1200);
+}
+});
+
+function toggleDictation(){
+if(!DICT_SR){
+toast(‘Voice dictation is not supported in this browser’,‘error’);
+return;
+}
+if(dictActive){
+stopDictation(false);
+}else{
+startDictation();
+}
+}
+
+function startDictation(){
+warmupDictationMic();
+dictActive=true;dictStopping=false;dictFinishCalled=false;
+dictConsecutiveHardErrors=0;dictRestartDelay=DICT_BASE_RESTART_MS;
+dictCorrectionCount=0;dictRecoveredCount=0;
+
+const box=document.getElementById(‘ingestSourceText’);
+dictAccumulated=box.value.trim();
+if(dictAccumulated)dictAccumulated+=’ ’;
+box.readOnly=true;
+box.classList.add(‘dictating’);
+document.getElementById(‘dictationHint’).classList.remove(‘show’);
+
+const btn=document.getElementById(‘btnDictate’);
+btn.textContent=‘⏹ Stop Dictation’;btn.classList.add(‘recording’);
+setDictationPill(‘recording’,‘Recording’);
+toast(‘🎙️ Listening — speak naturally, tap Stop when done’);
+
+runDictationChunk();
+}
+
+function runDictationChunk(){
+if(!dictActive)return;
+
+dictChunkGeneration++;
+const myGen=dictChunkGeneration;
+let localInterim=’’;
+let localForcedCut=false;
+const finalIndices=[];
+
+dictRec=new DICT_SR();
+dictRec.continuous=false;
+dictRec.interimResults=true;
+dictRec.lang=‘en-US’;
+
+dictRec.onresult=function(e){
+if(myGen!==dictChunkGeneration)return;
+let finalText=’’;let latestInterim=’’;
+for(let i=0;i<e.results.length;i++){
+if(e.results[i].isFinal){
+if(finalIndices.indexOf(i)===-1){
+finalIndices.push(i);
+finalText+=e.results[i][0].transcript+’ ‘;
+}
+}else{
+latestInterim+=e.results[i][0].transcript;
+}
+}
+if(finalText.trim().length>0){
+dictAccumulated+=applyDictationDictionary(finalText);
+document.getElementById(‘ingestSourceText’).value=dictAccumulated;
+localInterim=’’;
+}else if(latestInterim){
+localInterim=latestInterim;
+}
+};
+
+dictRec.onerror=function(e){
+if(myGen!==dictChunkGeneration)return;
+if(e.error===‘aborted’||e.error===‘no-speech’)return; // routine on iOS, not a real failure
+if(e.error===‘not-allowed’){
+toast(‘Microphone permission denied — enable mic access for this site to use dictation’,‘error’);
+dictStopping=true;dictActive=false;
+clearTimeout(dictMaxTimer);
+finishDictation();
+return;
+}
+dictConsecutiveHardErrors++;
+if(dictConsecutiveHardErrors>=3&&dictActive&&!dictStopping){
+toast(‘Dictation ran into repeated errors and stopped — please check your text’,‘error’);
+dictStopping=true;
+clearTimeout(dictMaxTimer);
+try{dictRec.stop();}catch(err){finishDictation();}
+}
+};
+
+dictRec.onend=function(){
+if(myGen!==dictChunkGeneration)return;
+clearTimeout(dictMaxTimer);
+dictConsecutiveHardErrors=0;
+
+```
+if(localInterim&&localInterim.trim().length>0){
+  dictAccumulated+=' ⟨'+applyDictationDictionary(localInterim.trim())+'⟩ ';
+  document.getElementById('ingestSourceText').value=dictAccumulated;
+  dictRecoveredCount++;
+}
+
+if(dictActive&&!dictStopping){
+  const delay=localForcedCut?DICT_BASE_RESTART_MS:dictRestartDelay;
+  setTimeout(()=>{if(dictActive&&!dictStopping)runDictationChunk();},delay);
+}else if(dictStopping){
+  finishDictation();
+}
+```
+
+};
+
+try{
+dictRec.start();
+dictRestartDelay=DICT_BASE_RESTART_MS;
+dictMaxTimer=setTimeout(()=>{
+if(myGen!==dictChunkGeneration)return;
+localForcedCut=true;
+try{dictRec.stop();}catch(e){}
+},DICT_CHUNK_MAX_MS);
+}catch(err){
+if(myGen!==dictChunkGeneration)return;
+dictRec=null;
+if(dictActive&&!dictStopping){
+const thisDelay=dictRestartDelay;
+dictRestartDelay=Math.min(dictRestartDelay*2,DICT_MAX_RESTART_MS);
+setTimeout(()=>{if(dictActive&&!dictStopping)runDictationChunk();},thisDelay);
+}
+}
+}
+
+function stopDictation(silent){
+if(!dictActive)return;
+dictStopping=true;
+clearTimeout(dictMaxTimer);
+if(dictRec){
+try{dictRec.stop();}catch(e){dictRec=null;finishDictation();}
+}else{
+finishDictation();
+}
+setTimeout(()=>{if(!dictFinishCalled)finishDictation();},1200);
+}
+
+function finishDictation(){
+if(dictFinishCalled)return;
+dictFinishCalled=true;
+dictActive=false;dictStopping=false;
+
+dictAccumulated=applyDictationDictionary(dictAccumulated);
+const box=document.getElementById(‘ingestSourceText’);
+box.value=dictAccumulated;
+box.readOnly=false;
+box.classList.remove(‘dictating’);
+
+const btn=document.getElementById(‘btnDictate’);
+btn.textContent=‘🎙️ Start Dictation’;btn.classList.remove(‘recording’);
+setDictationPill(’’,‘Idle’);
+
+if(dictRecoveredCount>0){
+document.getElementById(‘dictationHint’).classList.add(‘show’);
+}
+
+let msg=‘Dictation stopped’;
+if(dictCorrectionCount>0)msg+=’ — ‘+dictCorrectionCount+’ term(s) auto-corrected’;
+msg+=’ — please review before tapping Process’;
+toast(msg);
 }
 
 renderAll();
