@@ -1,4 +1,4 @@
-<!-- jericho-speech-diagnostic-v2.html -->
+<!-- jericho-speech-diagnostic-v5.html -->
 
 <!DOCTYPE html>
 
@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Jericho Speech Diagnostic v2</title>
+<title>Jericho Speech Diagnostic v5</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -147,6 +147,13 @@
     display: none;
   }
   .recovered-hint.show { display: block; }
+  .dict-hint {
+    font-size: 11px;
+    color: #93c5fd;
+    margin-top: 4px;
+    display: none;
+  }
+  .dict-hint.show { display: block; }
   #log {
     background: #0a0b0e;
     border: 1px solid #2a2e38;
@@ -164,6 +171,7 @@
   .log-error { color: #f87171; }
   .log-good { color: #4ade80; }
   .log-warn { color: #fbbf24; }
+  .log-dict { color: #93c5fd; }
   .timer {
     font-size: 28px;
     font-weight: 700;
@@ -197,17 +205,32 @@
     white-space: pre-wrap;
   }
   .confirmed-box.show { display: block; }
+  .dict-list {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.7;
+    margin-top: 6px;
+  }
+  .dict-list code {
+    color: #93c5fd;
+    background: #0f1115;
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
 </style>
 </head>
 <body>
 
-<h1>🎙️ Jericho Speech Diagnostic v2</h1>
+<h1>🎙️ Jericho Speech Diagnostic v5</h1>
 <div class="sub">Standalone test page — not connected to Companion or Firestore. Nothing here touches production Jericho.</div>
 
 <div class="whatsnew">
-  <b>What's new in v2:</b><br>
-  1. If you tap Stop while a chunk is still mid-recognition, any words already picked up (even if not yet "finalized") are now recovered into the transcript and marked with ⟨ ⟩ brackets so nothing silently disappears.<br>
-  2. After stopping Test 2, the transcript box unlocks for editing right there — a review step before it would ever be treated as final, exactly like the real Inbox flow should work.
+  <b>What's new in v5:</b><br>
+  1. <b>Fixed a confirmed duplicate-transcription bug.</b> Earlier real test logs showed the same recognized sentence being logged (and appended to the transcript) up to three times in a row. Each chunk now tracks which result indices it has already used, so a repeated event can never double-append text.<br>
+  2. <b>"aborted" and "no-speech" are now treated as expected background noise</b>, not real errors — they no longer inflate the error count or look like something is broken. A session only stops early after 3 genuinely different consecutive hard errors.<br>
+  3. <b>Backgrounding the page (lock screen, app switch) now forces a clean stop into review</b> instead of silently breaking mid-session.<br>
+  4. <b>Stop/session-end is now bulletproof</b> against a dead or stuck recognition object — a fallback safety timer guarantees the review step always opens, even in a worst-case failure.<br>
+  5. <b>One-time mic "warm-up"</b> on your first tap of Start, to reduce the chance of the very first chunk failing silently.
 </div>
 
 <div class="card">
@@ -233,23 +256,35 @@
 
 <div class="card">
   <h2>Test 2 — Chunked / Auto-Restart Session</h2>
-  <div class="small-note">Simulates the "hold to record" approach: short recognition bursts that automatically restart, building one continuous transcript. Tap Start, speak naturally for as long as you want (try 1-3 minutes), then tap Stop. Watch the log for restarts, errors, or gaps.</div>
+  <div class="small-note">Simulates the "hold to record" approach. Tap Start, speak naturally for 1-3 minutes (include some long run-on sentences, and try locking your screen briefly mid-session to test the new backgrounding fix), then tap Stop.</div>
   <div style="text-align:center; margin-top:10px;">
     <span class="status-pill pill-idle" id="pill2">IDLE</span>
   </div>
   <div class="timer" id="timer2">0.0s</div>
-  <div class="small-note" style="text-align:center;">Chunks completed: <span id="chunkCount">0</span> &nbsp;|&nbsp; Errors: <span id="errorCount">0</span> &nbsp;|&nbsp; Recovered partials: <span id="recoveredCount">0</span></div>
+  <div class="small-note" style="text-align:center;">Chunks: <span id="chunkCount">0</span> &nbsp;|&nbsp; Errors: <span id="errorCount">0</span> &nbsp;|&nbsp; Recovered: <span id="recoveredCount">0</span> &nbsp;|&nbsp; Auto-corrected: <span id="dictCount">0</span> &nbsp;|&nbsp; Forced cutoffs: <span id="forcedCutCount">0</span></div>
   <button class="btn-primary" id="btnStart2" onclick="startTest2()">Start Test 2</button>
   <button class="btn-danger" id="btnStop2" onclick="stopTest2()" disabled>Stop Test 2</button>
 
   <textarea id="transcript" placeholder="Accumulated transcript will appear here..." readonly></textarea>
 
-  <div class="recovered-hint" id="recoveredHint">⟨text in angle brackets⟩ = recovered at the moment of stop, not yet confirmed by the recognizer — double-check this part carefully.</div>
+  <div class="recovered-hint" id="recoveredHint">⟨text in angle brackets⟩ = recovered at the moment of stop/cutoff, not yet confirmed by the recognizer — double-check this part carefully.</div>
+  <div class="dict-hint" id="dictHint">Words shown here have already been auto-corrected using the dictionary below — check the log for exactly what changed.</div>
 
-  <div class="review-note" id="reviewNote">⚠️ Review step: this box is now editable. Read it over, fix anything wrong (especially trade terms and any ⟨bracketed⟩ text), then tap Confirm.</div>
+  <div class="review-note" id="reviewNote">⚠️ Review step: this box is now editable. Read it over, fix anything wrong, then tap Confirm.</div>
   <button class="btn-confirm" id="btnConfirm" style="display:none;" onclick="confirmTranscript()">✓ Confirm Transcript</button>
 
   <div class="confirmed-box" id="confirmedBox"></div>
+
+  <div class="dict-list">
+    <b style="color:#aaa;">Current auto-correction dictionary (edit the DICTIONARY array in the code to add more):</b><br>
+    <code>essay(s)</code> → <code>assay(s)</code><br>
+    <code>indicative bit</code> → <code>indicative bid</code><br>
+    <code>fright</code> → <code>freight</code><br>
+    <code>quotation period</code> → <code>quotational period</code><br>
+    <code>a couple grade</code> → <code>a copper grade</code><br>
+    <code>the great that</code> → <code>the grade that</code><br>
+    <code>beating offer</code> → <code>competing offer</code>
+  </div>
 </div>
 
 <div class="card">
@@ -303,7 +338,42 @@
   }
 
   // =========================================================
-  // TEST 1: Single short session (unchanged from v1)
+  // AUTO-CORRECTION DICTIONARY
+  // =========================================================
+  var DICTIONARY = [
+    { find: /\bessay(s?)\b/gi, replace: 'assay$1' },
+    { find: /\bindicative bit\b/gi, replace: 'indicative bid' },
+    { find: /\bfright\b/gi, replace: 'freight' },
+    { find: /\bquotation period\b/gi, replace: 'quotational period' },
+    { find: /\ba couple grade\b/gi, replace: 'a copper grade' },
+    { find: /\bthe great that\b/gi, replace: 'the grade that' },
+    { find: /\bbeating offer\b/gi, replace: 'competing offer' }
+  ];
+
+  function applyDictionary(text, label) {
+    var corrected = text;
+    var changesMade = [];
+    DICTIONARY.forEach(function(entry) {
+      if (entry.find.test(corrected)) {
+        var before = corrected;
+        corrected = corrected.replace(entry.find, entry.replace);
+        if (corrected !== before) {
+          changesMade.push(entry.find.source + ' → ' + entry.replace);
+        }
+      }
+      entry.find.lastIndex = 0;
+    });
+    if (changesMade.length > 0) {
+      dictCount += changesMade.length;
+      document.getElementById('dictCount').textContent = dictCount;
+      document.getElementById('dictHint').classList.add('show');
+      log('TEST 2: ' + label + ' auto-corrected — ' + changesMade.join('; '), 'log-dict');
+    }
+    return corrected;
+  }
+
+  // =========================================================
+  // TEST 1: Single short session (unchanged — raw baseline, no dictionary)
   // =========================================================
   var rec1 = null;
   var test1Timer = null;
@@ -369,7 +439,7 @@
   }
 
   // =========================================================
-  // TEST 2: Chunked / auto-restart session — v2 fixes
+  // TEST 2: Chunked / auto-restart session — v5
   // =========================================================
   var rec2 = null;
   var test2Active = false;
@@ -379,25 +449,77 @@
   var chunkCount = 0;
   var errorCount = 0;
   var recoveredCount = 0;
+  var dictCount = 0;
+  var forcedCutCount = 0;
   var masterTranscript = '';
-  var chunkInterimText = ''; // latest not-yet-final text seen in the CURRENT chunk
+  var chunkMaxTimer = null;
+  var chunkGeneration = 0;   // v5: guards against stale async events from a previous chunk
+  var consecutiveHardErrors = 0;
+  var finishCalled = false; // v5: guarantees finishTest2() only ever runs once per session
+  var micWarmed = false;
+
+  var CHUNK_MAX_MS = 14000;
+  var BASE_RESTART_DELAY_MS = 200;
+  var currentRestartDelay = BASE_RESTART_DELAY_MS;
+  var MAX_RESTART_DELAY_MS = 1500;
+
+  // v5: one-time mic warm-up, attached the first time Start is tapped
+  function warmupMic() {
+    if (micWarmed) return;
+    micWarmed = true;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(function(stream) {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        log('Mic warm-up complete.', 'log-good');
+      })
+      .catch(function() {
+        log('Mic warm-up failed — permission may still need to be granted.', 'log-warn');
+      });
+  }
+  document.getElementById('btnStart2').addEventListener('click', warmupMic, { once: true });
+
+  // v5: if the page is backgrounded mid-session (lock screen, app switch), stop cleanly
+  // instead of letting recognition silently die and the UI get stuck.
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && test2Active && !test2Stopping) {
+      log('TEST 2: Page went to background — forcing a clean stop into review.', 'log-warn');
+      test2Stopping = true;
+      clearTimeout(chunkMaxTimer);
+      if (rec2) {
+        try { rec2.stop(); } catch (e) { /* ignore */ }
+      } else {
+        finishTest2();
+      }
+      setTimeout(function() {
+        if (!finishCalled) finishTest2();
+      }, 1200);
+    }
+  });
 
   function startTest2() {
     if (!SR) { log('TEST 2: Cannot start — no SpeechRecognition API.', 'log-error'); return; }
     test2Active = true;
     test2Stopping = false;
+    finishCalled = false;
+    consecutiveHardErrors = 0;
     chunkCount = 0;
     errorCount = 0;
     recoveredCount = 0;
+    dictCount = 0;
+    forcedCutCount = 0;
+    currentRestartDelay = BASE_RESTART_DELAY_MS;
     masterTranscript = '';
-    chunkInterimText = '';
     document.getElementById('transcript').value = '';
     document.getElementById('transcript').readOnly = true;
     document.getElementById('transcript').classList.remove('editable');
     document.getElementById('chunkCount').textContent = '0';
     document.getElementById('errorCount').textContent = '0';
     document.getElementById('recoveredCount').textContent = '0';
+    document.getElementById('dictCount').textContent = '0';
+    document.getElementById('forcedCutCount').textContent = '0';
     document.getElementById('recoveredHint').classList.remove('show');
+    document.getElementById('dictHint').classList.remove('show');
     document.getElementById('reviewNote').classList.remove('show');
     document.getElementById('btnConfirm').style.display = 'none';
     document.getElementById('confirmedBox').classList.remove('show');
@@ -419,65 +541,107 @@
   function runChunk() {
     if (!test2Active) return;
 
-    chunkInterimText = '';
+    chunkGeneration++;
+    var myGen = chunkGeneration;     // v5: this chunk's identity — stale events check this
+    var localInterim = '';
+    var localForcedCut = false;
+    var finalIndices = [];           // v5: which result indices this chunk has already used
+    var chunkStartTime = Date.now();
+    var thisChunkNumber = chunkCount + 1;
 
     rec2 = new SR();
     rec2.continuous = false;
-    rec2.interimResults = true; // v2: turned ON so we can recover in-progress speech on manual stop
+    rec2.interimResults = true;
     rec2.lang = 'en-US';
 
-    var chunkStartTime = Date.now();
-
     rec2.onstart = function() {
-      log('TEST 2: chunk #' + (chunkCount + 1) + ' started.');
+      if (myGen !== chunkGeneration) return;
+      log('TEST 2: chunk #' + thisChunkNumber + ' started.');
+      currentRestartDelay = BASE_RESTART_DELAY_MS;
     };
+
     rec2.onresult = function(e) {
+      if (myGen !== chunkGeneration) return; // stale event from an old chunk — ignore
       var finalText = '';
       var latestInterim = '';
       for (var i = 0; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript + ' ';
+          if (finalIndices.indexOf(i) === -1) {
+            finalIndices.push(i);
+            finalText += e.results[i][0].transcript + ' ';
+          }
+          // else: already used this result index earlier in this same chunk — skip it,
+          // this is exactly the duplicate-append bug confirmed in real testing.
         } else {
           latestInterim += e.results[i][0].transcript;
         }
       }
       if (finalText.trim().length > 0) {
-        masterTranscript += finalText;
+        var corrected = applyDictionary(finalText, 'chunk #' + thisChunkNumber);
+        masterTranscript += corrected;
         document.getElementById('transcript').value = masterTranscript;
-        log('TEST 2: chunk #' + (chunkCount + 1) + ' result — "' + finalText.trim() + '"', 'log-good');
-        chunkInterimText = ''; // this speech is now confirmed final, nothing left pending
-      } else {
-        chunkInterimText = latestInterim; // keep the latest guess in case we stop before it finalizes
+        log('TEST 2: chunk #' + thisChunkNumber + ' result — "' + corrected.trim() + '"', 'log-good');
+        localInterim = '';
+      } else if (latestInterim) {
+        localInterim = latestInterim;
       }
     };
+
     rec2.onerror = function(e) {
+      if (myGen !== chunkGeneration) return;
+
+      if (e.error === 'aborted' || e.error === 'no-speech') {
+        // v5: these are routine on iOS (e.g. forced cutoff, brief silence) — not real failures
+        log('TEST 2: chunk #' + thisChunkNumber + ' soft error — "' + e.error + '" (expected, not counted).', 'log-warn');
+        return;
+      }
+      if (e.error === 'not-allowed') {
+        log('TEST 2: Microphone permission denied — stopping session.', 'log-error');
+        test2Stopping = true;
+        test2Active = false;
+        clearTimeout(chunkMaxTimer);
+        finishTest2();
+        return;
+      }
+
       errorCount++;
+      consecutiveHardErrors++;
       document.getElementById('errorCount').textContent = errorCount;
-      log('TEST 2: chunk #' + (chunkCount + 1) + ' ERROR — "' + e.error + '"', 'log-error');
+      log('TEST 2: chunk #' + thisChunkNumber + ' ERROR — "' + e.error + '" (hard error #' + consecutiveHardErrors + ')', 'log-error');
+
+      if (consecutiveHardErrors >= 3 && test2Active && !test2Stopping) {
+        log('TEST 2: 3 consecutive hard errors — stopping session for review rather than continuing to retry.', 'log-warn');
+        test2Stopping = true;
+        clearTimeout(chunkMaxTimer);
+        try { rec2.stop(); } catch (err) { finishTest2(); }
+      }
     };
+
     rec2.onend = function() {
+      if (myGen !== chunkGeneration) return; // stale — a newer chunk already took over
+      clearTimeout(chunkMaxTimer);
       var chunkDuration = ((Date.now() - chunkStartTime) / 1000).toFixed(1);
       chunkCount++;
       document.getElementById('chunkCount').textContent = chunkCount;
+      consecutiveHardErrors = 0; // a clean end resets the hard-error streak
 
-      // v2 fix: recover any leftover interim text that never got finalized before this chunk ended
-      if (chunkInterimText && chunkInterimText.trim().length > 0) {
-        var recovered = chunkInterimText.trim();
+      if (localInterim && localInterim.trim().length > 0) {
+        var recovered = applyDictionary(localInterim.trim(), 'chunk #' + chunkCount + ' (recovered)');
         masterTranscript += ' ⟨' + recovered + '⟩ ';
         document.getElementById('transcript').value = masterTranscript;
         recoveredCount++;
         document.getElementById('recoveredCount').textContent = recoveredCount;
         document.getElementById('recoveredHint').classList.add('show');
-        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's — RECOVERED unconfirmed text: "' + recovered + '"', 'log-warn');
-        chunkInterimText = '';
+        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's' + (localForcedCut ? ' (forced cutoff)' : '') + ' — RECOVERED unconfirmed text: "' + recovered + '"', 'log-warn');
       } else {
-        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's.');
+        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's' + (localForcedCut ? ' (forced cutoff)' : '') + '.');
       }
 
       if (test2Active && !test2Stopping) {
+        var delay = localForcedCut ? BASE_RESTART_DELAY_MS : currentRestartDelay;
         setTimeout(function() {
           if (test2Active && !test2Stopping) runChunk();
-        }, 50);
+        }, delay);
       } else if (test2Stopping) {
         finishTest2();
       }
@@ -485,14 +649,28 @@
 
     try {
       rec2.start();
+      // v5: arm the hard cap only after start() actually succeeds, not inside onstart,
+      // so a delayed/missing onstart can't leave the cap disarmed.
+      chunkMaxTimer = setTimeout(function() {
+        if (myGen !== chunkGeneration) return;
+        localForcedCut = true;
+        forcedCutCount++;
+        document.getElementById('forcedCutCount').textContent = forcedCutCount;
+        log('TEST 2: chunk #' + thisChunkNumber + ' hit ' + (CHUNK_MAX_MS / 1000) + 's max duration — forcing stop (you were still talking).', 'log-warn');
+        try { rec2.stop(); } catch (e) { /* ignore */ }
+      }, CHUNK_MAX_MS);
     } catch (err) {
+      if (myGen !== chunkGeneration) return;
       errorCount++;
       document.getElementById('errorCount').textContent = errorCount;
-      log('TEST 2: start() threw an exception on chunk #' + (chunkCount + 1) + ' — ' + err.message, 'log-error');
+      log('TEST 2: start() threw an exception on chunk #' + thisChunkNumber + ' — ' + err.message + ' — retrying in ' + currentRestartDelay + 'ms', 'log-error');
+      rec2 = null; // v5: prevent stopTest2 from calling stop() on a dead object
       if (test2Active && !test2Stopping) {
+        var thisDelay = currentRestartDelay;
+        currentRestartDelay = Math.min(currentRestartDelay * 2, MAX_RESTART_DELAY_MS);
         setTimeout(function() {
           if (test2Active && !test2Stopping) runChunk();
-        }, 500);
+        }, thisDelay);
       }
     }
   }
@@ -502,14 +680,32 @@
     test2Stopping = true;
     log('TEST 2: Manual stop requested. Total chunks so far: ' + chunkCount + ', errors: ' + errorCount + '.', 'log-warn');
     document.getElementById('btnStop2').disabled = true;
+    clearTimeout(chunkMaxTimer);
+
     if (rec2) {
-      rec2.stop(); // onend will fire -> recovers any pending interim text -> calls finishTest2()
+      try {
+        rec2.stop();
+      } catch (e) {
+        rec2 = null;
+        finishTest2();
+      }
     } else {
       finishTest2();
     }
+
+    // v5: safety net — if onend never fires for any reason, force the review step open anyway
+    setTimeout(function() {
+      if (!finishCalled) {
+        log('TEST 2: Fallback — session did not end cleanly on its own, finishing anyway.', 'log-warn');
+        finishTest2();
+      }
+    }, 1200);
   }
 
   function finishTest2() {
+    if (finishCalled) return; // v5: guarantees this body only ever runs once
+    finishCalled = true;
+
     test2Active = false;
     test2Stopping = false;
     clearInterval(test2Timer);
@@ -517,8 +713,16 @@
     document.getElementById('btnStart2').disabled = false;
     document.getElementById('btnStop2').disabled = true;
 
-    // Unlock the transcript for editing — this is the review step
+    var beforeFinalPass = masterTranscript;
+    masterTranscript = applyDictionary(masterTranscript, 'final whole-transcript pass');
+    if (masterTranscript !== beforeFinalPass) {
+      log('TEST 2: Whole-transcript pass caught at least one cross-chunk mishear that per-chunk correction missed.', 'log-dict');
+    } else {
+      log('TEST 2: Whole-transcript pass found nothing new to correct beyond what was already fixed per-chunk.');
+    }
+
     var box = document.getElementById('transcript');
+    box.value = masterTranscript;
     box.readOnly = false;
     box.classList.add('editable');
     document.getElementById('reviewNote').classList.add('show');
@@ -529,7 +733,7 @@
   function confirmTranscript() {
     var box = document.getElementById('transcript');
     var finalText = box.value;
-    var wasEdited = finalText !== masterTranscript.trim() && finalText.trim() !== masterTranscript.trim();
+    var wasEdited = finalText.trim() !== masterTranscript.trim();
     box.readOnly = true;
     box.classList.remove('editable');
     document.getElementById('reviewNote').classList.remove('show');
@@ -537,11 +741,11 @@
     setPill('pill2', 'done', 'CONFIRMED');
 
     var confirmedBox = document.getElementById('confirmedBox');
-    confirmedBox.textContent = '✓ Confirmed transcript (' + finalText.length + ' chars):\n\n' + finalText;
+    confirmedBox.textContent = '✓ Confirmed transcript (' + finalText.length + ' chars, ' + dictCount + ' auto-corrections applied, ' + forcedCutCount + ' forced cutoffs):\n\n' + finalText;
     confirmedBox.classList.add('show');
 
-    log('TEST 2: Transcript CONFIRMED by user.' + (wasEdited ? ' Text was edited during review.' : ' No edits made.'), 'log-good');
-    log('TEST 2: In a real Companion build, this confirmed text is what would be sent to the AI Inbox extraction step — not the raw, unreviewed capture.', 'log-good');
+    log('TEST 2: Transcript CONFIRMED by user.' + (wasEdited ? ' Text was further edited during review.' : ' No manual edits made beyond auto-correction.'), 'log-good');
+    log('TEST 2: In a real Companion build, this confirmed text is what would be sent to the AI Inbox extraction step.', 'log-good');
   }
 </script>
 
