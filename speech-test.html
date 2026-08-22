@@ -1,10 +1,12 @@
-<!-- jericho-speech-diagnostic-v1.html -->
+<!-- jericho-speech-diagnostic-v2.html -->
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Jericho Speech Diagnostic v1</title>
+<title>Jericho Speech Diagnostic v2</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -25,6 +27,17 @@
     color: #999;
     margin-bottom: 16px;
   }
+  .whatsnew {
+    background: #12241a;
+    border: 1px solid #1f4d33;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #86efac;
+    line-height: 1.6;
+  }
+  .whatsnew b { color: #fff; }
   .card {
     background: #1a1d24;
     border: 1px solid #2a2e38;
@@ -74,6 +87,11 @@
     color: white;
   }
   .btn-danger:active { background: #b91c1c; }
+  .btn-confirm {
+    background: #16a34a;
+    color: white;
+  }
+  .btn-confirm:active { background: #15803d; }
   .btn-secondary {
     background: #374151;
     color: white;
@@ -92,12 +110,13 @@
   }
   .pill-idle { background: #374151; color: #ccc; }
   .pill-recording { background: #dc2626; color: white; animation: pulse 1s infinite; }
+  .pill-review { background: #fbbf24; color: #1a1d24; }
   .pill-done { background: #16a34a; color: white; }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
   }
-  #transcript {
+  #transcript, #transcript1 {
     width: 100%;
     min-height: 90px;
     background: #0f1115;
@@ -109,6 +128,25 @@
     margin-top: 10px;
     resize: vertical;
   }
+  #transcript.editable {
+    border: 2px solid #fbbf24;
+    background: #171408;
+  }
+  .review-note {
+    display: none;
+    font-size: 12px;
+    color: #fbbf24;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .review-note.show { display: block; }
+  .recovered-hint {
+    font-size: 11px;
+    color: #fb923c;
+    margin-top: 4px;
+    display: none;
+  }
+  .recovered-hint.show { display: block; }
   #log {
     background: #0a0b0e;
     border: 1px solid #2a2e38;
@@ -147,12 +185,30 @@
     width: auto;
     margin-top: 8px;
   }
+  .confirmed-box {
+    display: none;
+    background: #0f2417;
+    border: 1px solid #1f4d33;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #86efac;
+    white-space: pre-wrap;
+  }
+  .confirmed-box.show { display: block; }
 </style>
 </head>
 <body>
 
-<h1>🎙️ Jericho Speech Diagnostic</h1>
+<h1>🎙️ Jericho Speech Diagnostic v2</h1>
 <div class="sub">Standalone test page — not connected to Companion or Firestore. Nothing here touches production Jericho.</div>
+
+<div class="whatsnew">
+  <b>What's new in v2:</b><br>
+  1. If you tap Stop while a chunk is still mid-recognition, any words already picked up (even if not yet "finalized") are now recovered into the transcript and marked with ⟨ ⟩ brackets so nothing silently disappears.<br>
+  2. After stopping Test 2, the transcript box unlocks for editing right there — a review step before it would ever be treated as final, exactly like the real Inbox flow should work.
+</div>
 
 <div class="card">
   <h2>Device &amp; Browser Info</h2>
@@ -172,20 +228,28 @@
   <div class="timer" id="timer1">0.0s</div>
   <button class="btn-primary" id="btnStart1" onclick="startTest1()">Start Test 1</button>
   <button class="btn-danger" id="btnStop1" onclick="stopTest1()" disabled>Stop Test 1</button>
-  <textarea id="transcript1" class="transcript-box" placeholder="Transcript will appear here..." readonly style="width:100%; min-height:60px; background:#0f1115; border:1px solid #2a2e38; border-radius:8px; color:#e6e6e6; font-size:14px; padding:10px; margin-top:10px;"></textarea>
+  <textarea id="transcript1" placeholder="Transcript will appear here..." readonly></textarea>
 </div>
 
 <div class="card">
   <h2>Test 2 — Chunked / Auto-Restart Session</h2>
-  <div class="small-note">Simulates the "hold to record" approach: short recognition bursts (~10s) that automatically restart, building one continuous transcript. Tap Start, speak naturally for as long as you want (try 1-3 minutes), then tap Stop. Watch the log for restarts, errors, or gaps.</div>
+  <div class="small-note">Simulates the "hold to record" approach: short recognition bursts that automatically restart, building one continuous transcript. Tap Start, speak naturally for as long as you want (try 1-3 minutes), then tap Stop. Watch the log for restarts, errors, or gaps.</div>
   <div style="text-align:center; margin-top:10px;">
     <span class="status-pill pill-idle" id="pill2">IDLE</span>
   </div>
   <div class="timer" id="timer2">0.0s</div>
-  <div class="small-note" style="text-align:center;">Chunks completed: <span id="chunkCount">0</span> &nbsp;|&nbsp; Errors: <span id="errorCount">0</span></div>
+  <div class="small-note" style="text-align:center;">Chunks completed: <span id="chunkCount">0</span> &nbsp;|&nbsp; Errors: <span id="errorCount">0</span> &nbsp;|&nbsp; Recovered partials: <span id="recoveredCount">0</span></div>
   <button class="btn-primary" id="btnStart2" onclick="startTest2()">Start Test 2</button>
   <button class="btn-danger" id="btnStop2" onclick="stopTest2()" disabled>Stop Test 2</button>
+
   <textarea id="transcript" placeholder="Accumulated transcript will appear here..." readonly></textarea>
+
+  <div class="recovered-hint" id="recoveredHint">⟨text in angle brackets⟩ = recovered at the moment of stop, not yet confirmed by the recognizer — double-check this part carefully.</div>
+
+  <div class="review-note" id="reviewNote">⚠️ Review step: this box is now editable. Read it over, fix anything wrong (especially trade terms and any ⟨bracketed⟩ text), then tap Confirm.</div>
+  <button class="btn-confirm" id="btnConfirm" style="display:none;" onclick="confirmTranscript()">✓ Confirm Transcript</button>
+
+  <div class="confirmed-box" id="confirmedBox"></div>
 </div>
 
 <div class="card">
@@ -196,7 +260,6 @@
 
 <script>
   var logEl = document.getElementById('log');
-  var startTimeGlobal = 0;
 
   function nowStamp() {
     var d = new Date();
@@ -233,18 +296,18 @@
     log('No SpeechRecognition API detected in this browser at all. Both tests will fail immediately.', 'log-error');
   }
 
-  // =========================================================
-  // TEST 1: Single short session
-  // =========================================================
-  var rec1 = null;
-  var test1Timer = null;
-  var test1Start = 0;
-
   function setPill(id, state, text) {
     var el = document.getElementById(id);
     el.className = 'status-pill pill-' + state;
     el.textContent = text;
   }
+
+  // =========================================================
+  // TEST 1: Single short session (unchanged from v1)
+  // =========================================================
+  var rec1 = null;
+  var test1Timer = null;
+  var test1Start = 0;
 
   function startTest1() {
     if (!SR) { log('TEST 1: Cannot start — no SpeechRecognition API.', 'log-error'); return; }
@@ -306,26 +369,39 @@
   }
 
   // =========================================================
-  // TEST 2: Chunked / auto-restart session
+  // TEST 2: Chunked / auto-restart session — v2 fixes
   // =========================================================
   var rec2 = null;
   var test2Active = false;
+  var test2Stopping = false;
   var test2Timer = null;
   var test2Start = 0;
   var chunkCount = 0;
   var errorCount = 0;
+  var recoveredCount = 0;
   var masterTranscript = '';
-  var CHUNK_TARGET_MS = 10000; // informational only; actual chunk length is decided by the recognizer itself (interimResults off, continuous off)
+  var chunkInterimText = ''; // latest not-yet-final text seen in the CURRENT chunk
 
   function startTest2() {
     if (!SR) { log('TEST 2: Cannot start — no SpeechRecognition API.', 'log-error'); return; }
     test2Active = true;
+    test2Stopping = false;
     chunkCount = 0;
     errorCount = 0;
+    recoveredCount = 0;
     masterTranscript = '';
+    chunkInterimText = '';
     document.getElementById('transcript').value = '';
+    document.getElementById('transcript').readOnly = true;
+    document.getElementById('transcript').classList.remove('editable');
     document.getElementById('chunkCount').textContent = '0';
     document.getElementById('errorCount').textContent = '0';
+    document.getElementById('recoveredCount').textContent = '0';
+    document.getElementById('recoveredHint').classList.remove('show');
+    document.getElementById('reviewNote').classList.remove('show');
+    document.getElementById('btnConfirm').style.display = 'none';
+    document.getElementById('confirmedBox').classList.remove('show');
+    document.getElementById('confirmedBox').textContent = '';
     document.getElementById('btnStart2').disabled = true;
     document.getElementById('btnStop2').disabled = false;
     setPill('pill2', 'recording', 'RECORDING');
@@ -343,9 +419,11 @@
   function runChunk() {
     if (!test2Active) return;
 
+    chunkInterimText = '';
+
     rec2 = new SR();
     rec2.continuous = false;
-    rec2.interimResults = false; // final results only, per the reviewed engineering consensus
+    rec2.interimResults = true; // v2: turned ON so we can recover in-progress speech on manual stop
     rec2.lang = 'en-US';
 
     var chunkStartTime = Date.now();
@@ -354,16 +432,22 @@
       log('TEST 2: chunk #' + (chunkCount + 1) + ' started.');
     };
     rec2.onresult = function(e) {
-      var text = '';
+      var finalText = '';
+      var latestInterim = '';
       for (var i = 0; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
-          text += e.results[i][0].transcript + ' ';
+          finalText += e.results[i][0].transcript + ' ';
+        } else {
+          latestInterim += e.results[i][0].transcript;
         }
       }
-      if (text.trim().length > 0) {
-        masterTranscript += text;
+      if (finalText.trim().length > 0) {
+        masterTranscript += finalText;
         document.getElementById('transcript').value = masterTranscript;
-        log('TEST 2: chunk #' + (chunkCount + 1) + ' result — "' + text.trim() + '"', 'log-good');
+        log('TEST 2: chunk #' + (chunkCount + 1) + ' result — "' + finalText.trim() + '"', 'log-good');
+        chunkInterimText = ''; // this speech is now confirmed final, nothing left pending
+      } else {
+        chunkInterimText = latestInterim; // keep the latest guess in case we stop before it finalizes
       }
     };
     rec2.onerror = function(e) {
@@ -375,12 +459,27 @@
       var chunkDuration = ((Date.now() - chunkStartTime) / 1000).toFixed(1);
       chunkCount++;
       document.getElementById('chunkCount').textContent = chunkCount;
-      log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's.');
-      if (test2Active) {
-        // Immediate restart — no gap, per the reviewed chunking pattern
+
+      // v2 fix: recover any leftover interim text that never got finalized before this chunk ended
+      if (chunkInterimText && chunkInterimText.trim().length > 0) {
+        var recovered = chunkInterimText.trim();
+        masterTranscript += ' ⟨' + recovered + '⟩ ';
+        document.getElementById('transcript').value = masterTranscript;
+        recoveredCount++;
+        document.getElementById('recoveredCount').textContent = recoveredCount;
+        document.getElementById('recoveredHint').classList.add('show');
+        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's — RECOVERED unconfirmed text: "' + recovered + '"', 'log-warn');
+        chunkInterimText = '';
+      } else {
+        log('TEST 2: chunk #' + chunkCount + ' ended after ' + chunkDuration + 's.');
+      }
+
+      if (test2Active && !test2Stopping) {
         setTimeout(function() {
-          if (test2Active) runChunk();
+          if (test2Active && !test2Stopping) runChunk();
         }, 50);
+      } else if (test2Stopping) {
+        finishTest2();
       }
     };
 
@@ -390,24 +489,59 @@
       errorCount++;
       document.getElementById('errorCount').textContent = errorCount;
       log('TEST 2: start() threw an exception on chunk #' + (chunkCount + 1) + ' — ' + err.message, 'log-error');
-      if (test2Active) {
+      if (test2Active && !test2Stopping) {
         setTimeout(function() {
-          if (test2Active) runChunk();
+          if (test2Active && !test2Stopping) runChunk();
         }, 500);
       }
     }
   }
 
   function stopTest2() {
-    test2Active = false;
+    if (!test2Active) return;
+    test2Stopping = true;
+    log('TEST 2: Manual stop requested. Total chunks so far: ' + chunkCount + ', errors: ' + errorCount + '.', 'log-warn');
+    document.getElementById('btnStop2').disabled = true;
     if (rec2) {
-      log('TEST 2: Manual stop requested. Total chunks: ' + chunkCount + ', total errors: ' + errorCount + '.', 'log-warn');
-      rec2.stop();
+      rec2.stop(); // onend will fire -> recovers any pending interim text -> calls finishTest2()
+    } else {
+      finishTest2();
     }
+  }
+
+  function finishTest2() {
+    test2Active = false;
+    test2Stopping = false;
     clearInterval(test2Timer);
-    setPill('pill2', 'done', 'DONE');
+    setPill('pill2', 'review', 'REVIEW');
     document.getElementById('btnStart2').disabled = false;
     document.getElementById('btnStop2').disabled = true;
+
+    // Unlock the transcript for editing — this is the review step
+    var box = document.getElementById('transcript');
+    box.readOnly = false;
+    box.classList.add('editable');
+    document.getElementById('reviewNote').classList.add('show');
+    document.getElementById('btnConfirm').style.display = 'block';
+    log('TEST 2: Session ended. Transcript unlocked for review — edit anything before confirming.', 'log-good');
+  }
+
+  function confirmTranscript() {
+    var box = document.getElementById('transcript');
+    var finalText = box.value;
+    var wasEdited = finalText !== masterTranscript.trim() && finalText.trim() !== masterTranscript.trim();
+    box.readOnly = true;
+    box.classList.remove('editable');
+    document.getElementById('reviewNote').classList.remove('show');
+    document.getElementById('btnConfirm').style.display = 'none';
+    setPill('pill2', 'done', 'CONFIRMED');
+
+    var confirmedBox = document.getElementById('confirmedBox');
+    confirmedBox.textContent = '✓ Confirmed transcript (' + finalText.length + ' chars):\n\n' + finalText;
+    confirmedBox.classList.add('show');
+
+    log('TEST 2: Transcript CONFIRMED by user.' + (wasEdited ? ' Text was edited during review.' : ' No edits made.'), 'log-good');
+    log('TEST 2: In a real Companion build, this confirmed text is what would be sent to the AI Inbox extraction step — not the raw, unreviewed capture.', 'log-good');
   }
 </script>
 
