@@ -1,8 +1,53 @@
 <!DOCTYPE html>
 <!--
-  Diligence-v31.html
-  Jericho Due Diligence Engine - front end - VERSION v31
-  Previous version: v30.  Pairs with Cloudflare Worker diligence-worker-v14.js.
+  Diligence-v33.html
+  Jericho Due Diligence Engine - front end - VERSION v33
+  Previous version: v32.  Pairs with Cloudflare Worker diligence-worker-v14.js
+  (NO Worker change is required for v33 - front-end only, and nothing here
+  touches the network at all).
+
+  New in v33 - two deterministic check groups that run entirely on the device,
+  with no API, no key, no cost, and no AI involvement. Neither can hallucinate,
+  because neither asks a model anything. Both were verified before being built:
+
+   1. PDF PROVENANCE. pdf.js 3.11.174 - the exact pinned version this file
+      loads - exposes getMetadata() on the document proxy, returning Creator,
+      Producer, CreationDate, ModDate, Title, Author, plus PDFFormatVersion,
+      IsAcroFormPresent, IsSignaturesPresent and IsXFAPresent. It also exposes
+      .fingerprints, a two-element array whose second entry is present and
+      different from the first when the file carries a modification ID.
+      Verified by reading the source of the published package, not assumed.
+      IMPORTANT AND STATED ON SCREEN: these are values written inside the file.
+      They are editable, and ordinary scanning or converting rewrites them. The
+      tool reports what the fields SAY. It never infers authenticity from them.
+
+   2. BANK DETAIL ARITHMETIC. BIC/SWIFT structure per ISO 9362 (4 bank + 2
+      country + 2 location + optional 3 branch) and the IBAN ISO 13616 mod-97
+      check. Both are offline arithmetic, verified against published specimen
+      IBANs and their single-digit corruptions before this was written. Also
+      flags the same branch name carrying two different branch codes within one
+      document, which is a plain internal contradiction.
+
+  NOT BUILT, deliberately: domain-age (RDAP) and mail-server (DNS-over-HTTPS)
+  checks. Both are documented as free and keyless by their operators, but
+  neither could be executed and confirmed end to end from the build
+  environment, so neither was shipped on the strength of documentation alone.
+  Sanctions list screening is likewise not built - nothing about it was
+  verified at all.
+
+  New in v32:
+   - Tax identification numbers are no longer mistaken for company registration
+     numbers. v31 typed any cued number as a registration number unless the line
+     mentioned VAT, so "TAX Identification Number 910 3434 222" was offered as a
+     registration number. It did no harm in the first live run only because the
+     real number appeared earlier in the document and the Worker keeps the first
+     one it sees. Tax IDs now have their own type, are labelled as such on
+     screen, and are never sent for a registry lookup.
+   - South African registration numbers are now format-checked: YYYY/NNNNNN/NN,
+     six or seven digits in the middle block, optional legacy letter prefix for
+     pre-2002 entities. So a real CIPC number reads "format OK" instead of "not
+     checkable", and a tax number is rejected on its face rather than by luck of
+     where it sits in the document.
 
   New in v31:
    - READABILITY. v30 added new panels using colour variables left over from an
@@ -695,6 +740,10 @@ color: #4f46e5;
 .doc-quote { font-family:'DM Mono',monospace; color:var(--gray); }
 .cite-ok { font-family:'DM Mono',monospace; font-size:10px; color:var(--green-soft); }
 .cite-bad { font-family:'DM Mono',monospace; font-size:10px; color:var(--red); }
+.mech-banner { border:1px solid rgba(4,120,87,0.35); background:#f0fdf4; border-radius:6px; padding:14px 16px; font-size:12px; line-height:1.7; color:var(--gray-light); margin-bottom:22px; }
+.mech-table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; }
+.mech-table td { padding:6px 10px; border-bottom:1px solid var(--border); color:var(--gray-light); vertical-align:top; }
+.mech-table td:first-child { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray); width:38%; }
 .doc-audit { margin-top:22px; padding-top:14px; border-top:1px solid var(--border); font-size:11px; color:var(--gray); font-family:'DM Mono',monospace; line-height:1.7; }
 </style>
 </head>
@@ -705,7 +754,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v31</div>
+      <div class="logo-sub">Due Diligence Engine · v33</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -1185,6 +1234,31 @@ async function extractFromPdf(file) {
     data: buf, isEvalSupported: false, disableAutoFetch: true, disableFontFace: true
   }).promise;
 
+  // Provenance is read here, while the document object is open.
+  let provenance = null;
+  try {
+    const md = await pdf.getMetadata();
+    const info = (md && md.info) ? md.info : {};
+    let fp = null;
+    try { fp = pdf.fingerprints || null; } catch (e) { fp = null; }
+    provenance = {
+      creator: info.Creator || null,
+      producer: info.Producer || null,
+      creationDate: parsePdfDate(info.CreationDate),
+      modDate: parsePdfDate(info.ModDate),
+      title: info.Title || null,
+      author: info.Author || null,
+      pdfVersion: info.PDFFormatVersion || null,
+      hasAcroForm: !!info.IsAcroFormPresent,
+      hasSignatures: !!info.IsSignaturesPresent,
+      hasXfa: !!info.IsXFAPresent,
+      modifiedId: !!(fp && fp.length > 1 && fp[1] && fp[1] !== fp[0]),
+      pageCount: pdf.numPages
+    };
+  } catch (e) {
+    provenance = { error: 'Document properties could not be read from this file.' };
+  }
+
   const pagesRead = Math.min(pdf.numPages, DOC_MAX_PAGES);
   const lines = [];
   let ocrPages = 0, confSum = 0, confCount = 0;
@@ -1209,6 +1283,7 @@ async function extractFromPdf(file) {
   }
 
   return {
+    provenance: provenance,
     text: lines.join('\n'),
     method: ocrPages === 0 ? 'pdf_text' : (ocrPages === pagesRead ? 'ocr' : 'pdf_text+ocr'),
     confidence: confCount ? Math.round(confSum / confCount) : null,
@@ -1285,6 +1360,7 @@ function classifyExtraction(method, confidence, text) {
 function applyExtraction(doc, res) {
   const cls = classifyExtraction(res.method, res.confidence, res.text || '');
   doc.method = res.method;
+  doc.provenance = res.provenance || null;
   doc.confidence = res.confidence;
   doc.pages = res.pages;
   doc.pagesRead = res.pagesRead;
@@ -1319,6 +1395,26 @@ function applyExtraction(doc, res) {
 // number, and looking one up could return a completely different company.
 const ID_CUE_RE = /(registration|registered\s+(?:no|number)|reg\.?\s*(?:no|nr|number)|company\s*(?:no|number)|companies\s*house|ondernemingsnummer|entreprise|enterprise\s*number|kbo|bce|crn|rc\s*no|rccm|incorporat|vat|btw|tva|ust|nif|tax\s*(?:id|number))/i;
 const VAT_CUE_RE = /(vat|btw|tva|ust|t\.v\.a)/i;
+// A tax/SARS/TIN reference is NOT a company registration number. Kept separate
+// so it can be shown to the user but never looked up as a company.
+const TAX_CUE_RE = /(tax\s*(?:id|identification|reference|number)|\btin\b|sars|income\s*tax)/i;
+
+function idTypeForLine(text) {
+  if (VAT_CUE_RE.test(text)) return 'vat';
+  if (TAX_CUE_RE.test(text)) return 'tax_id';
+  return 'reg_no';
+}
+
+// South Africa (CIPC): YYYY/NNNNNN/NN - year, a six or seven digit sequence,
+// and a two-digit entity-type code (07 private, 06 public, 08 NPC, 21 Inc,
+// 23 CC). Entities registered before the 2002 centralisation keep a legacy
+// number carrying an alphabetical regional prefix, so one is allowed.
+function zaNormaliseId(raw) {
+  return String(raw || '').toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9\/]/g, '');
+}
+function zaFormatOk(id) {
+  return /^[A-Z]{0,2}(?:18|19|20)\d{2}\/\d{6,7}\/\d{2}$/.test(id);
+}
 
 function beNormaliseId(raw) {
   let d = String(raw || '').replace(/\D/g, '');
@@ -1366,15 +1462,28 @@ function extractIdentifiers(doc) {
 
       if (entry && entry.id === 'belgium') {
         const m = source.match(/\b(?:BE\s*)?([01][\s.\-]?\d{3}[\s.\-]?\d{3}[\s.\-]?\d{3})\b/);
-        if (m && (!wasFixed || beChecksum(beNormaliseId(m[1])))) pushId(m[1], 'reg_no', l, 'be', wasFixed);
+        if (m && (!wasFixed || beChecksum(beNormaliseId(m[1])))) pushId(m[1], idTypeForLine(l.text), l, 'be', wasFixed);
         const v = source.match(/\bBE\s*([0-9][\s.\-]?\d{3}[\s.\-]?\d{3}[\s.\-]?\d{3})\b/i);
         if (v && VAT_CUE_RE.test(l.text) && (!wasFixed || beChecksum(beNormaliseId(v[1])))) pushId(v[1], 'vat', l, 'be', wasFixed);
       } else if (entry && entry.id === 'uk') {
         const m = source.match(/\b([A-Z]{2}\d{6}|\d{8})\b/);
-        if (m) pushId(m[1], 'reg_no', l, 'uk', wasFixed);
+        if (m) pushId(m[1], idTypeForLine(l.text), l, 'uk', wasFixed);
+      } else if (entry && entry.id === 'south africa') {
+        // Spaces are allowed inside the year because OCR splits it: the live
+        // test produced "20 16/019773/07". zaNormaliseId strips them, so this
+        // de-duplicates against the clean copy elsewhere in the document.
+        const m = source.match(/\b((?:[A-Z]{1,2}\s*)?(?:18|19|20)\s*\d{2}\s*\/\s*\d{6,7}\s*\/\s*\d{2})\b/);
+        if (m) {
+          pushId(m[1], idTypeForLine(l.text), l, 'za', wasFixed);
+        } else if (!wasFixed) {
+          // Not a CIPC registration number - but VAT and tax numbers on cued
+          // lines must still be shown, correctly typed, rather than dropped.
+          const g = source.match(/\b([A-Z]{0,3}[\s\-]?\d[\d\s.\-\/]{4,17}\d)\b/);
+          if (g) pushId(g[1], idTypeForLine(l.text), l, 'generic', false);
+        }
       } else if (!wasFixed) {
         const m = source.match(/\b([A-Z]{0,3}[\s\-]?\d[\d\s.\-\/]{4,17}\d)\b/);
-        if (m) pushId(m[1], VAT_CUE_RE.test(l.text) ? 'vat' : 'reg_no', l, 'generic', false);
+        if (m) pushId(m[1], idTypeForLine(l.text), l, 'generic', false);
       }
     });
   });
@@ -1392,6 +1501,10 @@ function extractIdentifiers(doc) {
       }
       normalized = n;
       validation = beChecksum(n) ? 'checksum_ok' : 'checksum_failed';
+    } else if (scheme === 'za') {
+      const n = zaNormaliseId(raw);
+      normalized = n;
+      validation = zaFormatOk(n) ? 'format_ok' : 'format_failed';
     } else if (scheme === 'uk') {
       let n = ukNormaliseId(raw);
       const ok = /^[A-Z]{2}\d{6}$/.test(n) || /^\d{8}$/.test(n);
@@ -1423,7 +1536,13 @@ function collectDocIdentifiers() {
   const all = [];
   attachedDocs.forEach(function (d) {
     if (d.status !== 'ready') return;
-    (d.identifiers || []).forEach(function (i) { all.push(i); });
+    (d.identifiers || []).forEach(function (i) {
+      // Tax IDs are displayed on screen but never transmitted: the Worker
+      // treats any non-VAT identifier as a registration number, so sending one
+      // risks a tax number being reported as the company's registration number.
+      if (i.type === 'tax_id') return;
+      all.push(i);
+    });
   });
   return all;
 }
@@ -1456,7 +1575,10 @@ function renderDocList() {
           : i.validation === 'format_ok' ? '<span class="cite-ok">format OK</span>'
           : i.validation === 'no_validator' ? '<span class="doc-chip">not checkable</span>'
           : '<span class="cite-bad">failed its check digit — will NOT be looked up</span>';
-        return '<div>' + (i.type === 'vat' ? 'VAT number' : 'Registration number') + ' found: <strong>' +
+        const typeLabel = i.type === 'vat' ? 'VAT number'
+          : i.type === 'tax_id' ? 'Tax identification number (not used for registry lookup)'
+          : 'Registration number';
+        return '<div>' + typeLabel + ' found: <strong>' +
           escapeHtml(i.normalized) + '</strong> ' + badge +
           (i.ocrCorrected ? ' <span class="cite-bad">OCR correction applied — check the digits against the original</span>' : '') +
           '<div class="doc-idline">from line ' + i.line + ': "' + escapeHtml(i.lineText.slice(0, 120)) + '"</div></div>';
@@ -1492,6 +1614,133 @@ function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ══ v33: DETERMINISTIC CHECKS - no network, no AI, cannot hallucinate ═════
+
+// PDF dates look like D:YYYYMMDDHHmmSS+HH'mm' . Anything unrecognised is
+// returned as the raw string rather than guessed at.
+function parsePdfDate(v) {
+  if (!v || typeof v !== 'string') return null;
+  const m = v.match(/^D?:?(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?(\d{2})?/);
+  if (!m) return { raw: v, iso: null };
+  const y = m[1], mo = m[2] || '01', d = m[3] || '01';
+  const hh = m[4] || '00', mi = m[5] || '00', ss = m[6] || '00';
+  const iso = y + '-' + mo + '-' + d + 'T' + hh + ':' + mi + ':' + ss;
+  const t = Date.parse(iso + 'Z');
+  return { raw: v, iso: isNaN(t) ? null : iso, ms: isNaN(t) ? null : t };
+}
+
+function fmtPdfDate(d) {
+  if (!d) return null;
+  if (!d.iso) return d.raw;
+  return d.iso.replace('T', ' ').slice(0, 16) + ' UTC';
+}
+
+// ISO 9362: 4 letters bank, 2 letters country, 2 alphanumeric location,
+// optional 3 alphanumeric branch.
+function parseBIC(v) {
+  const t = String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(t)) return null;
+  return { bic: t, bank: t.slice(0, 4), country: t.slice(4, 6), location: t.slice(6, 8), branch: t.slice(8) || null };
+}
+
+// ISO 13616 mod-97: move the first four characters to the end, map letters to
+// numbers with A=10, and the remainder modulo 97 must be exactly 1.
+function ibanValid(v) {
+  const t = String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/.test(t)) return false;
+  const r = t.slice(4) + t.slice(0, 4);
+  let rem = 0;
+  for (const ch of r) {
+    const seg = /[0-9]/.test(ch) ? ch : String(ch.charCodeAt(0) - 55);
+    for (const dch of seg) rem = (rem * 10 + Number(dch)) % 97;
+  }
+  return rem === 1;
+}
+
+const ISO2_BY_COUNTRY = {
+  'south africa': 'ZA', 'belgium': 'BE', 'united kingdom': 'GB', 'uk': 'GB',
+  'netherlands': 'NL', 'germany': 'DE', 'france': 'FR', 'united states': 'US',
+  'mexico': 'MX', 'united arab emirates': 'AE', 'nigeria': 'NG', 'ghana': 'GH',
+  'kenya': 'KE', 'zambia': 'ZM', 'zimbabwe': 'ZW', 'namibia': 'NA',
+  'botswana': 'BW', 'mozambique': 'MZ', 'tanzania': 'TZ', 'india': 'IN',
+  'china': 'CN', 'turkey': 'TR', 'switzerland': 'CH', 'luxembourg': 'LU',
+  'spain': 'ES', 'italy': 'IT', 'portugal': 'PT', 'brazil': 'BR', 'chile': 'CL',
+  'peru': 'PE', 'australia': 'AU', 'indonesia': 'ID', 'philippines': 'PH',
+  'kazakhstan': 'KZ', 'singapore': 'SG', 'hong kong': 'HK'
+};
+
+// Every finding carries the document id and line it came from, so the existing
+// citation discipline applies to these too.
+function bankChecks(doc, companyCountry) {
+  const out = [];
+  const bics = [], ibans = [], branches = [];
+
+  doc.lines.forEach(function (l) {
+    const txt = l.text;
+    if (/\b(swift|bic)\b/i.test(txt)) {
+      // Take everything after the cue and strip separators, because documents
+      // print these broken up in every conceivable way ("SB ZAZAJJ"). The
+      // cleaned remainder must be EXACTLY a BIC: anything with trailing text is
+      // skipped rather than guessed at, so a missed code is possible but a
+      // wrong one is not.
+      const after = txt.replace(/^[\s\S]*?\b(?:swift|bic)\b\s*(?:code)?\s*:?\s*/i, '');
+      const cand = after.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(cand)) bics.push({ raw: cand, line: l });
+    }
+    if (/\biban\b/i.test(txt)) {
+      const m = txt.match(/\b([A-Z]{2}[0-9]{2}[A-Z0-9\s]{10,40})\b/);
+      if (m) ibans.push({ raw: m[1], line: l });
+    }
+    const bm = txt.match(/branch\s*(name|code)\s*:?\s*(.+)$/i);
+    if (bm) branches.push({ kind: bm[1].toLowerCase(), value: bm[2].trim(), line: l });
+  });
+
+  bics.forEach(function (b) {
+    const p = parseBIC(b.raw);
+    if (!p) {
+      out.push({ check: 'BIC / SWIFT code', result: 'malformed',
+        detail: 'This code does not match the ISO 9362 structure (four letters for the bank, two for the country, two for the location, optionally three more for the branch).',
+        value: b.raw, line: b.line });
+      return;
+    }
+    const expected = ISO2_BY_COUNTRY[normCountryUI(companyCountry)] || null;
+    if (expected && p.country !== expected) {
+      out.push({ check: 'BIC / SWIFT code', result: 'country mismatch',
+        detail: 'The country segment of this code is ' + p.country + ', but the counterparty is stated to be in ' + companyCountry + ' (' + expected + '). A foreign bank is not irregular in itself - it is worth knowing about.',
+        value: p.bic, line: b.line });
+    } else {
+      out.push({ check: 'BIC / SWIFT code', result: 'structure valid',
+        detail: 'Structure is well formed. Bank ' + p.bank + ', country ' + p.country + ', location ' + p.location +
+          (p.branch ? ', branch ' + p.branch : '') + '. This confirms the FORMAT only - it does not confirm the account exists or belongs to this company.',
+        value: p.bic, line: b.line });
+    }
+  });
+
+  ibans.forEach(function (i) {
+    const ok = ibanValid(i.raw);
+    out.push({ check: 'IBAN', result: ok ? 'check digits valid' : 'check digits FAIL',
+      detail: ok ? 'The IBAN passes its ISO 13616 mod-97 check digit. This means the number is internally consistent - it does not mean the account exists.'
+                 : 'The IBAN fails its mod-97 check digit. Either it was mistyped or misread, or it is not a real IBAN. Ask for it again in writing.',
+      value: i.raw.replace(/\s+/g, ' ').trim(), line: i.line });
+  });
+
+  // Same branch name, two different branch codes, inside one document.
+  const codes = branches.filter(function (b) { return b.kind === 'code'; });
+  const uniq = [];
+  codes.forEach(function (c) { if (uniq.indexOf(c.value) === -1) uniq.push(c.value); });
+  if (uniq.length > 1) {
+    const names = branches.filter(function (b) { return b.kind === 'name'; }).map(function (b) { return b.value.toLowerCase(); });
+    const sameName = names.length > 1 && names.every(function (n) { return n === names[0]; });
+    out.push({ check: 'Bank branch', result: sameName ? 'internal contradiction' : 'multiple branch codes',
+      detail: (sameName
+        ? 'The same branch name appears with more than one branch code in this document: ' + uniq.join(' and ') + '. One of them is wrong, or the accounts are not at the branch stated.'
+        : 'More than one branch code appears in this document: ' + uniq.join(', ') + '. Normal if there are genuinely several accounts - worth confirming.'),
+      value: uniq.join(' / '), line: codes[0].line });
+  }
+
+  return out;
 }
 
 // ── Document review pass (second Worker call) ────────────────────────────
@@ -1686,7 +1935,7 @@ function renderDocumentsTab(result) {
   const allowed = review.allowedPatterns || null;
 
   let rejected = 0;
-  let html = banner;
+  let html = banner + renderMechanicalChecks(result);
 
   review.documents.forEach(function (rd) {
     const src = docsById[rd.docId];
@@ -1756,6 +2005,74 @@ function renderDocumentsTab(result) {
     '</div>';
 
   el.innerHTML = html;
+}
+
+// Rendered ABOVE the AI findings on purpose: these are arithmetic and file
+// properties, and they are the only part of this tab that cannot be wrong
+// about what it read.
+function renderMechanicalChecks(result) {
+  const country = (result && result.country) || '';
+  let rows = '';
+
+  attachedDocs.forEach(function (d) {
+    let block = '';
+
+    const p = d.provenance;
+    if (p && !p.error) {
+      const items = [];
+      if (p.creator) items.push(['Created with', p.creator]);
+      if (p.producer) items.push(['Written by', p.producer]);
+      if (p.creationDate) items.push(['Creation date field', fmtPdfDate(p.creationDate)]);
+      if (p.modDate) items.push(['Modification date field', fmtPdfDate(p.modDate)]);
+      if (p.author) items.push(['Author field', p.author]);
+      if (p.pdfVersion) items.push(['PDF version', p.pdfVersion]);
+      items.push(['Pages', String(p.pageCount)]);
+      if (p.hasSignatures) items.push(['Digital signature present', 'yes']);
+      if (p.hasAcroForm) items.push(['Fillable form fields', 'yes']);
+      if (p.modifiedId) items.push(['File carries a modification ID', 'yes - the file was changed after it was first written']);
+
+      // A modification date later than the creation date is a plain arithmetic
+      // observation, not an accusation.
+      if (p.creationDate && p.modDate && p.creationDate.ms && p.modDate.ms && p.modDate.ms > p.creationDate.ms + 60000) {
+        items.push(['Note', 'The modification date field is later than the creation date field.']);
+      }
+
+      if (items.length) {
+        block += '<div class="doc-subhead">File properties</div><table class="mech-table">' +
+          items.map(function (kv) {
+            return '<tr><td>' + escapeHtml(kv[0]) + '</td><td>' + escapeHtml(kv[1]) + '</td></tr>';
+          }).join('') + '</table>' +
+          '<div class="doc-fline" style="color:var(--gray);">These are values stored inside the file. They can be edited, and scanning, printing to PDF or converting a document rewrites them as a matter of course. They describe the FILE, never the truth of its contents, and nothing here indicates whether a document is real.</div>';
+      }
+    } else if (p && p.error) {
+      block += '<div class="doc-subhead">File properties</div><div class="doc-fline">' + escapeHtml(p.error) + '</div>';
+    }
+
+    const bank = (d.lines && d.lines.length) ? bankChecks(d, country) : [];
+    if (bank.length) {
+      block += '<div class="doc-subhead">Bank details - arithmetic checks</div>';
+      bank.forEach(function (b) {
+        const cls = /FAIL|malformed|contradiction/.test(b.result) ? 'bad'
+                  : /valid/.test(b.result) ? 'ok' : 'warn';
+        block += '<div class="doc-finding ' + cls + '">' +
+          '<div><strong>' + escapeHtml(b.check) + '</strong> — <span class="doc-verdict ' + cls + '">' + escapeHtml(b.result) + '</span></div>' +
+          '<div class="doc-fline">' + escapeHtml(b.value) + '</div>' +
+          '<div class="doc-fline">' + escapeHtml(b.detail) + '</div>' +
+          '<div class="doc-cite"><span class="cite-ok">✓ read directly from</span> ' + escapeHtml(d.id) + ' line ' + b.line.n +
+          ': <span class="doc-quote">"' + escapeHtml(b.line.text) + '"</span></div>' +
+          '</div>';
+      });
+    }
+
+    if (block) {
+      rows += '<div class="section-header">' + escapeHtml(d.name) + ' <span class="doc-idtag">' + escapeHtml(d.id) + '</span></div>' + block;
+    }
+  });
+
+  if (!rows) return '';
+  return '<div class="mech-banner">The checks in this section are arithmetic and file properties read on your device. ' +
+    'No AI was involved and nothing was sent anywhere, so they cannot be invented — but they confirm format and internal ' +
+    'consistency only, never that an account, a company or a document is real.</div>' + rows;
 }
 
 function renderCiteBlock(f, v, probs) {
