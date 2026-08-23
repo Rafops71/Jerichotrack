@@ -1,8 +1,25 @@
 <!DOCTYPE html>
 <!--
-  Diligence-v30.html
-  Jericho Due Diligence Engine - front end - VERSION v30
-  Previous version: v29.  Pairs with Cloudflare Worker diligence-worker-v13.js.
+  Diligence-v31.html
+  Jericho Due Diligence Engine - front end - VERSION v31
+  Previous version: v30.  Pairs with Cloudflare Worker diligence-worker-v14.js.
+
+  New in v31:
+   - READABILITY. v30 added new panels using colour variables left over from an
+     older dark theme, on a page whose background is white. 47 CSS rules were
+     below the WCAG 4.5:1 contrast minimum, three of them white-on-white. The
+     palette is now defined for a light background: dark ink on very light
+     surfaces throughout. Verified by computing the contrast ratio of every
+     rule in the stylesheet, not by eye.
+   - Social media is EXCLUDED, not down-weighted. Handled in Worker v14.
+   - "not_found" may no longer be used for a registry that was never reachable;
+     the new value is "not_checked", with its own badge.
+   - Quote checking tolerates OCR digit spacing ("20 16/019773/07") and accepts
+     citations spanning several lines. In the first live test these two gaps
+     wrongly marked five correct findings as unverified.
+   - Internal markers such as [OUTCOME: not_machine_readable] are stripped from
+     report text before display and export.
+   - The Documents tab is now included in the PDF export.
 
   New in v30:
    - Supporting Documents panel: attach PDFs/photos of KYC forms, CIS sheets,
@@ -27,21 +44,30 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy: #1e3a5f;
-    --navy-mid: #24456d;
-    --navy-light: #2f5480;
-    --indigo: #818cf8;
-    --indigo-light: #a5b4fc;
-    --red: #f87171;
-    --red-soft: #fb7185;
-    --amber: #818cf8;
-    --green: #10b981;
-    --green-soft: #34d399;
+    /* v31: every value below is chosen to sit on a WHITE page. The previous
+       values were dark-theme accents - pale mints, salmons and periwinkles
+       designed to glow on navy - which measured between 1.0:1 and 3.0:1 on
+       white. Contrast ratios against #ffffff are noted for each. */
+    --navy: #1e3a5f;          /* 10.1:1  headings, strong text */
+    --navy-mid: #24456d;      /*  8.6:1 */
+    --navy-light: #2f5480;    /*  6.6:1 */
+    --ink: #111111;           /* 18.9:1  primary body text */
+    --indigo: #4338ca;        /*  8.2:1  links, evidence tags */
+    --indigo-light: #4f46e5;  /*  6.9:1 */
+    --red: #b91c1c;           /*  6.4:1  failures, bad citations */
+    --red-soft: #be123c;      /*  6.5:1  high risk */
+    --amber: #b45309;         /*  5.9:1  moderate/caution (was identical to
+                                          indigo before, which made "probable"
+                                          and "link" the same colour) */
+    --green: #047857;         /*  5.3:1 */
+    --green-soft: #065f46;    /*  7.4:1  verified, passing checks */
     --white: #ffffff;
-    --gray: #64748b;
-    --gray-light: #cbd5e1;
-    --border: rgba(129,140,248,0.2);
-    --glass: rgba(36,69,109,0.85);
+    --gray: #475569;          /*  7.0:1  secondary text */
+    --gray-light: #334155;    /* 10.4:1  body text in document panels */
+    --surface: #f8fafc;       /*          very light panel background */
+    --surface-alt: #f1f5f9;   /*          slightly deeper, for code/text views */
+    --border: rgba(30,58,95,0.18);
+    --glass: #f8fafc;
   }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-box-sizing: border-box; }
@@ -80,7 +106,7 @@ font-family: 'DM Sans', sans-serif;
 font-size: 28px;
 font-weight: 900;
 letter-spacing: 3px;
-color: #818cf8;
+color: var(--indigo);
 text-transform: uppercase;
 }
 .logo-sub {
@@ -165,7 +191,7 @@ transition: border-color 0.2s;
 appearance: none;
 }
 input::placeholder, textarea::placeholder { color: #64748b !important; -webkit-text-fill-color: #64748b !important; opacity: 1; }
-input:focus, select:focus, textarea:focus { border-color: #818cf8 !important; }
+input:focus, select:focus, textarea:focus { border-color: var(--indigo) !important; }
 select option { background: #ffffff; color: #111111; }
 textarea { resize: vertical; min-height: 80px; }
 
@@ -254,7 +280,7 @@ font-size: 13px;
 color: #64748b;
 transition: color 0.3s;
 }
-.step-item.done { color: #10b981 !important; }
+.step-item.done { color: var(--green) !important; }
 .step-item.active { color: #1e3a5f !important; font-weight: bold; }
 .step-dot {
 width: 8px; height: 8px;
@@ -364,7 +390,7 @@ margin-bottom: 8px;
 }
 .conflict-row { display: flex; gap: 16px; font-size: 13px; }
 .conflict-claim { color: var(--gray); }
-.conflict-claim span { color: var(--white); }
+.conflict-claim span { color: var(--ink); }
 .conflict-found { color: var(--amber); font-weight: 500; }
 
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
@@ -385,9 +411,9 @@ text-transform: uppercase;
 margin-bottom: 8px;
 }
 .info-card-value { font-size: 14px; line-height: 1.6; color: #111111; }
-.info-card-value.ok { color: #10b981; }
-.info-card-value.warn { color: #818cf8; }
-.info-card-value.bad { color: #f87171; }
+.info-card-value.ok { color: var(--green); }
+.info-card-value.warn { color: var(--indigo); }
+.info-card-value.bad { color: var(--red); }
 
 .confidence-badge {
 display: inline-block;
@@ -403,7 +429,8 @@ vertical-align: middle;
 .confidence-badge.verified { background: rgba(16,185,129,0.15); color: var(--green-soft); border: 1px solid rgba(16,185,129,0.3); }
 .confidence-badge.probable { background: rgba(129,140,248,0.15); color: var(--amber); border: 1px solid rgba(129,140,248,0.3); }
 .confidence-badge.unverified { background: rgba(100,116,139,0.15); color: var(--gray); border: 1px solid rgba(100,116,139,0.3); }
-.confidence-badge.notfound { background: rgba(248,113,113,0.1); color: #999; border: 1px solid rgba(100,116,139,0.3); }
+.confidence-badge.notchecked { background: rgba(180,83,9,0.12); color: var(--amber); border: 1px solid rgba(180,83,9,0.35); }
+.confidence-badge.notfound { background: rgba(71,85,105,0.10); color: var(--gray); border: 1px solid rgba(100,116,139,0.3); }
 .evidence-tag { color: var(--indigo); text-decoration: none; font-weight: 600; font-size: 11px; padding: 0 1px; border-bottom: 1px dotted var(--indigo); }
 .evidence-tag:hover { color: var(--navy); border-bottom-style: solid; }
 
@@ -498,7 +525,7 @@ border-radius: 2px;
 transition: all 0.2s;
 text-transform: uppercase;
 }
-.small-btn:hover { border-color: #818cf8; color: #818cf8; }
+.small-btn:hover { border-color: var(--indigo); color: var(--indigo); }
 
 .history-list { display: flex; flex-direction: column; gap: 12px; }
 .history-item {
@@ -514,7 +541,7 @@ cursor: pointer;
 transition: border-color 0.2s;
 box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.history-item:hover { border-color: #818cf8; }
+.history-item:hover { border-color: var(--indigo); }
 .history-company { font-family: 'DM Sans', sans-serif; font-size: 17px; color: #111111; }
 .history-meta { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
 .history-right { display: flex; align-items: center; gap: 16px; }
@@ -546,7 +573,7 @@ margin-top: 16px;
 display: flex;
 align-items: center;
 justify-content: space-between;
-background: rgba(36,69,109,0.6);
+background: var(--surface);
 border: 1px solid var(--border);
 border-radius: 2px;
 padding: 10px 14px;
@@ -637,12 +664,12 @@ color: #4f46e5;
 /* ── v30: supporting documents ─────────────────────────────────────── */
 .doc-attach-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .doc-note { font-size:11px; color:var(--gray); margin-top:8px; line-height:1.6; }
-.doc-row { border:1px solid var(--border); border-radius:6px; padding:12px; margin-top:10px; background:rgba(30,58,95,0.35); }
+.doc-row { border:1px solid var(--border); border-radius:6px; padding:12px; margin-top:10px; background:var(--surface); }
 .doc-row-top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
-.doc-name { font-size:13px; color:var(--white); word-break:break-all; }
+.doc-name { font-size:13px; color:var(--ink); word-break:break-all; }
 .doc-idtag { font-family:'DM Mono',monospace; font-size:11px; color:var(--indigo); }
 .doc-row-controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
-.doc-row-controls select { background:rgba(0,0,0,0.25); color:var(--white); border:1px solid var(--border); border-radius:4px; padding:7px 8px; font-size:12px; font-family:inherit; }
+.doc-row-controls select { background:var(--white); color:var(--ink); border:1px solid var(--border); border-radius:4px; padding:7px 8px; font-size:12px; font-family:inherit; }
 .doc-chip { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.5px; padding:3px 8px; border-radius:3px; background:rgba(100,116,139,0.15); color:var(--gray-light); border:1px solid rgba(100,116,139,0.3); white-space:nowrap; }
 .doc-chip.ok { background:rgba(16,185,129,0.15); color:var(--green-soft); border-color:rgba(16,185,129,0.3); }
 .doc-chip.warn { background:rgba(129,140,248,0.15); color:var(--amber); border-color:rgba(129,140,248,0.35); }
@@ -652,11 +679,11 @@ color: #4f46e5;
 .doc-warn { margin:10px 0; font-size:12px; line-height:1.6; color:var(--amber); }
 .doc-ids { margin-top:10px; font-size:12px; line-height:1.7; color:var(--gray-light); }
 .doc-idline { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray); margin:2px 0 8px 0; word-break:break-word; }
-.doc-text { margin-top:10px; max-height:280px; overflow:auto; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:4px; padding:10px; font-family:'DM Mono',monospace; font-size:11px; line-height:1.7; color:var(--gray-light); }
+.doc-text { margin-top:10px; max-height:280px; overflow:auto; background:var(--surface-alt); border:1px solid var(--border); border-radius:4px; padding:10px; font-family:'DM Mono',monospace; font-size:11px; line-height:1.7; color:var(--gray-light); }
 .doc-lineno { display:inline-block; min-width:44px; color:var(--indigo); }
-.doc-disclaimer { border:1px solid rgba(248,113,113,0.4); background:rgba(248,113,113,0.08); border-radius:6px; padding:14px 16px; font-size:12px; line-height:1.7; color:var(--gray-light); margin-bottom:22px; }
+.doc-disclaimer { border:1px solid rgba(185,28,28,0.35); background:#fef2f2; border-radius:6px; padding:14px 16px; font-size:12px; line-height:1.7; color:var(--gray-light); margin-bottom:22px; }
 .doc-subhead { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--indigo); margin:18px 0 10px 0; }
-.doc-finding { border-left:3px solid var(--gray); background:rgba(30,58,95,0.35); border-radius:0 6px 6px 0; padding:12px 14px; margin-bottom:10px; font-size:13px; line-height:1.7; }
+.doc-finding { border-left:3px solid var(--gray); background:var(--surface); border-radius:0 6px 6px 0; padding:12px 14px; margin-bottom:10px; font-size:13px; line-height:1.7; }
 .doc-finding.ok { border-left-color:var(--green); }
 .doc-finding.bad { border-left-color:var(--red); }
 .doc-finding.warn { border-left-color:var(--amber); }
@@ -678,7 +705,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v30</div>
+      <div class="logo-sub">Due Diligence Engine · v31</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -1555,30 +1582,68 @@ function normQuote(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// OCR splits numbers: the first live test produced "20 16/019773/07" on one
+// line and "2016/019773/07" on another, and the strict comparison marked a
+// correct finding as unverified. Collapsing spaces that sit between two digits
+// makes the two forms comparable without loosening the check on words.
+function normQuoteDigits(s) {
+  return normQuote(s).replace(/(\d) (?=\d)/g, '$1');
+}
+
 function validateDocFinding(f, docsById) {
   const cite = String((f && f.cite) || '');
-  const m = cite.match(/^\s*\[?\s*([A-Za-z]\d+)\s*[:\s]\s*L?(\d+)\s*\]?\s*$/);
-  if (!m) return { ok: false, reason: 'no usable line citation' };
 
-  const doc = docsById[m[1].toUpperCase()];
+  // Accept D1:L14, [D1:L14], D1 L14, and citations covering several lines:
+  // D1:L46,L52  D1:L46-L48  D1:L46, D1:L52
+  const docM = cite.match(/([A-Za-z]\d+)/);
+  if (!docM) return { ok: false, reason: 'no usable line citation' };
+
+  const doc = docsById[docM[1].toUpperCase()];
   if (!doc) return { ok: false, reason: 'cites a document that is not in this run' };
 
-  const n = parseInt(m[2], 10);
-  const line = doc.lines.find(function (l) { return l.n === n; });
-  if (!line) return { ok: false, reason: 'cites line ' + n + ', which does not exist in ' + doc.id };
+  const nums = [];
+  const rangeRe = /L?(\d+)\s*(?:-|–|to)\s*L?(\d+)/gi;
+  let rm;
+  // Remove ONLY the document token. A blanket [A-Za-z]\d+ strip also eats
+  // the line references themselves (L31), which is what broke the first cut.
+  let citeRest = cite.split(docM[1]).join(' ');
+  while ((rm = rangeRe.exec(citeRest)) !== null) {
+    const a = parseInt(rm[1], 10), b = parseInt(rm[2], 10);
+    if (b >= a && (b - a) <= 40) { for (let k = a; k <= b; k++) nums.push(k); }
+    citeRest = citeRest.replace(rm[0], ' ');
+    rangeRe.lastIndex = 0;
+  }
+  (citeRest.match(/L?\d+/g) || []).forEach(function (t) {
+    const v = parseInt(t.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(v) && nums.indexOf(v) === -1) nums.push(v);
+  });
+
+  if (!nums.length) return { ok: false, reason: 'no usable line citation' };
+
+  const present = nums.filter(function (n) { return doc.lines.some(function (l) { return l.n === n; }); });
+  if (!present.length) {
+    return { ok: false, reason: 'cites line ' + nums[0] + ', which does not exist in ' + doc.id };
+  }
 
   const q = normQuote(f.quote);
   if (!q) return { ok: false, reason: 'no quote supplied' };
+  const qd = normQuoteDigits(f.quote);
 
-  const windowText = [n - 2, n - 1, n, n + 1, n + 2]
-    .map(function (k) { return doc.lines.find(function (l) { return l.n === k; }); })
-    .filter(Boolean)
-    .map(function (l) { return normQuote(l.text); })
-    .join(' ');
+  // Every cited line, each widened by two lines either side.
+  const wanted = {};
+  present.forEach(function (n) {
+    for (let k = n - 2; k <= n + 2; k++) wanted[k] = true;
+  });
+  const ctx = doc.lines.filter(function (l) { return wanted[l.n]; });
+  const windowText = ctx.map(function (l) { return normQuote(l.text); }).join(' ');
+  const windowDigits = ctx.map(function (l) { return normQuoteDigits(l.text); }).join(' ');
 
-  if (windowText.indexOf(q) === -1) return { ok: false, reason: 'the quoted words are not in the extracted text' };
+  if (windowText.indexOf(q) === -1 && windowDigits.indexOf(qd) === -1) {
+    return { ok: false, reason: 'the quoted words are not in the extracted text' };
+  }
 
-  return { ok: true, line: line, docId: doc.id, lineNo: n };
+  const anchor = doc.lines.find(function (l) { return l.n === present[0]; });
+  return { ok: true, line: anchor, docId: doc.id, lineNo: present[0], allLines: present };
 }
 
 function docFindingFlags(f, allowedPatterns) {
@@ -1696,7 +1761,8 @@ function renderDocumentsTab(result) {
 function renderCiteBlock(f, v, probs) {
   let h = '';
   if (v.ok) {
-    h += '<div class="doc-cite"><span class="cite-ok">✓ quote found</span> ' + escapeHtml(v.docId) + ' line ' + v.lineNo +
+    const lineLabel = (v.allLines && v.allLines.length > 1) ? ('lines ' + v.allLines.join(', ')) : ('line ' + v.lineNo);
+    h += '<div class="doc-cite"><span class="cite-ok">✓ quote found</span> ' + escapeHtml(v.docId) + ' ' + lineLabel +
       ': <span class="doc-quote">"' + escapeHtml(v.line.text) + '"</span></div>';
   } else {
     h += '<div class="doc-cite"><span class="cite-bad">⚠ unverified — ' + escapeHtml(v.reason) +
@@ -1877,7 +1943,8 @@ VERIFICATION RULES — CRITICAL:
    - "verified": confirmed by at least one independent, authoritative source in the evidence provided
    - "probable": suggested by independent sources in the evidence but not fully corroborated, or corroborated only by medium-confidence sources
    - "unverified": only a claim exists (e.g. company website), with no independent confirmation found in the evidence provided
-   - "not_found": the evidence provided does not cover this — this is itself meaningful and must be stated plainly, never silently omitted or filled with assumption
+   - "not_checked": a check was NOT PERFORMED - no registry was reachable, no account-free search exists, no identifier was available, or the source could not be read. This is NOT the same as not_found and must never be written as not_found. Use it whenever the tool could not look, as opposed to looked and found nothing.
+   - "not_found": a check WAS performed and returned nothing; the evidence provided does not cover this — this is itself meaningful and must be stated plainly, never silently omitted or filled with assumption
 4. Do NOT fill gaps with assumptions. If the evidence provided does not cover something, say "not_found" — do not guess or infer based on similar companies or general patterns.
 5. Flag every inconsistency between what the company claims and what the evidence shows as a "conflict."
 6. Be thorough but honest about the limits of what the evidence shows. Missing information is itself worth noting, not something to paper over with confident-sounding language.
@@ -1898,14 +1965,14 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
   "scoreRationale": "<2-3 sentence explanation of the score, referencing the balance of verified vs. unverified vs. missing evidence>",
   "executiveSummary": "<3-5 paragraph executive summary of findings, written with analytical precision, explicitly distinguishing verified facts from unverified claims from gaps>",
   "redFlags": [
-    { "severity": "high|medium|low", "category": "<category>", "description": "<detailed description of the red flag>", "confidence": "verified|probable|unverified|not_found" }
+    { "severity": "high|medium|low", "category": "<category>", "description": "<detailed description of the red flag>", "confidence": "verified|probable|unverified|not_found|not_checked" }
   ],
   "conflicts": [
     { "field": "<what is being compared>", "claimed": "<what company claims>", "found": "<what independent sources show, or 'no independent information found'>" }
   ],
   "company": {
     "registrationStatus": "<active/inactive/not found/unclear>",
-    "registrationConfidence": "verified|probable|unverified|not_found",
+    "registrationConfidence": "verified|probable|unverified|not_found|not_checked",
     "registrationSource": "<which registry or source, e.g. 'CIPC South Africa', 'not searched — no public registry identified'>",
     "incorporationDate": "<date or not found>",
     "registeredAddress": "<address>",
@@ -1926,7 +1993,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
       "name": "<person name>",
       "role": "<their role>",
       "source": "website|registry|both|other",
-      "confidence": "verified|probable|unverified|not_found",
+      "confidence": "verified|probable|unverified|not_found|not_checked",
       "sanctionsCheck": "not_checked|flagged_in_evidence",
       "pepCheck": "clear|flagged|not found",
       "courtRecords": "clear|flagged|not found",
@@ -2134,7 +2201,21 @@ function formatFindings(val) {
   return String(val);
 }
 
+// Belt and braces for the rule above: if the model echoes an internal marker
+// anyway, it must not reach the reader or the exported PDF.
+function stripInternalMarkers(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/\[?\s*OUTCOME:\s*[a-z_]+\s*\]?/gi, '')
+    .replace(/\[?\s*(?:EVIDENCE ID|SHAPE CHECK|HTTP STATUS|IDENTIFIER USED|PARSE NOTE):[^\].\n]*\]?/gi, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,;])/g, '$1')
+    .trim();
+}
+
 function linkifyEvidence(text, evidenceIndex) {
+  text = stripInternalMarkers(text);
   if (!text || typeof text !== 'string' || !evidenceIndex) return text;
   return text.replace(/\[E(\d+)\]/g, function (match, num) {
     const item = evidenceIndex['E' + num];
@@ -2201,7 +2282,8 @@ function confBadge(conf) {
     verified: ['verified', 'Verified'],
     probable: ['probable', 'Probable'],
     unverified: ['unverified', 'Unverified'],
-    not_found: ['notfound', 'Not Found']
+    not_found: ['notfound', 'Not Found'],
+    not_checked: ['notchecked', 'Not Checked']
   };
   const [cls, label] = map[key] || ['unverified', conf];
   return `<span class="confidence-badge ${cls}">${label}</span>`;
@@ -2238,7 +2320,7 @@ function renderResults(result) {
     <div class="section-header">Executive Summary</div>
     <div class="prose">${linkifyEvidence((r.executiveSummary || 'No summary available.').replace(/\n/g, '<br>'), r.evidenceIndex)}</div>
     <div class="section-header">Score Rationale</div>
-    <div class="prose">${r.scoreRationale || ''}</div>
+    <div class="prose">${stripInternalMarkers(r.scoreRationale || '')}</div>
   `;
 
   const flags = r.redFlags || [];
@@ -2463,7 +2545,7 @@ function renderHistory() {
             <button class="small-btn" onclick="loadFromHistory(${i})">View</button>
             <button class="small-btn" onclick="rerunFromHistory(${i})">Re-run</button>
             <button class="small-btn" onclick="showDocs(${i})">Docs</button>
-            <button class="small-btn" onclick="deleteFromHistory(${i})" style="border-color:#f87171;color:#f87171;">Delete</button>
+            <button class="small-btn" onclick="deleteFromHistory(${i})" style="border-color:var(--red);color:var(--red);">Delete</button>
           </div>
         </div>
       </div>
@@ -2534,6 +2616,51 @@ function triggerUpload(i) {
 }
 
 // ── Export PDF ───────────────────────────────────────────────────────────
+// Document findings were previously trapped in the browser - the PDF is what
+// leaves the tool, so the findings have to travel with it, disclaimer included.
+function docReviewForPDF() {
+  const review = currentResult && currentResult.docReview;
+  if (!review || review.error || !Array.isArray(review.documents)) return '';
+
+  const docsById = {};
+  attachedDocs.forEach(function (d) { docsById[d.id] = d; });
+  const allowed = review.allowedPatterns || null;
+  let out = '<div class="sec">SUPPORTING DOCUMENTS</div>' +
+    '<p style="border:1px solid #b91c1c;padding:10px;font-size:10px;">' + escapeHtml(DOC_DISCLAIMER) + '</p>';
+
+  review.documents.forEach(function (rd) {
+    const src = docsById[rd.docId];
+    out += '<div class="sub">' + escapeHtml(src ? src.name : rd.docId) + ' (' + escapeHtml(rd.docId) + ')</div>';
+    if (rd.notAnalysed || (src && src.status === 'failed')) {
+      out += '<p>Text could not be extracted from this file, so it was not analysed. Nothing has been assumed about its contents.</p>';
+      return;
+    }
+    const rows = [];
+    (rd.crossChecks || []).forEach(function (c) {
+      const v = validateDocFinding(c, docsById);
+      const probs = docFindingFlags(c, allowed);
+      rows.push('<tr><td>' + escapeHtml(c.field || '') + '</td><td>' + escapeHtml(String(c.verdict || '').toUpperCase()) +
+        '</td><td>' + escapeHtml(c.documentSays || '') + '</td><td>' + escapeHtml(c.reportSays || '') + '</td><td>' +
+        ((v.ok && !probs.length) ? 'quote verified, ' + escapeHtml(rd.docId) + ' line ' + v.lineNo
+          : 'UNVERIFIED - ' + escapeHtml(v.ok ? probs.join('; ') : v.reason)) + '</td></tr>');
+    });
+    if (rows.length) {
+      out += '<table><tr><th>Field</th><th>Verdict</th><th>Document says</th><th>Report says</th><th>Citation check</th></tr>' +
+        rows.join('') + '</table>';
+    }
+    const irr = (rd.irregularities || []).map(function (f) {
+      const v = validateDocFinding(f, docsById);
+      const probs = docFindingFlags(f, allowed);
+      return '<li><strong>' + escapeHtml(f.pattern || '') + '</strong> - ' + escapeHtml(f.explanation || '') +
+        ' [' + ((v.ok && !probs.length) ? 'quote verified' : 'UNVERIFIED') + ']</li>';
+    });
+    if (irr.length) out += '<p><strong>Irregularities for manual review:</strong></p><ul>' + irr.join('') + '</ul>';
+  });
+
+  if (review.summary) out += '<p><strong>What to check on the originals:</strong> ' + escapeHtml(review.summary) + '</p>';
+  return out;
+}
+
 function exportPDF() {
   if (!currentResult || !currentResult.raw) { alert('No results to export.'); return; }
   const r = currentResult.raw;
@@ -2552,25 +2679,25 @@ function exportPDF() {
   .co-name { font-size: 28px; font-weight: bold; color: #1e3a5f; }
   .meta { font-size: 12px; color: #666; margin-top: 6px; font-family: monospace; letter-spacing: 1px; }
   .score-box { display: inline-block; padding: 12px 24px; border-radius: 4px; margin: 20px 0; }
-  .score-box.green { background: #ecfdf5; border: 2px solid #34d399; color: #10b981; }
+  .score-box.green { background: #ecfdf5; border: 2px solid #34d399; color: var(--green); }
   .score-box.amber { background: #eef2ff; border: 2px solid #818cf8; color: #4f46e5; }
-  .score-box.red { background: #fef2f2; border: 2px solid #fb7185; color: #f87171; }
+  .score-box.red { background: #fef2f2; border: 2px solid #fb7185; color: var(--red); }
   .score-num { font-size: 36px; font-weight: bold; }
   h2 { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #1e3a5f; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin: 28px 0 14px; }
   .prose { font-size: 13px; line-height: 1.8; color: #333; }
   .flag { padding: 10px 14px; margin-bottom: 8px; border-left: 4px solid #fb7185; background: #fef2f2; font-size: 12px; }
-  .flag.medium { border-color: #818cf8; background: #eef2ff; }
+  .flag.medium { border-color: var(--indigo); background: #eef2ff; }
   .flag.low { border-color: #aaa; background: #f8fafc; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
   td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
   td:first-child { font-weight: bold; color: #1e3a5f; width: 35%; }
   .footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 10px; color: #999; font-family: monospace; }
-  .confidential { color: #f87171; font-weight: bold; letter-spacing: 2px; font-size: 11px; }
+  .confidential { color: var(--red); font-weight: bold; letter-spacing: 2px; font-size: 11px; }
 </style>
 </head>
 <body>
 <div class="header">
-  <div style="font-family:monospace;font-size:11px;letter-spacing:3px;color:#f87171;margin-bottom:12px;">STRICTLY CONFIDENTIAL</div>
+  <div style="font-family:monospace;font-size:11px;letter-spacing:3px;color:var(--red);margin-bottom:12px;">STRICTLY CONFIDENTIAL</div>
   <div class="co-name">${currentResult.company}</div>
   <div class="meta">${currentResult.country} · ${currentResult.sectors?.join(', ') || 'General'} · Report Date: ${formatDate(currentResult.date)}</div>
   <div class="meta" style="margin-top:4px;">Prepared by: Jericho Due Diligence Engine</div>
@@ -2581,14 +2708,14 @@ function exportPDF() {
 </div>
 
 <h2>Executive Summary</h2>
-<div class="prose">${(r.executiveSummary || '').replace(/\n/g, '<br>')}</div>
+<div class="prose">${stripInternalMarkers(r.executiveSummary || '').replace(/\n/g, '<br>')}</div>
 
 <h2>Score Rationale</h2>
-<div class="prose">${r.scoreRationale || ''}</div>
+<div class="prose">${stripInternalMarkers(r.scoreRationale || '')}</div>
 
 ${(r.redFlags || []).length ? `
 <h2>Red Flags</h2>
-${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong> (${f.confidence || 'unrated'})<br>${f.description}</div>`).join('')}
+${(r.redFlags || []).map(f => `<div class="flag ${f.severity}"><strong>[${f.severity.toUpperCase()}] ${f.category}</strong> (${f.confidence || 'unrated'})<br>${stripInternalMarkers(f.description || '')}</div>`).join('')}
 ` : ''}
 
 ${(r.conflicts || []).length ? `
@@ -2619,6 +2746,8 @@ ${(r.people || []).map(p => `
 <table>
 ${Object.entries(r.businessAndOperations || {}).map(([k, v]) => v !== null && v !== undefined ? `<tr><td>${k.replace(/([A-Z])/g,' $1').trim()}</td><td>${v}</td></tr>` : '').join('')}
 </table>
+${docReviewForPDF()}
+
 
 <div class="footer">
   <div class="confidential">STRICTLY CONFIDENTIAL — JERICHO DUE DILIGENCE ENGINE</div>
