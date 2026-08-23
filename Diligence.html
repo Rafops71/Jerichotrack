@@ -1,4 +1,24 @@
 <!DOCTYPE html>
+<!--
+  Diligence-v30.html
+  Jericho Due Diligence Engine - front end - VERSION v30
+  Previous version: v29.  Pairs with Cloudflare Worker diligence-worker-v13.js.
+
+  New in v30:
+   - Supporting Documents panel: attach PDFs/photos of KYC forms, CIS sheets,
+     licences, certificates, assay reports. Text is extracted IN THIS BROWSER
+     (pdf.js text layer, Tesseract.js OCR for scans). Files are never uploaded;
+     only extracted text is sent, and only if it passes the quality gate.
+   - Registration/VAT numbers found in those documents are shown on screen
+     before the run and passed to the Worker, which looks them up on the real
+     official registry (UK Companies House, Belgium KBO) and on EU VIES.
+   - New Documents tab: cross-checks and named irregularities, every one of
+     them quote-checked against the extracted text by the browser before it is
+     shown. Findings that fail the check are shown as unverified.
+   - Country matching rewritten (v29 sent Ukraine to UK Companies House).
+   - "Verified" confidence is downgraded when only weak sources are cited.
+   - This tool NEVER judges whether a document is genuine. It cannot.
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -613,6 +633,42 @@ color: #4f46e5;
 .score-banner { flex-direction: column; gap: 20px; text-align: center; }
 .header { flex-direction: column; gap: 16px; align-items: flex-start; }
 }
+
+/* ── v30: supporting documents ─────────────────────────────────────── */
+.doc-attach-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.doc-note { font-size:11px; color:var(--gray); margin-top:8px; line-height:1.6; }
+.doc-row { border:1px solid var(--border); border-radius:6px; padding:12px; margin-top:10px; background:rgba(30,58,95,0.35); }
+.doc-row-top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.doc-name { font-size:13px; color:var(--white); word-break:break-all; }
+.doc-idtag { font-family:'DM Mono',monospace; font-size:11px; color:var(--indigo); }
+.doc-row-controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+.doc-row-controls select { background:rgba(0,0,0,0.25); color:var(--white); border:1px solid var(--border); border-radius:4px; padding:7px 8px; font-size:12px; font-family:inherit; }
+.doc-chip { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.5px; padding:3px 8px; border-radius:3px; background:rgba(100,116,139,0.15); color:var(--gray-light); border:1px solid rgba(100,116,139,0.3); white-space:nowrap; }
+.doc-chip.ok { background:rgba(16,185,129,0.15); color:var(--green-soft); border-color:rgba(16,185,129,0.3); }
+.doc-chip.warn { background:rgba(129,140,248,0.15); color:var(--amber); border-color:rgba(129,140,248,0.35); }
+.doc-chip.bad { background:rgba(248,113,113,0.12); color:var(--red); border-color:rgba(248,113,113,0.35); }
+.doc-chip.working { color:var(--indigo-light); }
+.doc-error { margin-top:10px; font-size:12px; line-height:1.6; color:var(--red); }
+.doc-warn { margin:10px 0; font-size:12px; line-height:1.6; color:var(--amber); }
+.doc-ids { margin-top:10px; font-size:12px; line-height:1.7; color:var(--gray-light); }
+.doc-idline { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray); margin:2px 0 8px 0; word-break:break-word; }
+.doc-text { margin-top:10px; max-height:280px; overflow:auto; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:4px; padding:10px; font-family:'DM Mono',monospace; font-size:11px; line-height:1.7; color:var(--gray-light); }
+.doc-lineno { display:inline-block; min-width:44px; color:var(--indigo); }
+.doc-disclaimer { border:1px solid rgba(248,113,113,0.4); background:rgba(248,113,113,0.08); border-radius:6px; padding:14px 16px; font-size:12px; line-height:1.7; color:var(--gray-light); margin-bottom:22px; }
+.doc-subhead { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--indigo); margin:18px 0 10px 0; }
+.doc-finding { border-left:3px solid var(--gray); background:rgba(30,58,95,0.35); border-radius:0 6px 6px 0; padding:12px 14px; margin-bottom:10px; font-size:13px; line-height:1.7; }
+.doc-finding.ok { border-left-color:var(--green); }
+.doc-finding.bad { border-left-color:var(--red); }
+.doc-finding.warn { border-left-color:var(--amber); }
+.doc-verdict { font-family:'DM Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--gray-light); }
+.doc-verdict.ok { color:var(--green-soft); }
+.doc-verdict.bad { color:var(--red); }
+.doc-fline { color:var(--gray-light); margin-top:4px; }
+.doc-cite { margin-top:8px; font-size:11px; line-height:1.6; }
+.doc-quote { font-family:'DM Mono',monospace; color:var(--gray); }
+.cite-ok { font-family:'DM Mono',monospace; font-size:10px; color:var(--green-soft); }
+.cite-bad { font-family:'DM Mono',monospace; font-size:10px; color:var(--red); }
+.doc-audit { margin-top:22px; padding-top:14px; border-top:1px solid var(--border); font-size:11px; color:var(--gray); font-family:'DM Mono',monospace; line-height:1.7; }
 </style>
 </head>
 <body>
@@ -622,7 +678,7 @@ color: #4f46e5;
   <div class="header">
     <div class="logo-block">
       <div class="logo-name">Jericho</div>
-      <div class="logo-sub">Due Diligence Engine · v29</div>
+      <div class="logo-sub">Due Diligence Engine · v30</div>
     </div>
     <div class="header-right">
       <button class="nav-btn active" onclick="resetSearch()">New Research</button>
@@ -680,6 +736,22 @@ color: #4f46e5;
           <button type="button" class="small-btn" onclick="window.open('https://www.responsiblemineralsinitiative.org/facilities-lists/public-list/','_blank')" style="width:100%;margin-top:10px;">🔗 Check RMI Public List — smelter/refiner responsible-sourcing status (free, covers cobalt, copper, lithium and other minerals)</button>
         </div>
         <div class="form-group full">
+          <label>Supporting Documents (optional)</label>
+          <div class="doc-attach-row">
+            <button type="button" class="small-btn" onclick="openDocPicker()">+ Attach a document</button>
+            <span class="doc-chip">PDF, JPG or PNG · max 10 MB · first 10 pages</span>
+          </div>
+          <div class="doc-note">
+            Attach KYC forms, client information sheets, licences, certificates or assay reports. Text is read
+            here on your device — the files themselves are never uploaded anywhere, and scans and photos go
+            through OCR in your browser. The first run downloads the OCR engine, which takes a moment.
+            <strong>This tool cannot tell you whether a document is genuine.</strong> It compares what the
+            document says against what the report finds elsewhere, and flags specific things worth checking
+            on the original.
+          </div>
+          <div id="docList"></div>
+        </div>
+        <div class="form-group full">
           <label>Additional Notes (optional)</label>
           <textarea id="extraNotes" placeholder="Any specific concerns, deal context, or focus areas..." autocomplete="off"></textarea>
         </div>
@@ -711,6 +783,7 @@ color: #4f46e5;
         <button class="result-tab" onclick="showTab('company',this)">Company</button>
         <button class="result-tab" onclick="showTab('people',this)">People</button>
         <button class="result-tab" onclick="showTab('business',this)">Business & Operations</button>
+        <button class="result-tab" onclick="showTab('documents',this)">Documents</button>
         <button class="result-tab" onclick="showTab('raw',this)">Raw Dump</button>
       </div>
 
@@ -720,6 +793,7 @@ color: #4f46e5;
         <div class="result-section" id="tab-company"></div>
         <div class="result-section" id="tab-people"></div>
         <div class="result-section" id="tab-business"></div>
+        <div class="result-section" id="tab-documents"></div>
         <div class="result-section" id="tab-raw"></div>
       </div>
 
@@ -742,6 +816,7 @@ color: #4f46e5;
 </div>
 
 <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.png">
+<input type="file" id="docFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onDocFilesChosen(this)">
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────
@@ -786,52 +861,101 @@ function showTab(name, btn) {
 
 function toggleSector(el) { el.classList.toggle('selected'); }
 
-// Same countries the Worker cannot reach via a free API - opens the correct
-// official government site directly in a new tab for a quick manual check.
-const MANUAL_REGISTRY_SITES = {
-  "united states": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
-  "usa": { label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
-  "united kingdom": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
-  "uk": { label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk" },
-  "south africa": { label: "Open CIPC (South Africa)", url: "https://eservices.cipc.co.za/Search.aspx" },
-  "zimbabwe": { label: "Zimbabwe Companies Office info", url: "https://www.google.com/search?q=Zimbabwe+Companies+and+Intellectual+Property+Office+company+search" },
-  "zambia": { label: "Open PACRA (Zambia)", url: "https://search.pacra.org.zm" },
-  "nigeria": { label: "Open CAC (Nigeria)", url: "https://search.cac.gov.ng" },
-  "uae": { label: "Open UAE National Economic Register", url: "https://ner.economy.ae/Search_By_BN.aspx" },
-  "united arab emirates": { label: "Open UAE National Economic Register", url: "https://ner.economy.ae/Search_By_BN.aspx" },
-  "drc": { label: "OHADA regional registry (may not list DRC entries - RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "democratic republic of the congo": { label: "OHADA regional registry (may not list DRC entries - RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
-  "mexico": { label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" },
-  "belgium": { label: "Open KBO/BCE (Belgium)", url: "https://kbopub.economie.fgov.be" },
-  "netherlands": { label: "Open KVK (Netherlands)", url: "https://www.kvk.nl/zoeken" },
-  "germany": { label: "Open Handelsregister (Germany)", url: "https://www.handelsregister.de" },
-  "kazakhstan": { label: "Open Kazakhstan BIN lookup (stat.gov.kz)", url: "https://stat.gov.kz" },
-  "turkey": { label: "Open Turkey MERSIS registry", url: "https://mersis.gtb.gov.tr" },
-  "india": { label: "Open India MCA master data", url: "https://www.mca.gov.in" },
-  "brazil": { label: "Open Brazil Receita Federal CNPJ lookup", url: "https://www.gov.br/receitafederal" },
-  "ghana": { label: "Ghana Registrar General's Department (search sub-page unreliable - use main site)", url: "https://www.rgd.gov.gh" },
-  "botswana": { label: "Open Botswana CIPA", url: "https://www.cipa.co.bw" },
-  "namibia": { label: "Open Namibia BIPA (public search availability unconfirmed)", url: "https://www.bipa.na" },
-  "gabon": { label: "Gabon registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Gabon+RCCM+company+registry+search" },
-  "guinea": { label: "Guinea registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Guinea+RCCM+company+registry+search" },
-  "mozambique": { label: "Mozambique registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Mozambique+company+registry+search" },
-  "australia": { label: "Open ASIC Connect (Australia)", url: "https://connectonline.asic.gov.au" },
-  "chile": { label: "Open Registro de Empresas y Sociedades (Chile)", url: "https://www.registrodeempresasysociedades.cl" },
-  "peru": { label: "Open SUNARP (Peru)", url: "https://www.sunarp.gob.pe" },
-  "indonesia": { label: "Open AHU Online (Indonesia)", url: "https://ahu.go.id" },
-  "philippines": { label: "Open Philippines SEC", url: "https://www.sec.gov.ph" }
-};
+// ── Country → official registry (v30) ───────────────────────────────────
+// This table and resolver are a deliberate twin of COUNTRY_REGISTRY /
+// resolveCountry() in diligence-worker-v13.js. If you change one, change the
+// other. v29 matched with a substring test, which sent Ukraine to UK Companies
+// House ("ukraine".indexOf("uk") === 0) and sent Equatorial Guinea,
+// Guinea-Bissau and Papua New Guinea to the Guinea note. This version matches
+// normalised aliases exactly, with a bounded multi-word fallback; single-word
+// aliases such as uk, uae, drc, guinea and congo are exact-match only.
+const COUNTRY_SITES = [
+  { id: "united states", aliases: ["united states", "usa", "us", "u s a", "united states of america", "america"], label: "Open SEC EDGAR (US, public companies)", url: "https://www.sec.gov/edgar/search" },
+  { id: "uk", aliases: ["united kingdom", "uk", "gb", "great britain", "england", "scotland", "wales", "northern ireland", "britain"], label: "Open UK Companies House", url: "https://find-and-update.company-information.service.gov.uk", auto: true },
+  { id: "belgium", aliases: ["belgium", "belgie", "belgique", "belgien", "kingdom of belgium"], label: "Open KBO/BCE (Belgium)", url: "https://kbopub.economie.fgov.be", auto: true },
+  { id: "south africa", aliases: ["south africa", "republic of south africa", "rsa"], label: "Open CIPC (South Africa)", url: "https://eservices.cipc.co.za/Search.aspx" },
+  { id: "zimbabwe", aliases: ["zimbabwe"], label: "Zimbabwe Companies Office info", url: "https://www.google.com/search?q=Zimbabwe+Companies+and+Intellectual+Property+Office+company+search" },
+  { id: "zambia", aliases: ["zambia"], label: "Open PACRA (Zambia)", url: "https://search.pacra.org.zm" },
+  { id: "nigeria", aliases: ["nigeria"], label: "Open CAC (Nigeria)", url: "https://search.cac.gov.ng" },
+  { id: "uae", aliases: ["united arab emirates", "uae", "u a e", "emirates"], label: "Open UAE National Economic Register", url: "https://ner.economy.ae/Search_By_BN.aspx" },
+  { id: "drc", aliases: ["democratic republic of the congo", "democratic republic of congo", "dr congo", "drc", "congo kinshasa", "congo drc"], label: "OHADA regional registry (may not list DRC entries — RCCM Kinshasa is in-person only)", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
+  { id: "congo republic", aliases: ["congo", "republic of the congo", "republic of congo", "congo brazzaville"], label: "OHADA regional registry — Republic of the Congo (Brazzaville), a different country from the DRC", url: "https://rccm.ohada.org/prsCompany/index?lang=en" },
+  { id: "mexico", aliases: ["mexico", "estados unidos mexicanos"], label: "Open SIGER (Mexico)", url: "https://www.siger.gob.mx" },
+  { id: "netherlands", aliases: ["netherlands", "the netherlands", "holland", "nederland"], label: "Open KVK (Netherlands)", url: "https://www.kvk.nl/zoeken" },
+  { id: "germany", aliases: ["germany", "deutschland", "federal republic of germany"], label: "Open Handelsregister (Germany)", url: "https://www.handelsregister.de" },
+  { id: "kazakhstan", aliases: ["kazakhstan"], label: "Open Kazakhstan BIN lookup (stat.gov.kz)", url: "https://stat.gov.kz" },
+  { id: "turkey", aliases: ["turkey", "turkiye", "republic of turkiye", "republic of turkey"], label: "Open Turkey MERSIS registry", url: "https://mersis.gtb.gov.tr" },
+  { id: "india", aliases: ["india", "bharat", "republic of india"], label: "Open India MCA master data", url: "https://www.mca.gov.in" },
+  { id: "brazil", aliases: ["brazil", "brasil"], label: "Open Brazil Receita Federal CNPJ lookup", url: "https://www.gov.br/receitafederal" },
+  { id: "ghana", aliases: ["ghana"], label: "Ghana Registrar General's Department (search sub-page unreliable — use main site)", url: "https://www.rgd.gov.gh" },
+  { id: "botswana", aliases: ["botswana"], label: "Open Botswana CIPA", url: "https://www.cipa.co.bw" },
+  { id: "namibia", aliases: ["namibia"], label: "Open Namibia BIPA (public search availability unconfirmed)", url: "https://www.bipa.na" },
+  { id: "gabon", aliases: ["gabon"], label: "Gabon registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Gabon+RCCM+company+registry+search" },
+  { id: "guinea", aliases: ["guinea", "republic of guinea", "guinea conakry"], label: "Guinea (Conakry) registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Guinea+Conakry+RCCM+company+registry+search" },
+  { id: "equatorial guinea", aliases: ["equatorial guinea", "guinea ecuatorial"], label: "Equatorial Guinea registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Equatorial+Guinea+RCCM+company+registry+search" },
+  { id: "guinea bissau", aliases: ["guinea bissau", "guine bissau", "republic of guinea bissau"], label: "Guinea-Bissau registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Guinea-Bissau+RCCM+company+registry+search" },
+  { id: "papua new guinea", aliases: ["papua new guinea", "png"], label: "Open Papua New Guinea IPA registry", url: "https://www.ipa.gov.pg" },
+  { id: "mozambique", aliases: ["mozambique", "mocambique"], label: "Mozambique registry info (no confirmed free online search)", url: "https://www.google.com/search?q=Mozambique+company+registry+search" },
+  { id: "australia", aliases: ["australia"], label: "Open ASIC Connect (Australia)", url: "https://connectonline.asic.gov.au" },
+  { id: "chile", aliases: ["chile"], label: "Open Registro de Empresas y Sociedades (Chile)", url: "https://www.registrodeempresasysociedades.cl" },
+  { id: "peru", aliases: ["peru"], label: "Open SUNARP (Peru)", url: "https://www.sunarp.gob.pe" },
+  { id: "indonesia", aliases: ["indonesia"], label: "Open AHU Online (Indonesia)", url: "https://ahu.go.id" },
+  { id: "philippines", aliases: ["philippines", "the philippines"], label: "Open Philippines SEC", url: "https://www.sec.gov.ph" }
+];
+
+function normCountryUI(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+const COUNTRY_SITES_EXACT = (function () {
+  const m = {};
+  COUNTRY_SITES.forEach(function (e) {
+    e.aliases.forEach(function (a) {
+      const k = normCountryUI(a);
+      if (k && !m[k]) m[k] = e;
+    });
+  });
+  return m;
+})();
+
+function resolveCountryUI(input) {
+  const key = normCountryUI(input);
+  if (!key) return null;
+  if (COUNTRY_SITES_EXACT[key]) return COUNTRY_SITES_EXACT[key];
+
+  const tokens = {};
+  key.split(' ').forEach(function (t) { tokens[t] = true; });
+
+  const hits = [];
+  COUNTRY_SITES.forEach(function (entry) {
+    let best = 0;
+    entry.aliases.forEach(function (a) {
+      const at = normCountryUI(a).split(' ').filter(Boolean);
+      if (at.length < 2) return;
+      const all = at.every(function (t) { return tokens[t] === true; });
+      if (all && at.length > best) best = at.length;
+    });
+    if (best) hits.push({ entry: entry, specificity: best });
+  });
+
+  if (!hits.length) return null;
+  hits.sort(function (a, b) { return b.specificity - a.specificity; });
+  if (hits.length > 1 && hits[0].specificity === hits[1].specificity) return null;
+  return hits[0].entry;
+}
 
 function checkManualRegistryLink() {
-  const val = document.getElementById('companyCountry').value.toLowerCase().trim();
+  const val = document.getElementById('companyCountry').value;
   const box = document.getElementById('manualRegistryButtonBox');
-  let match = null;
-  for (const key in MANUAL_REGISTRY_SITES) {
-    if (val.indexOf(key) !== -1) { match = MANUAL_REGISTRY_SITES[key]; break; }
-  }
+  const match = resolveCountryUI(val);
   if (match) {
+    const note = match.auto
+      ? 'this tool also checks it automatically when a registration number is found in an attached document'
+      : 'no free automated check available, opens official site';
     box.style.display = 'block';
-    box.innerHTML = `<button type="button" class="small-btn" onclick="window.open('${match.url}','_blank')" style="width:100%;">🔗 ${match.label} — no free automated check available, opens official site</button>`;
+    box.innerHTML = '<button type="button" class="small-btn" onclick="window.open(\'' + match.url + '\',\'_blank\')" style="width:100%;">🔗 ' +
+      match.label + ' — ' + note + '</button>';
   } else {
     box.style.display = 'none';
     box.innerHTML = '';
@@ -869,6 +993,721 @@ document.addEventListener('click', function (e) {
   }
 });
 
+// ══ v30: SUPPORTING DOCUMENTS — extraction, OCR, identifiers, review ══════
+// Everything in this block runs in the browser. Document files are never
+// uploaded anywhere: only the extracted TEXT is sent to the Worker, and only
+// for documents that passed the quality gate below.
+
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
+
+// pdf.js is pinned to 3.11.174 on purpose: 4.x and later use
+// Promise.withResolvers, which does not exist on iPadOS/Safari below 17.4 and
+// would make the whole reader fail. isEvalSupported:false is required with
+// this pinned version - it disables the font-eval path that carries a known
+// advisory, and these PDFs come from counterparties.
+
+const DOC_MAX_FILE_BYTES = 10 * 1024 * 1024;
+const DOC_MAX_PAGES = 10;
+const DOC_MAX_CHARS = 12000;
+const DOC_TOTAL_MAX_CHARS = 40000;
+const OCR_TIMEOUT_MS = 120000;
+
+const DOC_TYPES = ['KYC form', 'CIS / Client Information Sheet', 'Licence or permit', 'Certificate',
+  'Assay report', 'Bank or institutional letter', 'Incorporation document', 'Other'];
+
+const DOC_DISCLAIMER =
+  'This tool cannot verify that a document is genuine. It cannot detect forgery, and it can never confirm ' +
+  'authenticity. It reads text out of the file and compares that text with what this report found elsewhere. ' +
+  'Everything below is a prompt to check the original document yourself — not a conclusion.';
+
+let attachedDocs = [];
+let docSeq = 0;
+let tesseractLoaded = false;
+
+function loadScriptOnce(url) {
+  return new Promise(function (resolve, reject) {
+    const existing = document.querySelector('script[data-jdd-src="' + url + '"]');
+    if (existing) {
+      if (existing.dataset.jddLoaded === '1') { resolve(); return; }
+      existing.addEventListener('load', function () { resolve(); });
+      existing.addEventListener('error', function () { reject(new Error('Could not load ' + url)); });
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = url;
+    s.setAttribute('data-jdd-src', url);
+    s.onload = function () { s.dataset.jddLoaded = '1'; resolve(); };
+    s.onerror = function () { reject(new Error('Could not load ' + url + ' - check your internet connection.')); };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadTesseract() {
+  if (tesseractLoaded && window.Tesseract) return;
+  await loadScriptOnce(TESSERACT_URL);
+  if (!window.Tesseract) throw new Error('The OCR engine could not load. Check your internet connection and try again.');
+  tesseractLoaded = true;
+}
+
+function withTimeout(promise, ms, label) {
+  return new Promise(function (resolve, reject) {
+    const t = setTimeout(function () { reject(new Error(label + ' timed out after ' + Math.round(ms / 1000) + 's.')); }, ms);
+    promise.then(function (v) { clearTimeout(t); resolve(v); },
+      function (e) { clearTimeout(t); reject(e); });
+  });
+}
+
+// ── File handling ────────────────────────────────────────────────────────
+function openDocPicker() { document.getElementById('docFileInput').click(); }
+
+function onDocFilesChosen(input) {
+  const files = Array.prototype.slice.call(input.files || []);
+  input.value = '';
+  files.forEach(addDoc);
+}
+
+function addDoc(file) {
+  if (file.size > DOC_MAX_FILE_BYTES) {
+    alert('"' + file.name + '" is larger than 10 MB. Please attach a smaller file or a single-document extract.');
+    return;
+  }
+  docSeq++;
+  const doc = {
+    id: 'D' + docSeq, file: file, name: file.name, size: file.size,
+    claimedType: 'Other', status: 'queued', method: null, quality: null,
+    confidence: null, pages: null, pagesRead: null, lines: [], truncatedAt: null,
+    error: null, showText: false, identifiers: []
+  };
+  attachedDocs.push(doc);
+  renderDocList();
+  extractDoc(doc);
+}
+
+function removeDoc(id) {
+  attachedDocs = attachedDocs.filter(function (d) { return d.id !== id; });
+  renderDocList();
+}
+
+function setDocType(id, value) {
+  const d = attachedDocs.find(function (x) { return x.id === id; });
+  if (d) { d.claimedType = value; d.identifiers = extractIdentifiers(d); renderDocList(); }
+}
+
+function toggleDocText(id) {
+  const d = attachedDocs.find(function (x) { return x.id === id; });
+  if (d) { d.showText = !d.showText; renderDocList(); }
+}
+
+// ── Extraction ───────────────────────────────────────────────────────────
+async function extractDoc(doc) {
+  doc.status = 'extracting';
+  renderDocList();
+  try {
+    const ext = (doc.name.split('.').pop() || '').toLowerCase();
+    let res;
+    if (ext === 'pdf') {
+      res = await extractFromPdf(doc.file);
+    } else if (['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'heic'].indexOf(ext) !== -1) {
+      res = await extractFromImage(doc.file);
+    } else {
+      doc.status = 'failed';
+      doc.quality = 'failed';
+      doc.error = 'Unsupported file type (.' + ext + '). This tool reads PDF, JPG and PNG. ' +
+        'Word files are not read - export them to PDF first.';
+      renderDocList();
+      return;
+    }
+    applyExtraction(doc, res);
+  } catch (e) {
+    doc.status = 'failed';
+    doc.quality = 'failed';
+    doc.lines = [];
+    doc.error = (e && e.message) ? e.message : 'Text extraction failed.';
+  }
+  renderDocList();
+}
+
+// Rebuild real lines from pdf.js text items using their y/x positions, so a
+// citation points at a line rather than at a whole page.
+function itemsToLines(items) {
+  const rows = [];
+  items.forEach(function (it) {
+    if (!it.str || !it.str.trim()) return;
+    const y = Math.round(it.transform[5]);
+    let row = null;
+    for (const r of rows) { if (Math.abs(r.y - y) <= 2) { row = r; break; } }
+    if (!row) { row = { y: y, parts: [] }; rows.push(row); }
+    row.parts.push({ x: it.transform[4], s: it.str });
+  });
+  rows.sort(function (a, b) { return b.y - a.y; });
+  return rows.map(function (r) {
+    r.parts.sort(function (a, b) { return a.x - b.x; });
+    return r.parts.map(function (p) { return p.s; }).join(' ').replace(/\s+/g, ' ').trim();
+  }).filter(function (s) { return s.length > 0; });
+}
+
+async function extractFromPdf(file) {
+  await loadScriptOnce(PDFJS_URL);
+  if (!window.pdfjsLib) throw new Error('The PDF reader could not load. Check your internet connection.');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({
+    data: buf, isEvalSupported: false, disableAutoFetch: true, disableFontFace: true
+  }).promise;
+
+  const pagesRead = Math.min(pdf.numPages, DOC_MAX_PAGES);
+  const lines = [];
+  let ocrPages = 0, confSum = 0, confCount = 0;
+
+  for (let p = 1; p <= pagesRead; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const pageLines = itemsToLines(tc.items || []);
+    const charCount = pageLines.join('').length;
+
+    if (charCount >= 100) {
+      pageLines.forEach(function (l) { lines.push(l); });
+    } else {
+      const ocr = await withTimeout(ocrPdfPage(page), OCR_TIMEOUT_MS, 'OCR of page ' + p);
+      ocrPages++;
+      if (ocr.confidence != null) { confSum += ocr.confidence; confCount++; }
+      (ocr.text || '').split(/\n+/).forEach(function (l) {
+        const t = l.replace(/\s+/g, ' ').trim();
+        if (t) lines.push(t);
+      });
+    }
+  }
+
+  return {
+    text: lines.join('\n'),
+    method: ocrPages === 0 ? 'pdf_text' : (ocrPages === pagesRead ? 'ocr' : 'pdf_text+ocr'),
+    confidence: confCount ? Math.round(confSum / confCount) : null,
+    pages: pdf.numPages,
+    pagesRead: pagesRead
+  };
+}
+
+async function ocrPdfPage(page) {
+  await loadTesseract();
+  const base = page.getViewport({ scale: 1 });
+  const scale = Math.min(2.5, Math.max(1, 1600 / base.width));
+  const vp = page.getViewport({ scale: scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(vp.width);
+  canvas.height = Math.floor(vp.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  return await ocrCanvas(canvas);
+}
+
+async function extractFromImage(file) {
+  await loadTesseract();
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise(function (res, rej) {
+      const i = new Image();
+      i.onload = function () { res(i); };
+      i.onerror = function () { rej(new Error('This image could not be opened by the browser.')); };
+      i.src = url;
+    });
+    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    const ocr = await withTimeout(ocrCanvas(canvas), OCR_TIMEOUT_MS, 'OCR');
+    return { text: ocr.text, method: 'ocr', confidence: ocr.confidence, pages: 1, pagesRead: 1 };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function ocrCanvas(canvas) {
+  const res = await window.Tesseract.recognize(canvas, 'eng');
+  const data = (res && res.data) ? res.data : {};
+  return {
+    text: (data.text || '').trim(),
+    confidence: (typeof data.confidence === 'number' && isFinite(data.confidence)) ? Math.round(data.confidence) : null
+  };
+}
+
+// ── Quality gate ─────────────────────────────────────────────────────────
+// A failed extraction is never sent to the AI. Garbled text is sent but
+// labelled, and the prompt forbids the model from repairing or guessing it.
+function textQuality(text) {
+  const clean = (text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return { chars: 0, words: 0, wordish: 0, alnumRatio: 0 };
+  const words = clean.split(' ').filter(Boolean);
+  const wordish = words.filter(function (w) { return /[A-Za-z]{2,}/.test(w); }).length;
+  const alnum = (clean.match(/[A-Za-z0-9]/g) || []).length;
+  return { chars: clean.length, words: words.length, wordish: wordish, alnumRatio: alnum / clean.length };
+}
+
+function classifyExtraction(method, confidence, text) {
+  const q = textQuality(text);
+  if (q.chars < 100) return 'failed';
+  if (method === 'pdf_text') return 'native';
+  const wordishRatio = q.words ? (q.wordish / q.words) : 0;
+  if ((confidence != null && confidence < 50) || q.alnumRatio < 0.55 || wordishRatio < 0.40) return 'failed';
+  if ((confidence != null && confidence < 75) || q.alnumRatio < 0.70 || wordishRatio < 0.60) return 'poor';
+  return 'good';
+}
+
+function applyExtraction(doc, res) {
+  const cls = classifyExtraction(res.method, res.confidence, res.text || '');
+  doc.method = res.method;
+  doc.confidence = res.confidence;
+  doc.pages = res.pages;
+  doc.pagesRead = res.pagesRead;
+  doc.isNative = (cls === 'native');
+  doc.quality = (cls === 'native') ? 'good' : cls;
+
+  if (cls === 'failed') {
+    doc.status = 'failed';
+    doc.lines = [];
+    doc.error = 'Text extraction produced too little readable text. This document will NOT be analysed — ' +
+      'nothing will be guessed about its contents. Try a clearer scan or a higher-resolution photo.';
+    return;
+  }
+
+  let text = res.text || '';
+  let truncated = false;
+  if (text.length > DOC_MAX_CHARS) { text = text.slice(0, DOC_MAX_CHARS); truncated = true; }
+
+  doc.lines = text.split(/\n+/)
+    .map(function (s) { return s.replace(/\s+/g, ' ').trim(); })
+    .filter(function (s) { return s.length > 0; })
+    .map(function (t, i) { return { n: i + 1, text: t }; });
+
+  doc.truncatedAt = truncated ? doc.lines.length : null;
+  doc.status = 'ready';
+  doc.identifiers = extractIdentifiers(doc);
+}
+
+// ── Identifier extraction ────────────────────────────────────────────────
+// Only numbers found on a line that also carries an explicit cue word are
+// accepted. A bare 8-digit string somewhere in a document is not a company
+// number, and looking one up could return a completely different company.
+const ID_CUE_RE = /(registration|registered\s+(?:no|number)|reg\.?\s*(?:no|nr|number)|company\s*(?:no|number)|companies\s*house|ondernemingsnummer|entreprise|enterprise\s*number|kbo|bce|crn|rc\s*no|rccm|incorporat|vat|btw|tva|ust|nif|tax\s*(?:id|number))/i;
+const VAT_CUE_RE = /(vat|btw|tva|ust|t\.v\.a)/i;
+
+function beNormaliseId(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.length === 9) d = '0' + d;
+  return d;
+}
+
+function beChecksum(id) {
+  if (!/^[01]\d{9}$/.test(id)) return false;
+  return (97 - (parseInt(id.slice(0, 8), 10) % 97)) === parseInt(id.slice(8), 10);
+}
+
+function ukNormaliseId(raw) {
+  let s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (/^\d{1,8}$/.test(s)) s = s.padStart(8, '0');
+  return s;
+}
+
+// Single deterministic substitution pass for the characters OCR most often
+// confuses. If the corrected value passes its checksum we use it, and the
+// finding is labelled so the digits get eyeballed against the original.
+function ocrDigitFix(s) {
+  return String(s || '').replace(/[OoDQ]/g, '0').replace(/[lIi|]/g, '1')
+    .replace(/[Ss]/g, '5').replace(/[Bb]/g, '8').replace(/[Gg]/g, '6').replace(/[Zz]/g, '2');
+}
+
+function extractIdentifiers(doc) {
+  const out = [];
+  const entry = resolveCountryUI((document.getElementById('companyCountry') || {}).value || '');
+  const seen = {};
+
+  doc.lines.forEach(function (l) {
+    if (!ID_CUE_RE.test(l.text)) return;
+
+    // Second pass: OCR routinely turns 0 into O and 1 into l, which stops the
+    // number matching at all. We re-scan an OCR-corrected copy of the line, but
+    // a candidate found that way is only accepted where a checksum can confirm
+    // it (Belgium) or where the format is exact, and it is always labelled so
+    // the digits get checked against the original.
+    const fixed = ocrDigitFix(l.text);
+    const scanned = (fixed !== l.text) ? [l.text, fixed] : [l.text];
+
+    scanned.forEach(function (source, pass) {
+      const wasFixed = (pass === 1);
+
+      if (entry && entry.id === 'belgium') {
+        const m = source.match(/\b(?:BE\s*)?([01][\s.\-]?\d{3}[\s.\-]?\d{3}[\s.\-]?\d{3})\b/);
+        if (m && (!wasFixed || beChecksum(beNormaliseId(m[1])))) pushId(m[1], 'reg_no', l, 'be', wasFixed);
+        const v = source.match(/\bBE\s*([0-9][\s.\-]?\d{3}[\s.\-]?\d{3}[\s.\-]?\d{3})\b/i);
+        if (v && VAT_CUE_RE.test(l.text) && (!wasFixed || beChecksum(beNormaliseId(v[1])))) pushId(v[1], 'vat', l, 'be', wasFixed);
+      } else if (entry && entry.id === 'uk') {
+        const m = source.match(/\b([A-Z]{2}\d{6}|\d{8})\b/);
+        if (m) pushId(m[1], 'reg_no', l, 'uk', wasFixed);
+      } else if (!wasFixed) {
+        const m = source.match(/\b([A-Z]{0,3}[\s\-]?\d[\d\s.\-\/]{4,17}\d)\b/);
+        if (m) pushId(m[1], VAT_CUE_RE.test(l.text) ? 'vat' : 'reg_no', l, 'generic', false);
+      }
+    });
+  });
+
+  function pushId(raw, type, line, scheme, fromFixedText) {
+    let normalized = String(raw).trim();
+    let validation = 'no_validator';
+    let corrected = !!fromFixedText;
+
+    if (scheme === 'be') {
+      let n = beNormaliseId(raw);
+      if (!beChecksum(n)) {
+        const fixed = beNormaliseId(ocrDigitFix(raw));
+        if (beChecksum(fixed)) { n = fixed; corrected = true; }
+      }
+      normalized = n;
+      validation = beChecksum(n) ? 'checksum_ok' : 'checksum_failed';
+    } else if (scheme === 'uk') {
+      let n = ukNormaliseId(raw);
+      const ok = /^[A-Z]{2}\d{6}$/.test(n) || /^\d{8}$/.test(n);
+      if (!ok) {
+        const fixed = ukNormaliseId(ocrDigitFix(raw));
+        if (/^\d{8}$/.test(fixed)) { n = fixed; corrected = true; }
+      }
+      normalized = n;
+      validation = (/^[A-Z]{2}\d{6}$/.test(n) || /^\d{8}$/.test(n)) ? 'format_ok' : 'format_failed';
+    }
+
+    // De-duplicate on the NORMALISED value, so the raw and OCR-corrected
+    // passes cannot file the same number twice.
+    const key = type + '|' + String(normalized).replace(/\s/g, '');
+    if (seen[key]) return;
+    seen[key] = true;
+
+    out.push({
+      docId: doc.id, line: line.n, lineText: line.text, type: type,
+      raw: String(raw).trim(), normalized: normalized, validation: validation,
+      ocrCorrected: corrected, ocrConfidence: doc.confidence
+    });
+  }
+
+  return out;
+}
+
+function collectDocIdentifiers() {
+  const all = [];
+  attachedDocs.forEach(function (d) {
+    if (d.status !== 'ready') return;
+    (d.identifiers || []).forEach(function (i) { all.push(i); });
+  });
+  return all;
+}
+
+// ── Document panel rendering ─────────────────────────────────────────────
+function docStatusChip(d) {
+  if (d.status === 'queued') return '<span class="doc-chip">Queued</span>';
+  if (d.status === 'extracting') return '<span class="doc-chip working"><span class="spinner"></span> Reading…</span>';
+  if (d.status === 'failed') return '<span class="doc-chip bad">Extraction failed</span>';
+  if (d.isNative) return '<span class="doc-chip ok">PDF text layer</span>';
+  const conf = (d.confidence != null) ? (' ' + d.confidence + '%') : '';
+  if (d.quality === 'poor') return '<span class="doc-chip warn">OCR — poor' + conf + '</span>';
+  return '<span class="doc-chip ok">OCR' + conf + '</span>';
+}
+
+function renderDocList() {
+  const box = document.getElementById('docList');
+  if (!box) return;
+  if (!attachedDocs.length) { box.innerHTML = ''; return; }
+
+  box.innerHTML = attachedDocs.map(function (d) {
+    const opts = DOC_TYPES.map(function (t) {
+      return '<option value="' + t + '"' + (d.claimedType === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('');
+
+    let ids = '';
+    if (d.status === 'ready' && d.identifiers && d.identifiers.length) {
+      ids = '<div class="doc-ids">' + d.identifiers.map(function (i) {
+        const badge = i.validation === 'checksum_ok' ? '<span class="cite-ok">checksum OK</span>'
+          : i.validation === 'format_ok' ? '<span class="cite-ok">format OK</span>'
+          : i.validation === 'no_validator' ? '<span class="doc-chip">not checkable</span>'
+          : '<span class="cite-bad">failed its check digit — will NOT be looked up</span>';
+        return '<div>' + (i.type === 'vat' ? 'VAT number' : 'Registration number') + ' found: <strong>' +
+          escapeHtml(i.normalized) + '</strong> ' + badge +
+          (i.ocrCorrected ? ' <span class="cite-bad">OCR correction applied — check the digits against the original</span>' : '') +
+          '<div class="doc-idline">from line ' + i.line + ': "' + escapeHtml(i.lineText.slice(0, 120)) + '"</div></div>';
+      }).join('') + '</div>';
+    } else if (d.status === 'ready') {
+      ids = '<div class="doc-ids"><div class="doc-idline">No registration or VAT number was found on a labelled line in this document, so no registry lookup will be made from it.</div></div>';
+    }
+
+    const err = d.error ? '<div class="doc-error">' + escapeHtml(d.error) + '</div>' : '';
+
+    const textView = (d.showText && d.lines.length)
+      ? '<div class="doc-text">' + d.lines.map(function (l) {
+          return '<div><span class="doc-lineno">L' + l.n + '</span>' + escapeHtml(l.text) + '</div>';
+        }).join('') + (d.truncatedAt ? '<div class="doc-lineno">— text truncated at line ' + d.truncatedAt + ' —</div>' : '') + '</div>'
+      : '';
+
+    return '<div class="doc-row">' +
+      '<div class="doc-row-top">' +
+        '<div class="doc-name">' + escapeHtml(d.name) + ' <span class="doc-idtag">' + d.id + '</span></div>' +
+        docStatusChip(d) +
+      '</div>' +
+      '<div class="doc-row-controls">' +
+        '<select onchange="setDocType(\'' + d.id + '\', this.value)">' + opts + '</select>' +
+        (d.lines.length ? '<button type="button" class="small-btn" onclick="toggleDocText(\'' + d.id + '\')">' + (d.showText ? 'Hide text' : 'View extracted text') + '</button>' : '') +
+        '<button type="button" class="small-btn" onclick="removeDoc(\'' + d.id + '\')">Remove</button>' +
+      '</div>' +
+      err + ids + textView +
+    '</div>';
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Document review pass (second Worker call) ────────────────────────────
+function registrySummaryForDocs(raw) {
+  if (!raw || typeof raw !== 'object') return 'No registry information available.';
+  const rc = raw.registryCheck || {};
+  const vc = raw.vatCheck || {};
+  let s = 'REGISTRY OUTCOME: ' + (rc.outcome || 'unknown');
+  if (rc.url) s += '\nURL: ' + rc.url;
+  if (rc.identifierUsed) s += '\nIDENTIFIER LOOKED UP: ' + rc.identifierUsed;
+  if (rc.fields) {
+    s += '\nRECORD AS PUBLISHED:';
+    Object.keys(rc.fields).forEach(function (k) { if (rc.fields[k]) s += '\n  ' + k + ': ' + rc.fields[k]; });
+  }
+  if (rc.note) s += '\nNOTE: ' + rc.note;
+  s += '\n\nVAT (VIES) OUTCOME: ' + (vc.outcome || 'unknown');
+  if (vc.vat) s += '\nVAT: ' + vc.vat;
+  if (vc.name) s += '\nNAME PUBLISHED BY VIES: ' + vc.name;
+  if (vc.note) s += '\nNOTE: ' + vc.note;
+  return s;
+}
+
+async function runDocumentPass(result) {
+  const docs = attachedDocs.filter(function (d) { return d.status === 'ready' || d.status === 'failed'; });
+  if (!docs.length) return null;
+
+  let budget = DOC_TOTAL_MAX_CHARS;
+  const payloadDocs = docs.map(function (d) {
+    const lines = [];
+    let used = 0;
+    let cut = null;
+    if (d.status === 'ready') {
+      for (const l of d.lines) {
+        if (used + l.text.length > budget) { cut = l.n; break; }
+        lines.push({ n: l.n, text: l.text });
+        used += l.text.length;
+      }
+      budget -= used;
+    }
+    return {
+      docId: d.id, name: d.name, claimedType: d.claimedType,
+      extractionMethod: d.method, extractionQuality: (d.status === 'failed' ? 'failed' : d.quality),
+      extractionConfidence: d.confidence,
+      truncatedAt: cut || d.truncatedAt, lines: lines
+    };
+  });
+
+  const resp = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mode: 'documents',
+      companyName: result.company,
+      companyCountry: result.country,
+      report: result.raw,
+      registryEvidence: registrySummaryForDocs(result.raw),
+      documents: payloadDocs
+    })
+  });
+
+  if (!resp.ok) {
+    const t = await resp.text().catch(function () { return ''; });
+    return { error: 'The document review could not run (Worker status ' + resp.status + ')' + (t ? ': ' + t.slice(0, 160) : '') + '. The report above is unaffected.' };
+  }
+
+  const data = await resp.json();
+  if (data.error) return { error: data.message || data.error };
+
+  let text = '';
+  if (data.content) { data.content.forEach(function (b) { if (b.type === 'text') text += b.text; }); }
+  text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').replace(/^JSON\s*/i, '').trim();
+
+  try {
+    const obj = JSON.parse(text);
+    if (!obj || !Array.isArray(obj.documents)) return { error: 'The document review returned an unreadable response.' };
+    return obj;
+  } catch (e) {
+    return { error: 'The document review returned a response that was not valid JSON.' };
+  }
+}
+
+// ── Mechanical validation of every document finding ──────────────────────
+// The model is told to quote verbatim and cite a line. Here we check it
+// actually did. Nothing that fails these checks is shown as a finding.
+const FORBIDDEN_VERDICT_RE = /\b(genuine|authentic|authenticity|forged|forgery|fake|falsified|counterfeit|doctored|tampered)\b/i;
+
+function normQuote(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function validateDocFinding(f, docsById) {
+  const cite = String((f && f.cite) || '');
+  const m = cite.match(/^\s*\[?\s*([A-Za-z]\d+)\s*[:\s]\s*L?(\d+)\s*\]?\s*$/);
+  if (!m) return { ok: false, reason: 'no usable line citation' };
+
+  const doc = docsById[m[1].toUpperCase()];
+  if (!doc) return { ok: false, reason: 'cites a document that is not in this run' };
+
+  const n = parseInt(m[2], 10);
+  const line = doc.lines.find(function (l) { return l.n === n; });
+  if (!line) return { ok: false, reason: 'cites line ' + n + ', which does not exist in ' + doc.id };
+
+  const q = normQuote(f.quote);
+  if (!q) return { ok: false, reason: 'no quote supplied' };
+
+  const windowText = [n - 2, n - 1, n, n + 1, n + 2]
+    .map(function (k) { return doc.lines.find(function (l) { return l.n === k; }); })
+    .filter(Boolean)
+    .map(function (l) { return normQuote(l.text); })
+    .join(' ');
+
+  if (windowText.indexOf(q) === -1) return { ok: false, reason: 'the quoted words are not in the extracted text' };
+
+  return { ok: true, line: line, docId: doc.id, lineNo: n };
+}
+
+function docFindingFlags(f, allowedPatterns) {
+  const problems = [];
+  const blob = [f.explanation, f.documentSays, f.reportSays, f.quote].filter(Boolean).join(' ');
+  if (FORBIDDEN_VERDICT_RE.test(blob)) problems.push('uses authenticity language it is not allowed to use');
+  if (f.pattern && allowedPatterns && allowedPatterns.indexOf(f.pattern) === -1) {
+    problems.push('uses a pattern name that is not on the permitted list');
+  }
+  if (f.verdict && ['match', 'conflict', 'cannot_compare'].indexOf(f.verdict) === -1) {
+    problems.push('uses a verdict that is not on the permitted list');
+  }
+  return problems;
+}
+
+// ── Documents tab ────────────────────────────────────────────────────────
+function renderDocumentsTab(result) {
+  const el = document.getElementById('tab-documents');
+  if (!el) return;
+
+  const banner = '<div class="doc-disclaimer">' + DOC_DISCLAIMER + '</div>';
+
+  if (result && result.docReviewUnavailable) {
+    el.innerHTML = banner + '<div class="prose">Document review is not stored in history. Re-attach the files on the search screen and run again to review them.</div>';
+    return;
+  }
+
+  const review = result ? result.docReview : null;
+  if (!review) {
+    el.innerHTML = banner + '<div class="prose">No documents were attached to this run. Attach KYC forms, client information sheets, licences, certificates or assay reports on the search screen before running.</div>';
+    return;
+  }
+  if (review.error) {
+    el.innerHTML = banner + '<div class="prose">' + escapeHtml(review.error) + '</div>';
+    return;
+  }
+
+  const docsById = {};
+  attachedDocs.forEach(function (d) { docsById[d.id] = d; });
+  const allowed = review.allowedPatterns || null;
+
+  let rejected = 0;
+  let html = banner;
+
+  review.documents.forEach(function (rd) {
+    const src = docsById[rd.docId];
+    const name = src ? src.name : rd.docId;
+    html += '<div class="section-header">' + escapeHtml(name) + ' <span class="doc-idtag">' + escapeHtml(rd.docId) + '</span></div>';
+
+    if (rd.notAnalysed || (src && src.status === 'failed')) {
+      html += '<div class="prose" style="color:var(--gray);">Text could not be extracted from this file, so it was not analysed. ' +
+        'Nothing has been assumed about its contents.</div>';
+      return;
+    }
+
+    if (src && src.quality === 'poor') {
+      html += '<div class="doc-warn">This text came from a poor-quality OCR pass. Read the findings against the original document, not against the extracted text.</div>';
+    }
+
+    const checks = Array.isArray(rd.crossChecks) ? rd.crossChecks : [];
+    const irregs = Array.isArray(rd.irregularities) ? rd.irregularities : [];
+
+    if (!checks.length && !irregs.length) {
+      html += '<div class="prose">No cross-checks or irregularities were returned for this document.</div>';
+    }
+
+    if (checks.length) {
+      html += '<div class="doc-subhead">Cross-checks against independent evidence</div>';
+      checks.forEach(function (c) {
+        const v = validateDocFinding(c, docsById);
+        const probs = docFindingFlags(c, allowed);
+        if (!v.ok || probs.length) rejected++;
+        const verdictClass = c.verdict === 'conflict' ? 'bad' : c.verdict === 'match' ? 'ok' : '';
+        html += '<div class="doc-finding ' + verdictClass + '">' +
+          '<div><strong>' + escapeHtml(c.field || 'field') + '</strong> — ' +
+          '<span class="doc-verdict ' + verdictClass + '">' + escapeHtml(c.verdict || 'unspecified') + '</span></div>' +
+          '<div class="doc-fline">Document says: ' + escapeHtml(c.documentSays || '') + '</div>' +
+          '<div class="doc-fline">Report / registry says: ' + escapeHtml(c.reportSays || '') +
+            (c.reportCite ? ' ' + linkifyEvidence('[' + String(c.reportCite).replace(/[\[\]]/g, '') + ']', (result.raw || {}).evidenceIndex) : '') + '</div>' +
+          (c.explanation ? '<div class="doc-fline">' + escapeHtml(c.explanation) + '</div>' : '') +
+          renderCiteBlock(c, v, probs) +
+          '</div>';
+      });
+    }
+
+    if (irregs.length) {
+      html += '<div class="doc-subhead">Irregularities worth a human look</div>';
+      irregs.forEach(function (f) {
+        const v = validateDocFinding(f, docsById);
+        const probs = docFindingFlags(f, allowed);
+        if (!v.ok || probs.length) rejected++;
+        html += '<div class="doc-finding warn">' +
+          '<div><strong>' + escapeHtml(f.pattern || 'unnamed pattern') + '</strong></div>' +
+          (f.explanation ? '<div class="doc-fline">' + escapeHtml(f.explanation) + '</div>' : '') +
+          '<div class="doc-fline" style="color:var(--gray);">Raises the case for manual review. It is not a finding that anything is wrong.</div>' +
+          renderCiteBlock(f, v, probs) +
+          '</div>';
+      });
+    }
+  });
+
+  if (review.summary) {
+    html += '<div class="section-header">What to check on the originals</div><div class="prose">' + escapeHtml(review.summary) + '</div>';
+  }
+
+  html += '<div class="doc-audit">Automatic citation check: ' +
+    (rejected === 0
+      ? 'every finding above quoted text that was actually present in the extracted document.'
+      : rejected + ' finding(s) failed the automatic citation check and are marked unverified above.') +
+    '</div>';
+
+  el.innerHTML = html;
+}
+
+function renderCiteBlock(f, v, probs) {
+  let h = '';
+  if (v.ok) {
+    h += '<div class="doc-cite"><span class="cite-ok">✓ quote found</span> ' + escapeHtml(v.docId) + ' line ' + v.lineNo +
+      ': <span class="doc-quote">"' + escapeHtml(v.line.text) + '"</span></div>';
+  } else {
+    h += '<div class="doc-cite"><span class="cite-bad">⚠ unverified — ' + escapeHtml(v.reason) +
+      '. Treat this finding as unsupported until you check the original.</span></div>';
+  }
+  probs.forEach(function (p) {
+    h += '<div class="doc-cite"><span class="cite-bad">⚠ this finding ' + escapeHtml(p) + '.</span></div>';
+  });
+  return h;
+}
+
 // ── Research Runner ─────────────────────────────────────────────────────
 let timerInterval = null;
 
@@ -897,6 +1736,12 @@ async function runResearch() {
   const company = document.getElementById('companyName').value.trim();
   const country = document.getElementById('companyCountry').value.trim();
   if (!company || !country) { alert('Please enter at least a company name and country.'); return; }
+
+  const stillReading = attachedDocs.filter(function (d) { return d.status === 'queued' || d.status === 'extracting'; });
+  if (stillReading.length) {
+    alert('Still reading ' + stillReading.length + ' attached document(s). Wait until every document shows a status, then run.');
+    return;
+  }
 
   const website = document.getElementById('companyWebsite').value.trim();
   const keyPerson = document.getElementById('keyPerson').value.trim();
@@ -929,7 +1774,7 @@ async function runResearch() {
   let raw;
   try {
     const [result] = await Promise.all([
-      callWorker(prompt, company, country, keyPerson),
+      callWorker(prompt, company, country, keyPerson, website, collectDocIdentifiers()),
       animateProgress(steps)
     ]);
     raw = result;
@@ -943,9 +1788,21 @@ async function runResearch() {
   if (!raw || !raw.error) {
     try {
       const idx = researchHistory.findIndex(h => h.company === currentResult.company && h.country === currentResult.country && h.date === currentResult.date);
-      if (idx === -1) researchHistory.unshift(currentResult);
+      if (idx === -1) researchHistory.unshift(historySafe(currentResult));
       localStorage.setItem('jdd_history', JSON.stringify(researchHistory.slice(0, 100)));
     } catch (histErr) { console.error('Auto-save to history failed:', histErr); }
+  }
+
+  if (!raw || !raw.error) {
+    const docCount = attachedDocs.filter(function (d) { return d.status === 'ready' || d.status === 'failed'; }).length;
+    if (docCount) {
+      try {
+        document.getElementById('runBtn').innerHTML = '<span class="spinner"></span> &nbsp; Reviewing documents...';
+        currentResult.docReview = await runDocumentPass(currentResult);
+      } catch (docErr) {
+        currentResult.docReview = { error: 'The document review could not run: ' + ((docErr && docErr.message) || 'unknown error') + '. The report above is unaffected.' };
+      }
+    }
   }
 
   try {
@@ -1094,11 +1951,11 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no preamble) w
 }
 
 // ── Worker API Call (replaces direct Anthropic call — key is never exposed here) ──
-async function callWorker(prompt, companyName, companyCountry, keyPerson) {
+async function callWorker(prompt, companyName, companyCountry, keyPerson, companyWebsite, docIdentifiers) {
   const response = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson })
+    body: JSON.stringify({ prompt, companyName, companyCountry, keyPerson, companyWebsite, docIdentifiers })
   });
 
   if (!response.ok) {
@@ -1313,6 +2170,30 @@ function renderSelfCheck(r) {
   return html;
 }
 
+// A finding may not be shown as "verified" if the only sources it cites are
+// Tier 3/4 (general web, company-controlled, self-published). This is checked
+// mechanically here, not left to the model's judgement.
+let __evidenceIndex = null;
+
+function guardConfidence(conf, text) {
+  if (!conf || String(conf).toLowerCase().trim() !== 'verified') return { conf: conf, warn: '' };
+  const ids = String(text || '').match(/\[E(\d+)\]/g) || [];
+  if (!ids.length) {
+    return { conf: 'unverified', warn: ' <span class="cite-bad">confidence downgraded — no source cited</span>' };
+  }
+  if (!__evidenceIndex) return { conf: conf, warn: '' };
+  const strong = ids.some(function (tag) {
+    const num = tag.replace(/[^0-9]/g, '');
+    const item = __evidenceIndex['E' + num];
+    const tier = item ? String(item.tier || '') : '';
+    return tier.indexOf('Tier 1') !== -1 || tier.indexOf('Tier 2') !== -1;
+  });
+  if (!strong) {
+    return { conf: 'unverified', warn: ' <span class="cite-bad">confidence downgraded — only weak or company-controlled sources cited</span>' };
+  }
+  return { conf: conf, warn: '' };
+}
+
 function confBadge(conf) {
   if (!conf) return '';
   const key = String(conf).toLowerCase().trim();
@@ -1328,9 +2209,10 @@ function confBadge(conf) {
 
 function renderResults(result) {
   const r = result.raw;
+  __evidenceIndex = (r && r.evidenceIndex) ? r.evidenceIndex : null;
   if (!r || r.error) {
     document.getElementById('tab-summary').innerHTML = `<div class="prose">Research completed, but the response could not be read as a structured report.<br><br><strong>Details:</strong><br>${r?.rawText || 'No data'}</div>`;
-    ['redflags','company','people','business','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
+    ['redflags','company','people','business','documents','raw'].forEach(t => document.getElementById('tab-' + t).innerHTML = '');
     document.getElementById('scoreBanner').innerHTML = '';
     return;
   }
@@ -1462,6 +2344,8 @@ function renderResults(result) {
     ${bo.additionalFindings ? `<div class="section-header">Additional Findings</div><div class="prose">${linkifyEvidence(formatFindings(bo.additionalFindings), r.evidenceIndex)}</div>` : ''}
   `;
 
+  renderDocumentsTab(result);
+
   document.getElementById('tab-raw').innerHTML = `
     <div class="section-header">Complete Raw Research Dump</div>
     <div class="raw-dump">${r.rawDump || JSON.stringify(r, null, 2)}</div>
@@ -1475,7 +2359,7 @@ function renderFlagBox(flags, title, color, evidenceIndex) {
       ${flags.map(f => `
         <div class="flag-item">
           <div class="flag-icon" style="color:${color};">▲</div>
-          <div><strong style="color:${color};">[${f.category}]</strong> ${linkifyEvidence(f.description, evidenceIndex)} ${confBadge(f.confidence)}</div>
+          <div><strong style="color:${color};">[${f.category}]</strong> ${linkifyEvidence(f.description, evidenceIndex)} ${(function(){ const g = guardConfidence(f.confidence, f.description); return confBadge(g.conf) + g.warn; })()}</div>
         </div>
       `).join('')}
     </div>
@@ -1538,10 +2422,20 @@ function formatDate(iso) {
 }
 
 // ── History ─────────────────────────────────────────────────────────────
+// Document text and document findings are deliberately NOT written to
+// localStorage: the text is counterparty KYC material, and storing it would
+// also risk filling the browser storage quota and breaking history saving.
+function historySafe(result) {
+  const copy = Object.assign({}, result);
+  copy.docReviewUnavailable = !!result.docReview;
+  delete copy.docReview;
+  return copy;
+}
+
 function saveToHistory() {
   if (!currentResult) return;
   const idx = researchHistory.findIndex(h => h.company === currentResult.company && h.country === currentResult.country && h.date === currentResult.date);
-  if (idx === -1) researchHistory.unshift(currentResult);
+  if (idx === -1) researchHistory.unshift(historySafe(currentResult));
   localStorage.setItem('jdd_history', JSON.stringify(researchHistory.slice(0, 100)));
   alert('Saved to history.');
 }
