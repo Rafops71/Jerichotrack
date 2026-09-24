@@ -86,12 +86,17 @@ export default {
      * it was obeying rule 1, not ignoring the schema. Supplying the date is
      * the fix; a sterner instruction would not have been.
      *
-     * Cloudflare runs in UTC. Rafael is in Belgium, so around midnight local
-     * this can be a day behind. Harmless for due dates, and preferable to
-     * guessing a timezone.
+     * Cloudflare runs in UTC and Rafael is in Belgium, so "today" is taken in
+     * APP_TIMEZONE (default Europe/Brussels). Without this, anything dictated
+     * between local midnight and 02:00 in summer resolved a day early.
      */
-    const todayISO = new Date().toISOString().slice(0, 10);
-    const todayWeekday = new Date().toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+    const TZ = env.APP_TIMEZONE || "Europe/Brussels";
+    const now = new Date();
+    // en-CA formats as YYYY-MM-DD, which is what the schema asks for.
+    const todayISO = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(now);
+    const todayWeekday = now.toLocaleDateString("en-GB", { weekday: "long", timeZone: TZ });
 
     const extractionPrompt = `You are a precise, zero-invention data extraction assistant for a commodities brokerage CRM (Jericho).
 
@@ -414,6 +419,89 @@ ${sourceText}
       return item;
     }
 
+    /* ------------------------------------------------------------------ *
+     * Due dates: a net behind the prompt rule.
+     *
+     * The prompt tells the model today's date, and it now converts "by 30
+     * September" correctly about nine times in ten. The tenth still comes back
+     * blank. The Incoterms rule has a code check behind it; this is the same
+     * idea for dates.
+     *
+     * Deliberately conservative. It only reads UNAMBIGUOUS absolute forms and
+     * "today"/"tomorrow", and only from the sentence the item itself came from
+     * - never from elsewhere in the text, which would repeat the cross-paragraph
+     * mistake this worker already guards against. Anything needing judgement
+     * ("next Tuesday", "in two weeks", "end of month") is left to the model.
+     * ------------------------------------------------------------------ */
+    const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+    const todayParts = todayISO.split("-").map(Number);
+
+    function isoFrom(y, m, d) {
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;  // e.g. 31 February
+      return dt.toISOString().slice(0, 10);
+    }
+
+    /* A bare day-and-month means the next time it occurs, today counting as valid. */
+    function nextOccurrence(month, day) {
+      let iso = isoFrom(todayParts[0], month, day);
+      if (iso && iso >= todayISO) return iso;
+      return isoFrom(todayParts[0] + 1, month, day);
+    }
+
+    function shiftDays(n) {
+      const dt = new Date(Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2]));
+      dt.setUTCDate(dt.getUTCDate() + n);
+      return dt.toISOString().slice(0, 10);
+    }
+
+    function dateInSentence(sentence) {
+      const t = " " + sentence.toLowerCase() + " ";
+      if (/\btomorrow\b/.test(t)) return shiftDays(1);
+      if (/\btoday\b/.test(t)) return todayISO;
+
+      const names = Object.keys(MONTHS).join("|");
+      let m = t.match(new RegExp("\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(" + names + ")[a-z]*\\b"));
+      if (m) return nextOccurrence(MONTHS[m[2]], Number(m[1]));
+      m = t.match(new RegExp("\\b(" + names + ")[a-z]*\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b"));
+      if (m) return nextOccurrence(MONTHS[m[1]], Number(m[2]));
+      return null;
+    }
+
+    /* The sentence an item came from, located by its own quote. */
+    function sentenceFor(snippet) {
+      if (!snippet) return null;
+      const hay = normalizeForMatch(sourceText);
+      const needle = normalizeForMatch(snippet);
+      if (!needle || !hay.includes(needle)) return null;
+      const sentences = sourceText.split(/(?<=[.!?\n])\s+/);
+      for (const sen of sentences) {
+        if (normalizeForMatch(sen).includes(needle)) return sen;
+      }
+      return null;
+    }
+
+    function fillMissingDue(item, field) {
+      if (!item || typeof item !== "object") return item;
+      if (item[field]) return item;
+      const sentence = sentenceFor(item.sourceSnippet);
+      if (!sentence) return item;
+      const found = dateInSentence(sentence);
+      /*
+       * A bare day-and-month rolls forward to the next occurrence, which turns
+       * a retrospective "I was supposed to send that on 10 September" into a
+       * date next year. A regex cannot tell looking-back from looking-ahead,
+       * so anything further out than ~4 months is left for the model to judge.
+       */
+      const within = found && found >= todayISO &&
+        (Date.parse(found) - Date.parse(todayISO)) / 86400000 <= 120;
+      if (within) {
+        item[field] = found;
+        item.dueDerived = true;   // the model missed it; this was read from the text
+      }
+      return item;
+    }
+
     function validateStage(item) {
       if (!item || typeof item !== "object") return item;
       if (item.stage && !ALLOWED_STAGES.includes(item.stage)) {
@@ -428,8 +516,16 @@ ${sourceText}
       return item;
     });
 
-    result.tasks = result.tasks.map(verifySnippet);
-    result.commslog = result.commslog.map(verifySnippet);
+    result.tasks = result.tasks.map(item => {
+      item = verifySnippet(item);
+      item = fillMissingDue(item, "due");
+      return item;
+    });
+    result.commslog = result.commslog.map(item => {
+      item = verifySnippet(item);
+      item = fillMissingDue(item, "followupDate");
+      return item;
+    });
     result.broker_quotes = result.broker_quotes.map(item => {
       item = verifySnippet(item);
       item = verifyOrigin(item);

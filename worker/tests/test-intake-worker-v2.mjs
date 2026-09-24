@@ -148,6 +148,53 @@ chk3('still forbids dates with no anchor', /stay null/.test(prompt));
 chk3('forbids dates in the past', /Never return a date in the past/.test(prompt));
 console.log(`  ${p3} passed, ${f3} failed`);
 
+/* ---- the code net behind the date prompt rule ----
+   The prompt gets it right about nine times in ten. The tenth came back blank
+   on a live run, so there is now a check behind it, the same way the Incoterms
+   rule has one. It is deliberately narrow. */
+console.log('\nDUE-DATE NET\n');
+const todayNet = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const plusDays = n => { const d=new Date(Date.parse(todayNet)); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const envTz = { ...env, APP_TIMEZONE:'Europe/Brussels' };
+const taskReply = tasks => 'JSON\n```json\n'+JSON.stringify({leads:[],tasks,commslog:[],broker_quotes:[],pipeline:[],notes:[]})+'\n```';
+const runNet = async (text, tasks) => {
+  globalThis.fetch = async () => new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:taskReply(tasks)}}]}),{status:200});
+  const r = await worker.fetch(new Request('https://w/',{method:'POST',
+    headers:{'Content-Type':'application/json','X-API-Key':'pw123'}, body:JSON.stringify({text})}), envTz);
+  return r.json();
+};
+const t = (title, due=null, snip=title) => [{title, category:'Follow-up', notes:null, due, confidence:0.9, sourceSnippet:snip}];
+const sep30 = (todayNet <= todayNet.slice(0,4)+'-09-30') ? todayNet.slice(0,4)+'-09-30' : (+todayNet.slice(0,4)+1)+'-09-30';
+
+let p4=0, f4=0;
+const chk4=(n,c,d='')=>{ if(c){p4++;console.log('  PASS',n);} else {f4++;console.log('  FAIL',n,'->',d);} };
+
+let n1 = await runNet('Remind me to send Maria the SPA draft by 30 September.', t('Send Maria the SPA draft',null,'send Maria the SPA draft'));
+chk4('fills a date the model left blank', n1.data.tasks[0].due===sep30, n1.data.tasks[0].due);
+chk4('marks it derived rather than model-supplied', n1.data.tasks[0].dueDerived===true);
+
+let n2 = await runNet('Call Diego on 30 September. Separately, chase the Delta sugar financials.',
+                      t('Chase Delta sugar financials',null,'chase the Delta sugar financials'));
+chk4('does NOT borrow a date from another sentence', n2.data.tasks[0].due===null, String(n2.data.tasks[0].due));
+
+let n3 = await runNet('Send the draft by 30 September.', t('Send the draft','2026-12-01','Send the draft'));
+chk4('never overrides a date the model found', n3.data.tasks[0].due==='2026-12-01', n3.data.tasks[0].due);
+
+let n4 = await runNet('Call Diego tomorrow about the corn.', t('Call Diego'));
+chk4('handles "tomorrow"', n4.data.tasks[0].due===plusDays(1), n4.data.tasks[0].due);
+
+let n5 = await runNet('Chase the Vermeer financials next Tuesday.', t('Chase Vermeer financials',null,'Chase the Vermeer financials'));
+chk4('leaves judgement calls to the model', n5.data.tasks[0].due===null, String(n5.data.tasks[0].due));
+
+const past = new Date(Date.parse(todayNet) - 20*86400000);
+const pastPhrase = past.getUTCDate()+' '+past.toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'});
+let n6 = await runNet(`I was supposed to send that on ${pastPhrase}.`, t('Send that',null,'send that'));
+chk4('does not roll a past date forward a year', n6.data.tasks[0].due===null, String(n6.data.tasks[0].due));
+
+let n7 = await runNet('Chase Diego soon, whenever he gets back.', t('Chase Diego'));
+chk4('stays blank when there is no date at all', n7.data.tasks[0].due===null, String(n7.data.tasks[0].due));
+console.log(`  ${p4} passed, ${f4} failed`);
+
 globalThis.fetch = realFetch;
-console.log(`\n  TOTAL: ${pass+p2+p3} passed, ${fail+f2+f3} failed\n`);
-process.exit((fail+f2+f3)?1:0);
+console.log(`\n  TOTAL: ${pass+p2+p3+p4} passed, ${fail+f2+f3+f4} failed\n`);
+process.exit((fail+f2+f3+f4)?1:0);
