@@ -19,16 +19,25 @@ const raw = JSON.parse(fs.readFileSync(RESULTS, 'utf8'));
 
 /* Flatten Playwright's nested report into { ItemNN: status }. */
 const outcomes = {};
+const flakes = new Set();
 (function walk(suites) {
   for (const s of suites || []) {
     for (const spec of s.specs || []) {
       const m = /Item(\d{2})/.exec(spec.title);
       if (!m) continue;
       const n = Number(m[1]);
-      const ok = (spec.tests || []).every(t =>
-        (t.results || []).length && t.results.every(r => r.status === 'passed'));
-      // If an item somehow has several tests, all of them must pass.
+      // A test may be retried. It counts as passing only if its final attempt
+      // passed, and as FLAKY if it needed more than one attempt - which is
+      // shown, not swallowed.
+      let ok = true, flaky = false;
+      for (const t of (spec.tests || [])) {
+        const res = t.results || [];
+        if (!res.length) { ok = false; continue; }
+        if (res[res.length - 1].status !== 'passed') ok = false;
+        else if (res.length > 1) flaky = true;
+      }
       outcomes[n] = outcomes[n] === false ? false : ok;
+      if (flaky) flakes.add(n);
     }
     walk(s.suites);
   }
@@ -42,7 +51,7 @@ let lastGroup = null;
 for (const item of CHECKLIST) {
   const result = outcomes[item.n];
   let mark, note = '';
-  if (result === true) { mark = PASS; covered++; }
+  if (result === true) { mark = PASS; covered++; if (flakes.has(item.n)) note = 'FLAKY - passed on retry'; }
   else if (result === false) { mark = FAIL; failed++; note = 'TEST FAILING'; }
   else if (item.manual) { mark = MANUAL; uncovered++; note = 'NOT CHECKED BY ROBOT'; }
   else { mark = FAIL; uncovered++; note = 'NO TEST'; }
@@ -61,6 +70,9 @@ for (const r of rows) {
 console.log('\n  ' + '-'.repeat(width + 20));
 console.log(`  passing: ${covered}/${CHECKLIST.length}   failing: ${failed}   not covered: ${uncovered}`);
 
+if (flakes.size) {
+  console.log(`  flaky: ${flakes.size} item(s) needed a second attempt - see FLAKY above.`);
+}
 for (const r of rows) {
   if (r.mark === MANUAL) console.log(`  note  ${String(r.item.n).padStart(2, '0')}: ${r.item.manual}`);
 }

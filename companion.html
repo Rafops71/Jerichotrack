@@ -1,4 +1,4 @@
-<!-- companion-v19.html -->
+<!-- companion-v20.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,16 +6,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" id="themeColorMeta" content="#1a2e4a">
 <meta name="apple-mobile-web-app-title" content="Jericho">
 <title>Jericho Companion</title>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-:root { --app-max: 680px; }   /* widest the content ever gets - phones are narrower, so unaffected */
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #1a2e4a; padding-bottom: 90px; }
-.header { background: #1a2e4a; color: white; padding: 16px 18px 14px 18px; }
+:root {
+  /* The look, as settings. Defaults are exactly the v19 colours, so the app
+     looks identical until you change something in Settings. */
+  --c-primary: var(--c-primary);   /* header, primary tiles, headings, buttons */
+  --c-accent:  var(--c-primary);   /* the small uppercase tags and the Intake tile */
+  --c-on-primary: #ffffff;
+  --c-on-accent:  #ffffff;
+  --c-bg: var(--c-bg);        /* page background */
+  --app-max: 680px;       /* widest the content ever gets - phones are narrower */
+  --ui-gap: 16px;         /* space between cards */
+  --ui-card-pad: 12px 14px;
+  --ui-title: 14px;       /* the size of a card's main line */
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: var(--c-bg); color: var(--c-primary); padding-bottom: 90px; }
+.header { background: var(--c-primary); color: var(--c-on-primary); padding: 16px 18px 14px 18px; }
 /* Keep the coloured bar full width but centre what is inside it. */
 .header { padding-left: max(18px, calc((100% - var(--app-max)) / 2)); padding-right: max(18px, calc((100% - var(--app-max)) / 2)); }
 .header h1 { margin: 0; font-size: 19px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.head-gear { margin-left: auto; background: rgba(255,255,255,0.16); color: inherit; border: none; width: 30px; height: 30px;
+             border-radius: 9px; font-size: 15px; line-height: 1; cursor: pointer; }
+.look-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.look-swatch { width: 36px; height: 36px; border-radius: 10px; border: 2px solid transparent; padding: 0; cursor: pointer; }
+.look-swatch.on { border-color: var(--c-primary); box-shadow: 0 0 0 2px var(--c-bg) inset; }
+.look-slider { width: 100%; accent-color: var(--c-primary); height: 24px; }
+.look-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.look-row span { font-weight: 500; color: #999; font-size: 12px; }
+.look-layouts { display: grid; gap: 8px; }
+.look-layout { display: block; width: 100%; text-align: left; background: white; border: 1.5px solid #ddd; border-radius: 11px;
+               padding: 11px 13px; font: inherit; color: inherit; cursor: pointer; }
+.look-layout.on { border-color: var(--c-primary); border-width: 2px; }
+.look-layout b { display: block; font-size: 13px; }
+.look-layout em { display: block; font-style: normal; font-size: 12px; color: #888; margin-top: 2px; }
 .sync-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; display: inline-block; margin-top: 8px; }
 .sync-pill.online { background: rgba(39,174,96,0.25); color: #8ee0ab; }
 .sync-pill.offline { background: rgba(231,76,60,0.25); color: #f5a89f; }
@@ -29,9 +56,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .upcoming-card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin: 0 0 10px 0; }
 .upcoming-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f2f2f2; }
 .upcoming-row:last-child { border-bottom: none; }
-.upcoming-time { background: #1a2e4a; color: white; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; white-space: nowrap; }
+.upcoming-time { background: var(--c-primary); color: var(--c-on-primary); font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; white-space: nowrap; }
 .upcoming-info { flex: 1; min-width: 0; }
-.upcoming-info .u-title { font-size: 14px; font-weight: 600; color: #1a2e4a; }
+.upcoming-info .u-title { font-size: 14px; font-weight: 600; color: var(--c-primary); }
 .upcoming-info .u-sub { font-size: 12px; color: #999; margin-top: 1px; }
 .empty-note { color: #bbb; font-size: 13px; padding: 6px 0; }
 
@@ -39,21 +66,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .tile { background: white; border: none; border-radius: 14px; padding: 18px 14px; text-align: left; box-shadow: 0 1px 6px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
 .tile .tile-icon { font-size: 22px; }
-.tile .tile-label { font-size: 14px; font-weight: 600; color: #1a2e4a; }
-.tile.primary { background: #1a2e4a; }
-.tile.primary .tile-label { color: white; }
+.tile .tile-label { font-size: 14px; font-weight: 600; color: var(--c-primary); }
+.tile.primary { background: var(--c-primary); }
+.tile.primary .tile-label { color: var(--c-on-primary); }
 
 /* Section title */
-.sec-h { font-size: 13px; font-weight: 700; color: #1a2e4a; margin: 18px 0 10px 0; text-transform: uppercase; letter-spacing: 0.4px; }
+.sec-h { font-size: 13px; font-weight: 700; color: var(--c-primary); margin: 18px 0 10px 0; text-transform: uppercase; letter-spacing: 0.4px; }
 
 /* Follow-up items */
-.item-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #1a2e4a; }
+.item-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid var(--c-primary); }
 .item-card.overdue { border-left-color: #e74c3c; }
 .item-card.today { border-left-color: #e8a020; }
 .item-card.nodate { border-left-color: #bbb; }
 .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.item-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; color: white; background: #1a2e4a; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.3px; }
-.item-title { font-size: 14px; font-weight: 600; margin-top: 6px; color: #1a2e4a; }
+.item-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--c-on-accent); background: var(--c-accent); padding: 2px 7px; border-radius: 8px; letter-spacing: 0.3px; }
+.item-title { font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--c-primary); }
 .item-sub { font-size: 12px; color: #888; margin-top: 3px; }
 .item-note { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.4; }
 .item-due { font-size: 11px; color: #999; margin-top: 5px; }
@@ -65,25 +92,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .pipe-row { display: flex; align-items: center; gap: 10px; background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
 .pipe-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .pipe-info { flex: 1; min-width: 0; }
-.pipe-title { font-size: 13px; font-weight: 600; color: #1a2e4a; }
+.pipe-title { font-size: 13px; font-weight: 600; color: var(--c-primary); }
 .pipe-stage { font-size: 11px; color: #999; margin-top: 2px; }
 
 /* Bottom nav */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #eee; padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px)) 4px; z-index: 100; }
 .bottom-nav { padding-left: max(4px, calc((100% - var(--app-max)) / 2)); padding-right: max(4px, calc((100% - var(--app-max)) / 2)); }
 .bottom-nav button { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; color: #aaa; font-size: 10px; }
-.bottom-nav button.active { color: #1a2e4a; }
+.bottom-nav button.active { color: var(--c-primary); }
 .bottom-nav button .nav-icon { font-size: 19px; }
 
 /* Modal / sheet */
 .sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; }
 .sheet-overlay.show { display: block; }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #f0f2f5; border-radius: 20px 20px 0 0; z-index: 201; max-height: 88vh; overflow-y: auto; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px)) 18px; transform: translateY(100%); transition: transform 0.25s ease; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--c-bg); border-radius: 20px 20px 0 0; z-index: 201; max-height: 88vh; overflow-y: auto; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px)) 18px; transform: translateY(100%); transition: transform 0.25s ease; }
 .sheet.show { transform: translateY(0); }
 /* On a wide screen the pop-up panels sit in the same centred column. */
 .sheet { max-width: var(--app-max); margin-left: auto; margin-right: auto; }
 .sheet-handle { width: 40px; height: 4px; background: #ddd; border-radius: 3px; margin: 0 auto 14px auto; }
-.sheet h3 { margin: 0 0 16px 0; font-size: 17px; color: #1a2e4a; }
+.sheet h3 { margin: 0 0 16px 0; font-size: 17px; color: var(--c-primary); }
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 12px; font-weight: 600; color: #777; margin-bottom: 5px; }
 .field input, .field select, .field textarea { width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: white; }
@@ -92,12 +119,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .field-row .field { flex: 1; }
 .sheet-actions { display: flex; gap: 10px; margin-top: 16px; }
 .sheet-actions button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; }
-.btn-sheet-save { background: #1a2e4a; color: white; }
+.btn-sheet-save { background: var(--c-primary); color: white; }
 .btn-sheet-cancel { background: #e5e5e5; color: #666; }
 
 /* Attendee chips */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.chip { background: #e8edf3; color: #1a2e4a; font-size: 12px; padding: 5px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px; }
+.chip { background: #e8edf3; color: var(--c-primary); font-size: 12px; padding: 5px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px; }
 .chip .chip-x { cursor: pointer; color: #999; font-weight: bold; }
 .quick-loc-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; margin-bottom: 8px; }
 .quick-loc { background: white; border: 1px solid #ddd; font-size: 12px; padding: 6px 10px; border-radius: 10px; }
@@ -105,27 +132,53 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .loc-result-item { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #f2f2f2; }
 
 .toast-container { position: fixed; top: 16px; left: 16px; right: 16px; z-index: 999; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-.toast { background: #1a2e4a; color: white; padding: 11px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-10px); transition: all 0.3s ease; max-width: 90%; text-align: center; }
+.toast { background: var(--c-primary); color: white; padding: 11px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-10px); transition: all 0.3s ease; max-width: 90%; text-align: center; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { background: #27ae60; }
 .toast.error { background: #e74c3c; }
 
 .tag-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .tag-opt { background: white; border: 1.5px solid #ddd; color: #666; font-size: 12px; padding: 7px 12px; border-radius: 10px; }
-.tag-opt.selected { background: #1a2e4a; border-color: #1a2e4a; color: white; }
+.tag-opt.selected { background: var(--c-primary); border-color: var(--c-primary); color: white; }
+/* ============================================================
+   v20: three layouts. Compact is the default and is what v19 looked like,
+   so choosing nothing changes nothing.
+   ============================================================ */
+html[data-layout="comfortable"] {
+  --app-max: 760px; --ui-gap: 20px; --ui-card-pad: 16px 18px; --ui-title: 16px;
+}
+html[data-layout="comfortable"] .screen { padding: 22px 20px; }
+html[data-layout="comfortable"] .tile { padding: 22px 18px; }
+html[data-layout="comfortable"] .tile .tile-label { font-size: 15px; }
+html[data-layout="comfortable"] .item-card, html[data-layout="comfortable"] .upcoming-card { padding: var(--ui-card-pad); }
+html[data-layout="comfortable"] .item-title, html[data-layout="comfortable"] .u-title,
+html[data-layout="comfortable"] .pipe-title { font-size: var(--ui-title); }
+html[data-layout="comfortable"] .item-note, html[data-layout="comfortable"] .u-sub { font-size: 13px; }
+
+html[data-layout="wide"] { --app-max: 1060px; }
+/* Two columns only where there is genuinely room for them. */
+@media (min-width: 900px) {
+  html[data-layout="wide"] #fullFollowups,
+  html[data-layout="wide"] #homeFollowups,
+  html[data-layout="wide"] #notesList {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start;
+  }
+  html[data-layout="wide"] .item-card { margin-bottom: 0; }
+}
+
 /* v19: a delete button waiting for its second tap */
 .btn-del.confirming { background: #e74c3c; color: white; font-weight: 600; }
-.btn-edit { background: #eef1f6; color: #1a2e4a; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+.btn-edit { background: #eef1f6; color: var(--c-primary); border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
 /* v19: rows you can tap to open something */
 .upcoming-row, .pipe-row { cursor: pointer; }
-.stage-opt { display: block; width: 100%; text-align: left; background: white; border: 1.5px solid #ddd; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 14px; color: #1a2e4a; display: flex; align-items: center; gap: 10px; }
-.stage-opt.current { border-color: #1a2e4a; border-width: 2px; font-weight: 700; }
+.stage-opt { display: block; width: 100%; text-align: left; background: white; border: 1.5px solid #ddd; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 14px; color: var(--c-primary); display: flex; align-items: center; gap: 10px; }
+.stage-opt.current { border-color: var(--c-primary); border-width: 2px; font-weight: 700; }
 .stage-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
 /* Intake review cards */
-.review-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #1a2e4a; }
+.review-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid var(--c-primary); }
 .review-card.low-conf { border-left-color: #e8a020; }
-.rc-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #1a2e4a; margin-bottom: 8px; }
+.rc-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--c-primary); margin-bottom: 8px; }
 .rc-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; color: white; margin-left: 4px; font-weight: 600; }
 .badge-merge { background: #e8a020; }
 .badge-new { background: #3498db; }
@@ -141,7 +194,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .ingest-setup-note { background: #fff8ea; border: 1px solid #f0d38a; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #7a5c10; margin-bottom: 12px; line-height: 1.5; }
 /* Voice dictation controls (companion-v17) */
 .dictation-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.btn-dictate { flex: 0 0 auto; padding: 8px 14px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; background: #1a2e4a; color: white; cursor: pointer; }
+.btn-dictate { flex: 0 0 auto; padding: 8px 14px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; background: var(--c-primary); color: white; cursor: pointer; }
 .btn-dictate.recording { background: #c0392b; }
 .btn-dictate:disabled { background: #ccc; color: #888; }
 .dictation-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; display: inline-block; background: #eee; color: #777; }
@@ -177,7 +230,7 @@ window.addEventListener('unhandledrejection', function (e) {
 </script>
 
 <div class="header">
-  <h1>Jericho Companion</h1>
+  <h1>Jericho Companion<button class="head-gear" onclick="openLookSheet()" aria-label="Appearance settings">⚙</button></h1>
   <span class="sync-pill syncing" id="syncPill">🔄 Connecting...</span>
 </div>
 
@@ -244,6 +297,50 @@ window.addEventListener('unhandledrejection', function (e) {
   <button onclick="showScreen('followups',this)"><span class="nav-icon">✅</span>Follow-ups</button>
   <button onclick="showScreen('pipeline',this)"><span class="nav-icon">📊</span>Pipeline</button>
   <button onclick="showScreen('notes',this)"><span class="nav-icon">📝</span>Notes</button>
+</div>
+
+<!-- LOOK SHEET (v20: colours and layout, chosen by the user) -->
+
+<div class="sheet-overlay" id="lookOverlay" onclick="closeLookSheet()"></div>
+<div class="sheet" id="lookSheet">
+  <div class="sheet-handle"></div>
+  <h3>Appearance</h3>
+  <div class="field">
+    <label>Start from</label>
+    <div class="look-swatches" id="lookPresets"></div>
+  </div>
+  <div class="field">
+    <div class="look-row"><label for="lkHue">Main colour</label><span id="lkHueV"></span></div>
+    <input class="look-slider" type="range" id="lkHue" min="0" max="360">
+  </div>
+  <div class="field">
+    <div class="look-row"><label for="lkSat">How strong</label><span id="lkSatV"></span></div>
+    <input class="look-slider" type="range" id="lkSat" min="8" max="95">
+  </div>
+  <div class="field">
+    <div class="look-row"><label for="lkLit">How bright</label><span id="lkLitV"></span></div>
+    <input class="look-slider" type="range" id="lkLit" min="16" max="70">
+  </div>
+  <div class="field">
+    <div class="look-row"><label for="lkAcc">Accent colour</label><span id="lkAccV"></span></div>
+    <input class="look-slider" type="range" id="lkAcc" min="0" max="360">
+  </div>
+  <div class="field">
+    <div class="look-row"><label for="lkBg">Background tint</label><span id="lkBgV"></span></div>
+    <input class="look-slider" type="range" id="lkBg" min="0" max="18">
+  </div>
+  <div class="field">
+    <label>Layout</label>
+    <div class="look-layouts" id="lookLayouts">
+      <button type="button" class="look-layout" data-l="compact"><b>Compact</b><em>Dense, made for one thumb on a phone.</em></button>
+      <button type="button" class="look-layout" data-l="comfortable"><b>Comfortable</b><em>Bigger text and more room. Easier on a tablet.</em></button>
+      <button type="button" class="look-layout" data-l="wide"><b>Wide</b><em>Two columns where the screen allows it.</em></button>
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="resetLook()">Reset</button>
+    <button class="btn-sheet-save" onclick="closeLookSheet()">Done</button>
+  </div>
 </div>
 
 <!-- STAGE SHEET (v19: change a deal's stage from the phone) -->
@@ -646,6 +743,114 @@ function convertTime(dateStr,timeStr,fromTz,toTz){
     return timeLabel+dayLabel;
   }catch(e){return '--:--';}
 }
+
+/* ============================================================
+   v20: APPEARANCE
+   Colours and layout are the user's choice, kept on this device. The defaults
+   are exactly the v19 look, so an untouched app is unchanged.
+   Stored locally only - a phone and a laptop can reasonably look different,
+   and this is not business data worth syncing.
+   ============================================================ */
+const LOOK_KEY='jericho_look';
+const LOOK_DEFAULT={h:213,s:48,l:20,a:213,b:4,layout:'compact'};
+const LOOK_PRESETS=[
+  {n:'Original navy',   h:213,s:48,l:20,a:213,b:4},
+  {n:'Bright blue',     h:212,s:88,l:52,a:190,b:4},
+  {n:'Soft sky',        h:200,s:62,l:46,a:172,b:8},
+  {n:'Forest',          h:158,s:40,l:26,a:142,b:7},
+  {n:'Aubergine',       h:282,s:34,l:30,a:322,b:6},
+  {n:'Graphite',        h:215,s:12,l:24,a:210,b:3}
+];
+let look={...LOOK_DEFAULT};
+
+function loadLook(){
+  try{
+    const raw=localStorage.getItem(LOOK_KEY);
+    if(raw)look={...LOOK_DEFAULT,...JSON.parse(raw)};
+  }catch(e){ look={...LOOK_DEFAULT}; }   // a corrupt value must never stop the app starting
+  applyLook();
+}
+function saveLook(){
+  try{ localStorage.setItem(LOOK_KEY,JSON.stringify(look)); }catch(e){}
+}
+
+/* Dark text on a light colour, light text on a dark one - so a pale choice
+   does not produce white-on-white. */
+const readableOn=l=>l>58?'#12202e':'#ffffff';
+
+function applyLook(){
+  const r=document.documentElement;
+  const accentL=Math.min(look.l+26,62);
+  const accentS=Math.min(look.s+18,92);
+  r.style.setProperty('--c-primary',`hsl(${look.h} ${look.s}% ${look.l}%)`);
+  r.style.setProperty('--c-accent',`hsl(${look.a} ${accentS}% ${accentL}%)`);
+  r.style.setProperty('--c-on-primary',readableOn(look.l));
+  r.style.setProperty('--c-on-accent',readableOn(accentL));
+  r.style.setProperty('--c-bg',`hsl(${look.h} ${look.b}% 96%)`);
+  r.setAttribute('data-layout',look.layout);
+  const themeMeta=document.getElementById('themeColorMeta');
+  if(themeMeta)themeMeta.setAttribute('content',`hsl(${look.h} ${look.s}% ${look.l}%)`);
+}
+
+function renderLookControls(){
+  const wrap=document.getElementById('lookPresets');
+  wrap.innerHTML=LOOK_PRESETS.map((p,i)=>
+    `<button type="button" class="look-swatch" data-i="${i}" title="${escapeHtml(p.n)}" aria-label="${escapeHtml(p.n)}"
+       style="background:linear-gradient(135deg,hsl(${p.h} ${p.s}% ${p.l}%) 0 55%,hsl(${p.a} ${Math.min(p.s+18,92)}% ${Math.min(p.l+26,62)}%) 55% 100%)"></button>`
+  ).join('');
+  document.getElementById('lkHue').value=look.h;
+  document.getElementById('lkSat').value=look.s;
+  document.getElementById('lkLit').value=look.l;
+  document.getElementById('lkAcc').value=look.a;
+  document.getElementById('lkBg').value=look.b;
+  document.getElementById('lkHueV').textContent=look.h+'\u00b0';
+  document.getElementById('lkSatV').textContent=look.s+'%';
+  document.getElementById('lkLitV').textContent=look.l+'%';
+  document.getElementById('lkAccV').textContent=look.a+'\u00b0';
+  document.getElementById('lkBgV').textContent=look.b===0?'none':look.b+'%';
+  document.querySelectorAll('#lookLayouts .look-layout').forEach(b=>
+    b.classList.toggle('on',b.dataset.l===look.layout));
+  document.querySelectorAll('#lookPresets .look-swatch').forEach(b=>{
+    const p=LOOK_PRESETS[+b.dataset.i];
+    b.classList.toggle('on',p.h===look.h&&p.s===look.s&&p.l===look.l&&p.a===look.a&&p.b===look.b);
+  });
+}
+
+function openLookSheet(){
+  renderLookControls();
+  document.getElementById('lookOverlay').classList.add('show');
+  document.getElementById('lookSheet').classList.add('show');
+}
+function closeLookSheet(){
+  document.getElementById('lookOverlay').classList.remove('show');
+  document.getElementById('lookSheet').classList.remove('show');
+}
+function resetLook(){
+  look={...LOOK_DEFAULT};
+  applyLook();saveLook();renderLookControls();
+  toast('Back to the original look');
+}
+
+['lkHue:h','lkSat:s','lkLit:l','lkAcc:a','lkBg:b'].forEach(pair=>{
+  const [id,key]=pair.split(':');
+  document.getElementById(id).addEventListener('input',e=>{
+    look[key]=+e.target.value;
+    applyLook();saveLook();renderLookControls();
+  });
+});
+document.getElementById('lookPresets').addEventListener('click',e=>{
+  const b=e.target.closest('.look-swatch'); if(!b)return;
+  const p=LOOK_PRESETS[+b.dataset.i];
+  look={...look,h:p.h,s:p.s,l:p.l,a:p.a,b:p.b};
+  applyLook();saveLook();renderLookControls();
+});
+document.getElementById('lookLayouts').addEventListener('click',e=>{
+  const b=e.target.closest('.look-layout'); if(!b)return;
+  look.layout=b.dataset.l;
+  applyLook();saveLook();renderLookControls();
+});
+
+loadLook();
 
 // TOAST
 function toast(msg,type='success',duration=2500){

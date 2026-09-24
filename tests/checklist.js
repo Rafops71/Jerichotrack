@@ -63,5 +63,10 @@ module.exports = [
   { n: 39, group: 'Editing',      text: 'I can change a call I already saved' },
   { n: 40, group: 'Editing',      text: 'I can cancel a call' },
   { n: 41, group: 'Editing',      text: 'Deleting takes two taps, so a stray tap cannot lose anything' },
-  { n: 42, group: 'Editing',      text: 'I can move a deal to a different stage from my phone' }
+  { n: 42, group: 'Editing',      text: 'I can move a deal to a different stage from my phone' },
+
+  { n: 43, group: 'Appearance',   text: 'I can change the colours, and the app remembers next time' },
+  { n: 44, group: 'Appearance',   text: 'I can choose between the three layouts' },
+  { n: 45, group: 'Appearance',   text: 'Reset puts it back to how it looked before' },
+  { n: 46, group: 'Appearance',   text: 'A pale colour still leaves the header text readable' }
 ];

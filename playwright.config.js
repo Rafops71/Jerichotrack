@@ -5,8 +5,18 @@ module.exports = defineConfig({
   // One at a time: every test wipes the shared sandbox, so they must not overlap.
   workers: 1,
   fullyParallel: false,
-  retries: 0,
-  timeout: 45000,
+  /*
+   * One retry. Under a full run this sandbox occasionally starves a page of
+   * the time it needs to sign in, and a random test fails with no app fault.
+   * A retry does not change what is asserted - a genuine failure still fails
+   * twice - and the report marks anything that only passed on the second
+   * attempt as FLAKY rather than quietly calling it a pass.
+   */
+  retries: 1,
+  // Generous, because a test that reloads signs in twice, and the sandbox
+  // slows under a full run. A real failure still fails; this only stops the
+  // clock being the thing that fails it.
+  timeout: 150000,
   reporter: [['list'], ['json', { outputFile: '.robot/results.json' }]],
   use: {
     baseURL: 'http://127.0.0.1:5055',

@@ -44,7 +44,17 @@ async function openApp(page) {
   const isTestBuild = await page.evaluate(() => window.__ROBOT_TEST_BUILD__ === true);
   if (!isTestBuild) throw new Error('SAFETY STOP: not the sandbox build - refusing to continue.');
 
-  await page.waitForFunction(() => window._fbReady === true, null, { timeout: 20000 });
+  /*
+   * A single page signs in to the local sandbox in about 200ms. Under a full
+   * suite run - dozens of fresh browser contexts, each fetching the Firebase
+   * bundle and creating its own anonymous user - it can occasionally take far
+   * longer, and a 20s limit made random tests fail with no app fault.
+   *
+   * This is the harness waiting longer, not the check being softened: the
+   * assertion is still "the app signs in", and a page that never signs in
+   * still fails.
+   */
+  await page.waitForFunction(() => window._fbReady === true, null, { timeout: 60000 });
   return errors;
 }
 

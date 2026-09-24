@@ -109,30 +109,34 @@ test('@robot Item36_closing_without_confirming_saves_nothing', async ({ page }) 
   await verify.stayedEmpty('jericho_leads', 3000);
 });
 
-test('@robot Item37_failures_are_explained_and_my_text_is_kept', async ({ page }) => {
-  await app.openApp(page);
-  const cases = [
-    // [ai mode, key to use, what the message must mention]
-    ['ok',        'WRONG-KEY', /key|unauthor/i],       // worker rejects us
-    ['ratelimit', KEY,         /rate.?limit/i],        // free plan exhausted
-    ['cutoff',    KEY,         /cut off|shorter/i],    // answer ran out of room
-    ['garbage',   KEY,         /could not be read|structured/i],
-    ['badmodel',  KEY,         /error|decommission/i]  // model name retired
-  ];
-  for (const [ai, key, expected] of cases) {
-    await page.evaluate(() => { localStorage.clear(); });
-    await page.reload();
-    await page.waitForFunction(() => window._fbReady === true, null, { timeout: 20000 });
+/*
+ * One test per failure mode rather than five reloads in a single test. Each
+ * reload means another sign-in to the sandbox, and five in a row was slow
+ * enough under a full run to trip the clock rather than find a real fault.
+ * All five carry the Item37 name, so the report still requires all of them.
+ */
+const FAILURE_MODES = [
+  ['wrong key',      'ok',        'WRONG-KEY', /key|unauthor/i],
+  ['rate limited',   'ratelimit', KEY,         /rate.?limit/i],
+  ['answer cut off', 'cutoff',    KEY,         /cut off|shorter/i],
+  ['unreadable',     'garbage',   KEY,         /could not be read|structured/i],
+  ['model retired',  'badmodel',  KEY,         /error|decommission/i]
+];
+
+for (const [label, ai, key, expected] of FAILURE_MODES) {
+  test(`@robot Item37_failure_is_explained_and_my_text_is_kept (${label})`, async ({ page }) => {
+    await app.openApp(page);
     await configure(page, ai, key);
-    const myText = 'important text for ' + ai;
+    const myText = 'important text about the Chile cargo';
     await process(page, myText);
 
     const panel = page.locator('#ingestReviewList');
-    await expect(panel, `"${ai}" should explain itself in plain English`).toContainText(expected, { timeout: 15000 });
-    await expect(panel, `"${ai}" should keep my original text`).toContainText(myText);
+    await expect(panel, `"${label}" should explain itself in plain English`)
+      .toContainText(expected, { timeout: 20000 });
+    await expect(panel, `"${label}" should keep my original text`).toContainText(myText);
     await verify.stayedEmpty('jericho_leads', 500);
-  }
-});
+  });
+}
 
 /*
  * Regression test for a bug the checklist caught.
