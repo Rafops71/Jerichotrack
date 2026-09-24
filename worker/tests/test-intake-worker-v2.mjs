@@ -121,7 +121,33 @@ stubGroq('ok', REAL_ORIGIN_REPLY);
 jj = await (await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:REAL_ORIGIN})).json();
 chk('KEEPS a genuine FOB origin', jj.data.broker_quotes[0].origin==='Santos', String(jj.data.broker_quotes[0].origin));
 
-globalThis.fetch = realFetch;
 console.log(`  ${p2} passed, ${f2} failed`);
-console.log(`\n  TOTAL: ${pass+p2} passed, ${fail+f2} failed\n`);
-process.exit((fail+f2)?1:0);
+
+/* ---- the prompt must tell the model what day it is ----
+   Live runs kept returning a blank due date for "by 30 September". The model
+   was not being stubborn - it was never told the year, so it could not produce
+   a YYYY-MM-DD without inventing one, and rule 1 forbids inventing. */
+console.log('\nDATE HANDLING\n');
+let sentBody = null;
+globalThis.fetch = async (u, o) => {
+  sentBody = JSON.parse(o.body);
+  return new Response(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content:
+    JSON.stringify({leads:[],tasks:[],commslog:[],broker_quotes:[],pipeline:[],notes:[]}) } }] }), { status: 200 });
+};
+await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:'send Maria the SPA draft by 30 September'});
+const prompt = sentBody.messages[0].content;
+const todayISO = new Date().toISOString().slice(0, 10);
+
+let p3 = 0, f3 = 0;
+const chk3 = (n, c, d='') => { if (c) { p3++; console.log('  PASS', n); } else { f3++; console.log('  FAIL', n, d); } };
+chk3("the prompt carries today's date", prompt.includes(todayISO), 'expected ' + todayISO);
+chk3('and the weekday, so "next Tuesday" can be resolved',
+     /TODAY IS (Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),/.test(prompt));
+chk3('says a worked-out date is not an invention', /NOT an invention/.test(prompt));
+chk3('still forbids dates with no anchor', /stay null/.test(prompt));
+chk3('forbids dates in the past', /Never return a date in the past/.test(prompt));
+console.log(`  ${p3} passed, ${f3} failed`);
+
+globalThis.fetch = realFetch;
+console.log(`\n  TOTAL: ${pass+p2+p3} passed, ${fail+f2+f3} failed\n`);
+process.exit((fail+f2+f3)?1:0);

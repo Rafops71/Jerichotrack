@@ -80,7 +80,22 @@ export default {
       }, 500);
     }
 
+    /*
+     * The model has no clock. Without today's date it cannot turn "by 30
+     * September" into a YYYY-MM-DD, so it correctly left due dates blank -
+     * it was obeying rule 1, not ignoring the schema. Supplying the date is
+     * the fix; a sterner instruction would not have been.
+     *
+     * Cloudflare runs in UTC. Rafael is in Belgium, so around midnight local
+     * this can be a day behind. Harmless for due dates, and preferable to
+     * guessing a timezone.
+     */
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayWeekday = new Date().toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+
     const extractionPrompt = `You are a precise, zero-invention data extraction assistant for a commodities brokerage CRM (Jericho).
+
+TODAY IS ${todayWeekday}, ${todayISO}. Use this, and only this, to work out any date the text refers to.
 
 CRITICAL RULES - NEVER BREAK THESE:
 1. Do NOT invent, guess, or complete any information.
@@ -171,6 +186,13 @@ Return exactly this JSON shape:
     }
   ]
 }
+
+DATES - the text usually gives them in human form, and you must convert them:
+- "by 30 September", "on the 30th", "end of month" -> work out the actual date from today's date above and return YYYY-MM-DD. A bare day and month with no year means the NEXT time that date occurs, counting today as valid.
+- "tomorrow", "next Tuesday", "in two weeks", "Friday" -> same, resolve against today's date. "Next <weekday>" means the coming one; if today is that weekday, it means seven days from now.
+- A date you have worked out from today's date is NOT an invention. It is a conversion, and it is required. Returning null because you were unsure of the year is wrong now that you have been given the year.
+- Only return null when the text genuinely names no time at all. Vague words with no anchor - "soon", "shortly", "when he gets back" - stay null.
+- Never return a date in the past. If your working produces one, you have misread it; return null instead.
 
 Additional hard constraints:
 - INCOTERMS - READ CAREFULLY. A port or city named after CIF, CFR, CIP, DAP, DDP or DPU is the DESTINATION, not the origin. A port or city named after FOB, FCA, EXW or FAS is the ORIGIN. "CIF Rotterdam" means the goods are going TO Rotterdam; it says nothing about where they come from, so "origin" must be null. Only fill "origin" when the text states where the goods come from - a country of origin, a mine, a producer, a load port. Putting a destination in the origin field is a serious error in this business.
