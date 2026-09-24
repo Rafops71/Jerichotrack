@@ -1,6 +1,6 @@
 # JERICHO COMPANION — HANDOVER
 
-**Last updated: 24 September 2026.** Replaces the older handoff note, which is
+**Last updated: 24 September 2026 (v19).** Replaces the older handoff note, which is
 now wrong in several places (see "Corrections" below).
 
 Rafael is not a developer. Explain things in plain words, no jargon, and
@@ -17,16 +17,16 @@ JerichoTrack on desktop, so anything entered in either appears in both.
 
 - **Repo:** https://github.com/Rafops71/Jerichotrack (GitHub Pages serves `main`)
 - **App file:** `companion.html` — one file, no build step
-- **Current version:** v18, on branch `claude/optimistic-euler-9xy09u`, **not yet merged to `main`**
+- **Current version:** v19, on branch `claude/optimistic-euler-9xy09u`, **not yet merged to `main`**
 - Firebase project `jericho-operation`, anonymous auth
 - Collections: `jericho_leads`, `jericho_tasks`, `jericho_pipeline`,
   `jericho_meetings`, `jericho_companion_notes`, `jericho_commslog`,
   `jericho_broker_quotes`
 
-Screens: Home, Follow-ups, Pipeline, Notes. Plus dictation and "AI Inbox"
-(paste/dictate messy text → AI extracts items → user reviews editable cards →
-**explicit Confirm before anything is saved**). That Confirm gate is
-non-negotiable and is covered by a test.
+Screens: Home, Follow-ups, Pipeline, Notes. Plus dictation and **Intake**
+(renamed from "AI Inbox" in v19): paste/dictate messy text → AI extracts items
+→ user reviews editable cards → **explicit Confirm before anything is saved**.
+That Confirm gate is non-negotiable and is covered by a test.
 
 ---
 
@@ -39,21 +39,42 @@ non-negotiable and is covered by a test.
    That — not a bug — is why "end-to-end extraction has never been confirmed".
 3. **Its CORS and JSON-unwrapping are already correct.** It allows `X-API-Key`
    and already strips the bare `JSON` label and ``` fences. Do not "fix" these.
-4. **Dictation language was already set** (`en-US`, now `en-GB` in v18).
-5. **The ⚡ icon is gone** as of v18.
+4. **Dictation language was already set** (`en-US`, now `en-GB`).
+5. **The ⚡ icon is gone.**
 
 ---
 
 ## State of play
 
 ### Done and pushed
-- **`companion.html` v18** — duplicate-lead warning, ⚡ removed, layout no
-  longer stretches on iPad/desktop, pinch-zoom unlocked, dictation language
-  hoisted to a named constant (`DICTATION_LANGUAGE`, now `en-GB`).
+
+**`companion.html` v18**
+- Duplicate-lead warning on Quick Add Lead (the existing `findExistingLead`
+  matches on email/phone only, which Quick Add never collects, so a separate
+  name+company check was added rather than widening it and changing how Intake
+  merges).
+- ⚡ removed; layout no longer stretches on iPad/desktop (centred 680px column);
+  pinch-zoom unlocked; `DICTATION_LANGUAGE` constant, set to `en-GB`.
+
+**`companion.html` v19**
+- **A real bug, found by the checklist.** Items added by hand get a numeric id;
+  items added by Intake get a UUID from `makeId()`. Card buttons interpolated
+  the id into `onclick` **unquoted**, so a UUID produced
+  `completeAction(3f2504e0-4f89-...)` — not valid JavaScript. Every Done and
+  Delete button on every AI-created item silently did nothing. Never noticed
+  because Intake had never run. Ids are now quoted and compared as text, and
+  `makeId()` is used everywhere.
+- Edit button on follow-ups, and calls can be edited or cancelled. Both reopen
+  the same sheet pre-filled and update the same record.
+- Deleting takes two taps ("Sure?", resets after 5s). Same pattern as the v18
+  duplicate warning.
+- Tap a deal → stage picker. Stage only; adding/editing deals stays on desktop.
+- Dictation grace period after stop raised 1200ms → 3500ms
+  (`DICT_STOP_GRACE_MS`). **A mitigation, not a confirmed fix** — see below.
 - **Robot-user test system** — see `ROBOT.md`. One command
   (`node scripts/run-robot.js`) drives the real app in a real browser against a
   local sandbox database, then checks results through an independent path.
-  **Last run: 32 of 37 checklist items passing, 0 failing.**
+  **Last run: 37 of 42 checklist items passing, 0 failing.**
 - **`worker/intake-worker-v1.js`** — an alternative Intake worker. **NOT
   deployed and probably should not be.** See below.
 
@@ -66,8 +87,15 @@ non-negotiable and is covered by a test.
   checking, because the Firebase config is public in a public repo — that is
   normal and not itself a leak, but the rules are what actually protect the data.
 - **Dictation items 26–30** cannot be tested by the robot (need a real
-  microphone). Includes the known bug where the last spoken chunk is lost if
-  Stop is tapped mid-processing.
+  microphone).
+- **The last-chunk dictation bug is NOT fixed.** It could not be reproduced
+  from the code — the recogniser's `onend` handler already recovers pending
+  interim text. Only the early-give-up timer was lengthened. To go further,
+  ask Rafael what exactly is lost: the last word, the last sentence, or
+  everything since the last pause.
+- **Leads have nowhere to live in Companion.** You can add a lead, but no
+  screen lists them. Once saved on the phone it is invisible until you open
+  JerichoTrack on the desktop.
 
 ---
 
@@ -135,6 +163,22 @@ files.
 - Preferred look: bright blue / white / pastel — confirm before big UI changes.
 
 ---
+
+## Agreed and queued, not built
+
+Rafael reviewed a list of suggested improvements and picked these. Nothing here
+has been started.
+
+- **Search** — one search box covering leads, follow-ups, deals and notes, with
+  results grouped by kind. Agreed this should also be where leads finally
+  become visible on the phone, rather than adding a fifth bottom-nav button.
+  **Still undecided:** whether leads get a proper screen of their own instead.
+- **Manual add for broker quotes and comms log.** Today these can only be
+  created by Intake; there is no button to record one by hand.
+- **Look and feel.** Rafael wants a settings screen with colour sliders and a
+  choice of three layouts. This is by far the largest item on the list and
+  amounts to a redesign — show mock-ups and get sign-off before writing code.
+  His stated preference remains bright blue / white / pastel.
 
 ## Open questions
 
