@@ -186,8 +186,8 @@ has been started.
   mentioned workers for Diligence and for "Jarvis AI", but the account lists
   only two, so one of those is unaccounted for.
 - **Supabase** is used on another project; no details gathered.
-- Rename "AI Inbox" → "Intake" was agreed in principle, deliberately deferred
-  until the feature actually works.
+- ~~Rename "AI Inbox" → "Intake"~~ **Done in v19.** The interface says Intake;
+  code identifiers still say "ingest", which is fine and invisible to the user.
 
 ---
 

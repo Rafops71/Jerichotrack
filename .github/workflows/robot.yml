@@ -1,7 +1,15 @@
 name: Robot user
 
 # The gate: if any function on the approved checklist has no passing test,
-# this job fails. Nothing is published from a failed run.
+# this job fails.
+#
+# NOTE: a red cross here is informational. GitHub Pages serves `main` directly
+# and this workflow has no publishing step, so a failed gate does NOT stop the
+# app going live. It is a signal to a human, not a barrier.
+#
+# It is also red by design today: five dictation items cannot be tested without
+# a real microphone, and the report counts "not covered" as not passing. Do not
+# make it green by dropping those items.
 on:
   push:
     branches: [ main, 'claude/**' ]
