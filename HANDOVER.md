@@ -91,9 +91,10 @@ That Confirm gate is non-negotiable and is covered by a test.
 - Rate limits, retired models and a bad provider key now return readable
   messages instead of a bare status code.
 - `worker/tests/test-intake-worker-v2.mjs` exercises the real worker code with
-  the provider stood in: **19 checks, all passing**, including that an invented
+  the provider stood in: **24 checks, all passing**, including that an invented
   email and an unverifiable quote are discarded, that a CIF destination is
-  cleared from the origin field, and that a genuine FOB origin is kept.
+  cleared from the origin field, that a genuine FOB origin is kept, and that
+  the prompt actually carries today's date and weekday.
 - **Proven against real Groq on 24 September 2026** — see the live-run section
   above. `openai/gpt-oss-120b` confirmed present on the account.
 - The deployed copy predates the Incoterms and cross-paragraph fixes.
@@ -149,7 +150,15 @@ with empty Email and Phone, which is exactly right.
    with a prompt rule forbidding it. Prompt-only; no code check yet.
 3. **A one-letter misquote** ("Feeles" for "Feels"). The snippet verification
    caught it and deleted the quote, which is the system working.
-4. **A due date was missed** on one run and found on another.
+4. **Due dates were being dropped.** "by 30 September" produced a blank due
+   date, repeatedly. **Root cause: the prompt never told the model what day it
+   is.** Asked for YYYY-MM-DD with no way to know the year, leaving it blank was
+   the model obeying rule 1, not ignoring the schema. **Fixed** by injecting
+   today's date and weekday, plus rules for resolving "tomorrow", "next
+   Tuesday" and a bare day-and-month, and an explicit statement that a date
+   worked out from today is a conversion, not an invention. Vague phrases with
+   no anchor still return null. A sterner instruction would not have fixed
+   this; the model was missing an input, not misbehaving.
 
 ### The finding that matters most: the model is not repeatable
 
@@ -165,11 +174,21 @@ gate. The whole design rests on a human reading the cards.
 
 ## THE NEXT STEP
 
-**Redeploy** `worker/intake-worker-v2-groq.js` — it has the Incoterms fix and
-the cross-paragraph rule, neither of which is on the deployed copy yet. Then
-re-run the same text and confirm origin comes back empty.
+**Redeploy** `worker/intake-worker-v2-groq.js` — the deployed copy has the
+Incoterms and cross-paragraph fixes but **not** the date fix. Then re-run
+"remind me to send Maria the SPA draft by 30 September" and confirm the task
+comes back with a real due date rather than a blank one.
 
-After that, `MISTRAL_API_KEY` can be deleted: Groq is proven.
+Both origin directions are already proven live: a CIF destination is cleared
+(with `originNote` attached) and a genuine FOB origin is kept, including in the
+hard case "bought FOB Santos, sold CIF Rotterdam", where it correctly kept the
+load port. `MISTRAL_API_KEY` has been deleted; Groq is proven, and a rollback to
+the Mistral worker would now mean restoring that key too.
+
+**Groq's free tier refuses after roughly six calls in quick succession.** Seen
+live. The worker handles it as designed: readable message, one automatic retry,
+text preserved. Not a problem in normal use, but do not benchmark by firing many
+requests in a row.
 
 **Deployment is not proof.** The proof is text going in and correct cards
 coming out.
