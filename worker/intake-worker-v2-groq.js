@@ -173,6 +173,8 @@ Return exactly this JSON shape:
 }
 
 Additional hard constraints:
+- INCOTERMS - READ CAREFULLY. A port or city named after CIF, CFR, CIP, DAP, DDP or DPU is the DESTINATION, not the origin. A port or city named after FOB, FCA, EXW or FAS is the ORIGIN. "CIF Rotterdam" means the goods are going TO Rotterdam; it says nothing about where they come from, so "origin" must be null. Only fill "origin" when the text states where the goods come from - a country of origin, a mine, a producer, a load port. Putting a destination in the origin field is a serious error in this business.
+- ONE PARAGRAPH AT A TIME. Do not carry a fact from one sentence or paragraph into an item described in a different one unless the text explicitly links them. If a price appears while discussing an offer, it belongs to that offer, not to a deal mentioned elsewhere. If a company makes an offer, that does NOT establish it as the seller on a separate deal. Leave the field null. A plausible inference stated as a fact is exactly the failure this prompt exists to prevent.
 - For broker_quotes: only create an entry if a price or clear commercial terms are explicitly stated. Otherwise return an empty array.
 - For meetings: never create a full meeting object. Turn any meeting mention into a task or a note instead.
 - stage must be one of the exact enum values listed or null. Never invent a stage.
@@ -366,6 +368,30 @@ ${sourceText}
       return item;
     }
 
+    /*
+     * "CIF Rotterdam" means the goods are going TO Rotterdam. The model filed
+     * Rotterdam as the origin on a live run. The prompt now forbids it, but a
+     * prompt is a request; this is a check. If the value in "origin" appears in
+     * the source text directly after a destination Incoterm, it is a
+     * destination, and the field is cleared.
+     */
+    const DESTINATION_INCOTERMS = ["CIF", "CFR", "CIP", "DAP", "DDP", "DPU", "DAT"];
+
+    function verifyOrigin(item) {
+      if (!item || typeof item !== "object") return item;
+      const origin = (item.origin || "").trim();
+      if (!origin) return item;
+      const escaped = origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const asDestination = new RegExp(
+        "\\b(?:" + DESTINATION_INCOTERMS.join("|") + ")\\s+" + escaped + "\\b", "i"
+      );
+      if (asDestination.test(sourceText)) {
+        item.origin = null;
+        item.originNote = "A destination was removed from the origin field - the text names it after a delivery term, so it is where the goods are going, not where they come from.";
+      }
+      return item;
+    }
+
     function validateStage(item) {
       if (!item || typeof item !== "object") return item;
       if (item.stage && !ALLOWED_STAGES.includes(item.stage)) {
@@ -382,10 +408,15 @@ ${sourceText}
 
     result.tasks = result.tasks.map(verifySnippet);
     result.commslog = result.commslog.map(verifySnippet);
-    result.broker_quotes = result.broker_quotes.map(verifySnippet);
+    result.broker_quotes = result.broker_quotes.map(item => {
+      item = verifySnippet(item);
+      item = verifyOrigin(item);
+      return item;
+    });
 
     result.pipeline = result.pipeline.map(item => {
       item = verifySnippet(item);
+      item = verifyOrigin(item);
       item = validateStage(item);
       return item;
     });

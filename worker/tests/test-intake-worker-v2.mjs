@@ -80,6 +80,48 @@ stubGroq('401');
 j = await (await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:NOTES})).json();
 check('explains a bad Groq key, and says which key', j.error==='provider_auth' && /not the password you type/.test(j.message));
 
+console.log(`\n  ${pass} passed, ${fail} failed`);
+
+/* ---- regression: a destination must never end up in the origin field ----
+   On the first live run the model put "Rotterdam" in origin, from the phrase
+   "CIF Rotterdam". CIF names where the goods are GOING. */
+const CIF_TEXT = 'Baltic Agro offer 12,500 MT yellow corn at USD 238/MT CIF Rotterdam, October shipment';
+const CIF_REPLY = 'JSON\n```json\n'+JSON.stringify({
+  leads:[],tasks:[],commslog:[],
+  broker_quotes:[{commodity:'yellow corn',price:'USD 238/MT',origin:'Rotterdam',
+                  terms:'CIF Rotterdam, October shipment',qty:'12,500 MT',
+                  direction:'Offer',source:'Baltic Agro',confidence:0.98,
+                  sourceSnippet:'Baltic Agro offer 12,500 MT yellow corn'}],
+  pipeline:[{commodity:'yellow corn',origin:'Rotterdam',stage:'New',confidence:0.7,
+             sourceSnippet:'12,500 MT yellow corn'}],
+  notes:[]
+})+'\n```';
+
+const REAL_ORIGIN = 'FOB Santos, Brazilian soybeans from Mato Grosso';
+const REAL_ORIGIN_REPLY = 'JSON\n```json\n'+JSON.stringify({
+  leads:[],tasks:[],commslog:[],
+  broker_quotes:[{commodity:'soybeans',price:null,origin:'Santos',terms:'FOB Santos',
+                  qty:null,direction:'Reference',source:null,confidence:0.8,
+                  sourceSnippet:'FOB Santos, Brazilian soybeans'}],
+  pipeline:[],notes:[]
+})+'\n```';
+
+let p2=0, f2=0;
+const chk=(n,c,d='')=>{ if(c){p2++;console.log('  PASS',n);} else {f2++;console.log('  FAIL',n,d);} };
+
+console.log('\nREGRESSION - origin vs destination\n');
+
+stubGroq('ok', CIF_REPLY);
+let jj = await (await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:CIF_TEXT})).json();
+chk('clears a CIF destination from a quote origin', jj.data.broker_quotes[0].origin===null, String(jj.data.broker_quotes[0].origin));
+chk('clears it on the deal too', jj.data.pipeline[0].origin===null, String(jj.data.pipeline[0].origin));
+chk('says why it was cleared', /where they come from/.test(jj.data.broker_quotes[0].originNote||''));
+
+stubGroq('ok', REAL_ORIGIN_REPLY);
+jj = await (await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:REAL_ORIGIN})).json();
+chk('KEEPS a genuine FOB origin', jj.data.broker_quotes[0].origin==='Santos', String(jj.data.broker_quotes[0].origin));
+
 globalThis.fetch = realFetch;
-console.log(`\n  ${pass} passed, ${fail} failed\n`);
-process.exit(fail?1:0);
+console.log(`  ${p2} passed, ${f2} failed`);
+console.log(`\n  TOTAL: ${pass+p2} passed, ${fail+f2} failed\n`);
+process.exit((fail+f2)?1:0);

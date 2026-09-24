@@ -91,9 +91,13 @@ That Confirm gate is non-negotiable and is covered by a test.
 - Rate limits, retired models and a bad provider key now return readable
   messages instead of a bare status code.
 - `worker/tests/test-intake-worker-v2.mjs` exercises the real worker code with
-  the provider stood in: **15 checks, all passing**, including that an invented
-  email and an unverifiable quote are both discarded.
-- **Not proven:** behaviour against the real Groq API.
+  the provider stood in: **19 checks, all passing**, including that an invented
+  email and an unverifiable quote are discarded, that a CIF destination is
+  cleared from the origin field, and that a genuine FOB origin is kept.
+- **Proven against real Groq on 24 September 2026** — see the live-run section
+  above. `openai/gpt-oss-120b` confirmed present on the account.
+- The deployed copy predates the Incoterms and cross-paragraph fixes.
+  **It needs redeploying.**
 - **Robot-user test system** — see `ROBOT.md`. One command
   (`node scripts/run-robot.js`) drives the real app in a real browser against a
   local sandbox database, then checks results through an independent path.
@@ -121,24 +125,65 @@ That Confirm gate is non-negotiable and is covered by a test.
 
 ---
 
-## THE NEXT STEP (do this first)
+## PROVEN WORKING — 24 September 2026
 
-**Nothing has ever been run through the Intake pipeline end to end.** That is
-the only thing still blocking the feature. Everything else is built and tested.
+**Intake ran end to end for the first time.** Real mixed English/Spanish text
+went into the live app at rafops71.github.io, through the deployed Groq worker,
+and came back as 9 reviewable cards. Nothing was saved — Confirm was not
+pressed, which is itself the proof that the gate holds.
 
-1. Deploy `worker/intake-worker-v2-groq.js` to the Cloudflare worker
-   `jericho-ai-inbox`.
-2. Set on it: `GROQ_API_KEY` (secret), `AI_MODEL` = `openai/gpt-oss-120b`,
-   `INGEST_AUTH_KEY` (secret, any value — tell Rafael what it is). Leave
-   `MISTRAL_API_KEY` in place until Groq is confirmed working, then delete it.
-3. Call the worker directly with real text and show the raw reply.
-4. Then drive the live app: configure Intake with the worker address
-   (`https://jericho-ai-inbox.rafael-e.workers.dev`) and that password, paste
-   the same text, press Process, and report what the cards show.
-5. Say explicitly whether anything was invented.
+The protection that mattered held: **no invented emails, phone numbers, prices,
+people or companies.** A contact whose number was explicitly not known came back
+with empty Email and Phone, which is exactly right.
+
+### What the first live run exposed
+
+1. **A destination was filed as the origin.** "CIF Rotterdam" produced
+   `origin: "Rotterdam"`. CIF names where goods are GOING. In this business that
+   is a serious error that looks harmless. **Fixed twice over:** an Incoterms
+   rule in the prompt, and `verifyOrigin()` in code, which clears an origin that
+   appears in the source after CIF/CFR/CIP/DAP/DDP/DPU/DAT and leaves a genuine
+   FOB/FCA/EXW origin alone. Regression-tested both ways.
+2. **Facts carried across paragraphs.** A seller and a price from an offer were
+   attached to a separate deal — a plausible guess presented as fact. **Fixed**
+   with a prompt rule forbidding it. Prompt-only; no code check yet.
+3. **A one-letter misquote** ("Feeles" for "Feels"). The snippet verification
+   caught it and deleted the quote, which is the system working.
+4. **A due date was missed** on one run and found on another.
+
+### The finding that matters most: the model is not repeatable
+
+The same text, run three times, gave three different answers — **despite
+temperature being set to 0.** One run found a due date, another did not. One
+invented a call direction, another correctly left it blank.
+
+This is normal for this class of model, not a bug to chase. The consequence is
+what matters: **the review-and-edit step is load-bearing, not a nicety.** Every
+card being editable before Confirm is what makes this safe. Do not add an
+"auto-save high confidence items" shortcut. Do not move or weaken the Confirm
+gate. The whole design rests on a human reading the cards.
+
+## THE NEXT STEP
+
+**Redeploy** `worker/intake-worker-v2-groq.js` — it has the Incoterms fix and
+the cross-paragraph rule, neither of which is on the deployed copy yet. Then
+re-run the same text and confirm origin comes back empty.
+
+After that, `MISTRAL_API_KEY` can be deleted: Groq is proven.
 
 **Deployment is not proof.** The proof is text going in and correct cards
 coming out.
+
+**Live settings as deployed:**
+- Worker: `https://jericho-ai-inbox.rafael-e.workers.dev`
+- `INGEST_AUTH_KEY` = `jericho-intake-VBHABP73KCPZ` (what Rafael types into the
+  app's one-time setup, on each device)
+- `AI_MODEL` = `openai/gpt-oss-120b`
+- The v1 Mistral worker's deployed code, which was never in this repo, was
+  rescued off Cloudflare before being overwritten and pushed to branch
+  `claude/zen-hamilton-k8czrq` as `worker/intake-worker-v1-deployed-backup.js`.
+  **That branch should be merged or the file copied here**, or the only backup
+  lives somewhere nobody will look.
 
 ---
 
