@@ -28,10 +28,20 @@ module.exports = defineConfig({
     ignoreHTTPSErrors: true,
     actionTimeout: 10000
   },
-  webServer: {
-    command: 'node scripts/serve.js',
-    url: 'http://127.0.0.1:5055/companion.html',
-    reuseExistingServer: true,
-    timeout: 20000
-  }
+  webServer: [
+    {
+      command: 'node scripts/serve.js',
+      url: 'http://127.0.0.1:5055/companion.html',
+      reuseExistingServer: true,
+      timeout: 20000
+    },
+    {
+      // The REAL Intake worker, running locally. Only the AI provider behind
+      // it is stood in for.
+      command: 'node scripts/serve-worker.js',
+      url: 'http://127.0.0.1:5057/',
+      reuseExistingServer: true,
+      timeout: 20000
+    }
+  ]
 });
