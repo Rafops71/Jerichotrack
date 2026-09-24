@@ -1,6 +1,6 @@
 # JERICHO COMPANION — HANDOVER
 
-**Last updated: 24 September 2026 (v19).** Replaces the older handoff note, which is
+**Last updated: 24 September 2026 (v19, live).** Replaces the older handoff note, which is
 now wrong in several places (see "Corrections" below).
 
 Rafael is not a developer. Explain things in plain words, no jargon, and
@@ -17,7 +17,10 @@ JerichoTrack on desktop, so anything entered in either appears in both.
 
 - **Repo:** https://github.com/Rafops71/Jerichotrack (GitHub Pages serves `main`)
 - **App file:** `companion.html` — one file, no build step
-- **Current version:** v19, on branch `claude/optimistic-euler-9xy09u`, **not yet merged to `main`**
+- **Current version:** v19. **Merged to `main` and live.** Development continues
+  on branch `claude/optimistic-euler-9xy09u`.
+- **Restore point:** branch `pre-v19-main` holds the last v17 state. To roll the
+  live app back: `git push origin pre-v19-main:main --force-with-lease`
 - Firebase project `jericho-operation`, anonymous auth
 - Collections: `jericho_leads`, `jericho_tasks`, `jericho_pipeline`,
   `jericho_meetings`, `jericho_companion_notes`, `jericho_commslog`,
@@ -71,6 +74,26 @@ That Confirm gate is non-negotiable and is covered by a test.
 - Tap a deal → stage picker. Stage only; adding/editing deals stays on desktop.
 - Dictation grace period after stop raised 1200ms → 3500ms
   (`DICT_STOP_GRACE_MS`). **A mitigation, not a confirmed fix** — see below.
+- "AI Inbox" renamed to **Intake** throughout the interface. This doubles as a
+  version check: if a device still shows "AI Inbox", it is serving a cached
+  pre-v19 copy.
+
+**`worker/intake-worker-v2-groq.js`** — the deployable Intake worker
+- Rafael's own worker with **Groq** in place of Mistral. The extraction prompt,
+  `verifySnippet`, `verifyContactFields`, `validateStage` and the stage
+  whitelist are all untouched — those are the parts worth keeping.
+- The model is now a Cloudflare variable (`AI_MODEL`), not hardcoded, because
+  Groq retires model names at short notice. Rafael's is `openai/gpt-oss-120b`,
+  already proven on his email-client project.
+- **Closes a security hole in the deployed v1 worker.** v1 read "if a key is
+  configured, require it", so with `INGEST_AUTH_KEY` unset it accepted requests
+  from anyone who knew the address. v2 refuses to run without one.
+- Rate limits, retired models and a bad provider key now return readable
+  messages instead of a bare status code.
+- `worker/tests/test-intake-worker-v2.mjs` exercises the real worker code with
+  the provider stood in: **15 checks, all passing**, including that an invented
+  email and an unverifiable quote are both discarded.
+- **Not proven:** behaviour against the real Groq API.
 - **Robot-user test system** — see `ROBOT.md`. One command
   (`node scripts/run-robot.js`) drives the real app in a real browser against a
   local sandbox database, then checks results through an independent path.
@@ -81,7 +104,6 @@ That Confirm gate is non-negotiable and is covered by a test.
 ### Not done
 - **The live test.** Nobody has ever run real text through the real worker.
   This is the only thing actually blocking the feature.
-- **v18 is not on `main`**, so it is not live yet.
 - **Firestore security rules never verified.** Unknown whether the intended
   "must be signed in" rule was ever applied to `jericho-operation`. Worth
   checking, because the Firebase config is public in a public repo — that is
@@ -101,15 +123,22 @@ That Confirm gate is non-negotiable and is covered by a test.
 
 ## THE NEXT STEP (do this first)
 
-1. Cloudflare → Workers & Pages → `jericho-ai-inbox` → Settings → Variables.
-   Set `INGEST_AUTH_KEY` to a password Rafael chooses (existing secrets cannot
-   be read back, so just set a new one). Confirm `MISTRAL_API_KEY` is present.
-2. In Companion → AI Inbox, enter:
-   - `https://jericho-ai-inbox.rafael-e.workers.dev`
-   - the same password
-3. Paste real notes, press Process, report exactly what appears.
+**Nothing has ever been run through the Intake pipeline end to end.** That is
+the only thing still blocking the feature. Everything else is built and tested.
 
-Expect a possible **429 / rate limit**. That is not a code failure — see below.
+1. Deploy `worker/intake-worker-v2-groq.js` to the Cloudflare worker
+   `jericho-ai-inbox`.
+2. Set on it: `GROQ_API_KEY` (secret), `AI_MODEL` = `openai/gpt-oss-120b`,
+   `INGEST_AUTH_KEY` (secret, any value — tell Rafael what it is). Leave
+   `MISTRAL_API_KEY` in place until Groq is confirmed working, then delete it.
+3. Call the worker directly with real text and show the raw reply.
+4. Then drive the live app: configure Intake with the worker address
+   (`https://jericho-ai-inbox.rafael-e.workers.dev`) and that password, paste
+   the same text, press Process, and report what the cards show.
+5. Say explicitly whether anything was invented.
+
+**Deployment is not proof.** The proof is text going in and correct cards
+coming out.
 
 ---
 
@@ -175,10 +204,32 @@ has been started.
   **Still undecided:** whether leads get a proper screen of their own instead.
 - **Manual add for broker quotes and comms log.** Today these can only be
   created by Intake; there is no button to record one by hand.
+- **Dictation language picker.** Rafael reports recognition quality is poor.
+  v19 changed the language from `en-US` to `en-GB` (`DICTATION_LANGUAGE`), so
+  that change is a suspect and is one word to revert. He works in English,
+  Spanish and French, so a picker in the Intake setup would let him choose per
+  session instead of waiting on a new version. The likelier win is extending
+  `DICTATION_DICTIONARY` with his actual mis-hearings — ask him for examples of
+  what he said versus what appeared.
 - **Look and feel.** Rafael wants a settings screen with colour sliders and a
   choice of three layouts. This is by far the largest item on the list and
   amounts to a redesign — show mock-ups and get sign-off before writing code.
   His stated preference remains bright blue / white / pastel.
+
+## Environment notes (this cost an hour — do not repeat it)
+
+- Network access for a cloud session is set on the **cloud environment**, not in
+  Settings. There is no settings page or URL for it: at claude.ai/code, click
+  the cloud icon showing the environment's name in the row **above the message
+  box**, hover the environment, click the gear. Levels are None / Trusted /
+  Full / Custom. **Trusted does not include Cloudflare or any AI provider.**
+- **Settings → Capabilities → Domain allowlist is a different feature** (the
+  chat analysis sandbox). Adding domains there does nothing for cloud sessions.
+- A session reads this **once, at startup**. Changing it never affects a running
+  session — a new session is required.
+- The Cloudflare MCP connector is **read-only for Workers**: it can list workers
+  and read their code, but cannot deploy or set variables. Those need network
+  access to `api.cloudflare.com` plus an API token.
 
 ## Open questions
 
