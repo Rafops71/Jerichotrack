@@ -51,11 +51,17 @@ module.exports = [
   { n: 30, group: 'Dictation',    text: 'It is obvious whether it is listening or not',
     manual: 'Tied to real recognition start/stop events.' },
 
-  { n: 31, group: 'AI Intake',    text: 'My Worker address and key are remembered' },
-  { n: 32, group: 'AI Intake',    text: 'I can paste messy text and press Process' },
-  { n: 33, group: 'AI Intake',    text: 'It comes back with cards I can read and edit' },
-  { n: 34, group: 'AI Intake',    text: 'NOTHING is saved to my database until I press Confirm' },
-  { n: 35, group: 'AI Intake',    text: 'When I press Confirm, the items really do appear' },
-  { n: 36, group: 'AI Intake',    text: 'If I close it without confirming, nothing was saved' },
-  { n: 37, group: 'AI Intake',    text: 'If it fails, it says why - and my original text is still there' }
+  { n: 31, group: 'Intake',       text: 'My Worker address and key are remembered' },
+  { n: 32, group: 'Intake',       text: 'I can paste messy text and press Process' },
+  { n: 33, group: 'Intake',       text: 'It comes back with cards I can read and edit' },
+  { n: 34, group: 'Intake',       text: 'NOTHING is saved to my database until I press Confirm' },
+  { n: 35, group: 'Intake',       text: 'When I press Confirm, the items really do appear' },
+  { n: 36, group: 'Intake',       text: 'If I close it without confirming, nothing was saved' },
+  { n: 37, group: 'Intake',       text: 'If it fails, it says why - and my original text is still there' },
+
+  { n: 38, group: 'Editing',      text: 'I can change a follow-up I already saved' },
+  { n: 39, group: 'Editing',      text: 'I can change a call I already saved' },
+  { n: 40, group: 'Editing',      text: 'I can cancel a call' },
+  { n: 41, group: 'Editing',      text: 'Deleting takes two taps, so a stray tap cannot lose anything' },
+  { n: 42, group: 'Editing',      text: 'I can move a deal to a different stage from my phone' }
 ];

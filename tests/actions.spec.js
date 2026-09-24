@@ -37,7 +37,10 @@ test('@robot Item19_action_can_be_deleted', async ({ page }) => {
   await verify.waitFor('jericho_tasks', d => d.title === title);
 
   await app.goToScreen(page, 'followups');
-  await page.locator('#fullFollowups button:has-text("Delete")').first().click();
+  const del = page.locator('#fullFollowups button.btn-del').first();
+  await del.click();                    // first tap only warns (see Item41)
+  await expect(del).toHaveText('Sure?');
+  await del.click();                    // second tap deletes
 
   const started = Date.now();
   let remaining = [];

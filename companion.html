@@ -1,4 +1,4 @@
-<!-- companion-v18.html -->
+<!-- companion-v19.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,8 +113,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .tag-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .tag-opt { background: white; border: 1.5px solid #ddd; color: #666; font-size: 12px; padding: 7px 12px; border-radius: 10px; }
 .tag-opt.selected { background: #1a2e4a; border-color: #1a2e4a; color: white; }
+/* v19: a delete button waiting for its second tap */
+.btn-del.confirming { background: #e74c3c; color: white; font-weight: 600; }
+.btn-edit { background: #eef1f6; color: #1a2e4a; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+/* v19: rows you can tap to open something */
+.upcoming-row, .pipe-row { cursor: pointer; }
+.stage-opt { display: block; width: 100%; text-align: left; background: white; border: 1.5px solid #ddd; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 14px; color: #1a2e4a; display: flex; align-items: center; gap: 10px; }
+.stage-opt.current { border-color: #1a2e4a; border-width: 2px; font-weight: 700; }
+.stage-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-/* AI Inbox review cards */
+/* Intake review cards */
 .review-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #1a2e4a; }
 .review-card.low-conf { border-left-color: #e8a020; }
 .rc-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #1a2e4a; margin-bottom: 8px; }
@@ -202,7 +210,7 @@ window.addEventListener('unhandledrejection', function (e) {
     </button>
     <button class="tile primary" onclick="openIngestSheet()">
       <span class="tile-icon">🤖</span>
-      <span class="tile-label">AI Inbox</span>
+      <span class="tile-label">Intake</span>
     </button>
   </div>
 
@@ -238,12 +246,24 @@ window.addEventListener('unhandledrejection', function (e) {
   <button onclick="showScreen('notes',this)"><span class="nav-icon">📝</span>Notes</button>
 </div>
 
+<!-- STAGE SHEET (v19: change a deal's stage from the phone) -->
+
+<div class="sheet-overlay" id="stageOverlay" onclick="closeStageSheet()"></div>
+<div class="sheet" id="stageSheet">
+  <div class="sheet-handle"></div>
+  <h3 id="stageSheetTitle">Move deal</h3>
+  <div id="stageOptions"></div>
+  <div class="sheet-actions">
+    <button class="btn-sheet-cancel" onclick="closeStageSheet()">Cancel</button>
+  </div>
+</div>
+
 <!-- ACTION SHEET (Add Action) -->
 
 <div class="sheet-overlay" id="actionOverlay" onclick="closeActionSheet()"></div>
 <div class="sheet" id="actionSheet">
   <div class="sheet-handle"></div>
-  <h3>Add Action</h3>
+  <h3 id="actionSheetTitle">Add Action</h3>
   <div class="field">
     <label>Type</label>
     <div class="tag-picker" id="actionTagPicker">
@@ -270,7 +290,7 @@ window.addEventListener('unhandledrejection', function (e) {
   </div>
   <div class="sheet-actions">
     <button class="btn-sheet-cancel" onclick="closeActionSheet()">Cancel</button>
-    <button class="btn-sheet-save" onclick="saveAction()">Save</button>
+    <button class="btn-sheet-save" id="actionSaveBtn" onclick="saveAction()">Save</button>
   </div>
 </div>
 
@@ -303,7 +323,7 @@ window.addEventListener('unhandledrejection', function (e) {
 <div class="sheet-overlay" id="meetingOverlay" onclick="closeMeetingSheet()"></div>
 <div class="sheet" id="meetingSheet">
   <div class="sheet-handle"></div>
-  <h3>New Call / Zoom</h3>
+  <h3 id="meetingSheetTitle">New Call / Zoom</h3>
   <div class="field">
     <label>Purpose</label>
     <div class="tag-picker" id="purposeTagPicker">
@@ -347,7 +367,8 @@ window.addEventListener('unhandledrejection', function (e) {
   </div>
   <div class="sheet-actions">
     <button class="btn-sheet-cancel" onclick="closeMeetingSheet()">Cancel</button>
-    <button class="btn-sheet-save" onclick="saveMeeting()">Save</button>
+    <button class="btn-del" id="meetingCancelCallBtn" onclick="cancelMeeting()" style="display:none;">Cancel call</button>
+    <button class="btn-sheet-save" id="meetingSaveBtn" onclick="saveMeeting()">Save</button>
   </div>
 </div>
 
@@ -367,15 +388,15 @@ window.addEventListener('unhandledrejection', function (e) {
   </div>
 </div>
 
-<!-- AI INBOX INPUT SHEET -->
+<!-- INTAKE INPUT SHEET -->
 
 <div class="sheet-overlay" id="ingestOverlay" onclick="closeIngestSheet()"></div>
 <div class="sheet" id="ingestSheet">
   <div class="sheet-handle"></div>
-  <h3>🤖 AI Inbox</h3>
+  <h3>🤖 Intake</h3>
   <div class="field" id="ingestSetupField" style="display:none;">
-    <div class="ingest-setup-note">One-time setup: paste your AI Inbox Worker URL and the auth key you set in Cloudflare. Both are remembered on this device — you won't need to do this again.</div>
-    <label>AI Inbox Worker URL</label>
+    <div class="ingest-setup-note">One-time setup: paste your Intake Worker URL and the auth key you set in Cloudflare. Both are remembered on this device — you won't need to do this again.</div>
+    <label>Intake Worker URL</label>
     <input id="ingestWorkerUrlInput" type="text" placeholder="https://your-ai-inbox-worker.workers.dev" autocomplete="off">
     <label style="margin-top:10px;">Auth Key (from Cloudflare INGEST_AUTH_KEY)</label>
     <input id="ingestAuthKeyInput" type="text" placeholder="Same value set in Cloudflare" autocomplete="off">
@@ -396,7 +417,7 @@ window.addEventListener('unhandledrejection', function (e) {
   </div>
 </div>
 
-<!-- AI INBOX REVIEW SHEET -->
+<!-- INTAKE REVIEW SHEET -->
 
 <div class="sheet-overlay" id="ingestReviewOverlay" onclick="closeIngestReviewSheet()"></div>
 <div class="sheet" id="ingestReviewSheet" style="max-height:92vh;">
@@ -758,7 +779,7 @@ function renderUpcoming(){
     const relLabel=relativeTimeLabel(m.date,m.time);
     const dateLabel=m.date===today?'Today':new Date(m.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const dayLabel=relLabel||dateLabel;
-    return `<div class="upcoming-row"><span class="upcoming-time">${escapeHtml(m.time)}</span><div class="upcoming-info"><div class="u-title">${escapeHtml(m.purpose||'Call')}</div><div class="u-sub">${escapeHtml(dayLabel)} · ${(m.attendees||[]).map(a=>escapeHtml(a.name)).join(', ')||'No attendees added'}</div></div></div>`;
+    return `<div class="upcoming-row" onclick="editMeeting('${m.id}')"><span class="upcoming-time">${escapeHtml(m.time)}</span><div class="upcoming-info"><div class="u-title">${escapeHtml(m.purpose||'Call')}</div><div class="u-sub">${escapeHtml(dayLabel)} · ${(m.attendees||[]).map(a=>escapeHtml(a.name)).join(', ')||'No attendees added'}</div></div></div>`;
   }).join('');
 }
 
@@ -770,7 +791,7 @@ function taskCardHTML(t){
   if(t.due&&t.due<today)cls='overdue';
   else if(t.due===today)cls='today';
   const dueLabel=t.due?(t.due<today?'Overdue — was due '+t.due:t.due===today?'Due today':'Due '+t.due):'No date set';
-  return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${escapeHtml(t.category||t.actionType||'Follow-up')}</span></div><div class="item-title">${escapeHtml(t.title)}</div>${t.notes?`<div class="item-note">${escapeHtml(t.notes)}</div>`:''}<div class="item-due">${escapeHtml(dueLabel)}</div><div class="item-actions"><button class="btn-done" onclick="completeAction(${t.id})">✓ Done</button><button class="btn-del" onclick="deleteAction(${t.id})">Delete</button></div></div>`;
+  return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${escapeHtml(t.category||t.actionType||'Follow-up')}</span></div><div class="item-title">${escapeHtml(t.title)}</div>${t.notes?`<div class="item-note">${escapeHtml(t.notes)}</div>`:''}<div class="item-due">${escapeHtml(dueLabel)}</div><div class="item-actions"><button class="btn-done" onclick="completeAction('${t.id}')">✓ Done</button><button class="btn-edit" onclick="editAction('${t.id}')">Edit</button><button class="btn-del" onclick="deleteAction('${t.id}',this)">Delete</button></div></div>`;
 }
 function renderFollowups(){
   const activeCompanionTasks=tasks.filter(t=>!t.completed&&t.fromCompanion);
@@ -780,23 +801,96 @@ function renderFollowups(){
   const fullEl=document.getElementById('fullFollowups');
   fullEl.innerHTML=activeCompanionTasks.length?activeCompanionTasks.map(taskCardHTML).join(''):'<div class="empty-note">Nothing here yet.</div>';
 }
+/* ============================================================
+   v19: deleting takes two taps.
+   First tap turns the button red and says "Sure?". Second tap deletes.
+   Walk away and it resets itself, so a pocket tap cannot delete anything.
+   ============================================================ */
+let pendingDelete=null;
+let pendingDeleteTimer=null;
+function armDelete(key,btn){
+  if(pendingDelete===key)return true;          // second tap - go ahead
+  if(pendingDeleteTimer)clearTimeout(pendingDeleteTimer);
+  resetPendingDelete();
+  pendingDelete=key;
+  btn.dataset.originalLabel=btn.textContent;
+  btn.textContent='Sure?';
+  btn.classList.add('confirming');
+  pendingDeleteTimer=setTimeout(resetPendingDelete,5000);
+  return false;                                 // first tap - just a warning
+}
+function resetPendingDelete(){
+  pendingDelete=null;
+  if(pendingDeleteTimer){clearTimeout(pendingDeleteTimer);pendingDeleteTimer=null;}
+  document.querySelectorAll('.btn-del.confirming').forEach(b=>{
+    if(b.dataset.originalLabel)b.textContent=b.dataset.originalLabel;
+    b.classList.remove('confirming');
+  });
+}
+
 function completeAction(id){
-  const t=tasks.find(x=>x.id===id);
+  // Ids arrive as text from the button. Records created before v19, and any
+  // added by hand, hold numbers - so compare as text either way.
+  const t=tasks.find(x=>String(x.id)===String(id));
   if(t){t.completed=true;t.completedDate=new Date().toLocaleDateString('en-GB');persistLocal('tasks',tasks);saveToCloud('tasks',t);renderAll();toast('Marked done ✓');}
 }
-function deleteAction(id){
-  tasks=tasks.filter(x=>x.id!==id);persistLocal('tasks',tasks);deleteFromCloud('tasks',id);renderAll();toast('Deleted','error');
+function deleteAction(id,btn){
+  if(btn&&!armDelete('task:'+id,btn))return;
+  resetPendingDelete();
+  tasks=tasks.filter(x=>String(x.id)!==String(id));persistLocal('tasks',tasks);deleteFromCloud('tasks',id);renderAll();toast('Deleted','error');
 }
 
 // ============================================================
 // RENDER: Pipeline quick view
 // ============================================================
 const stageColors={'New':'#3498db','Waiting Documents':'#e8a020','Waiting Financials':'#e8a020','Negotiation':'#9b59b6','Final SPA':'#2ecc71','Closed Won':'#27ae60','Closed Not Monetized':'#999','Lost':'#e74c3c'};
+/* ============================================================
+   v19: move a deal along from the phone.
+   Only the stage can be changed here - adding deals and editing prices stays
+   on the desktop, where there is a keyboard. On the phone the one thing worth
+   doing in the moment is "that just moved to Negotiation".
+   ============================================================ */
+let stagingDealId=null;
+
+function openStageSheet(dealId){
+  const deal=pipeline.find(d=>String(d.id)===String(dealId));
+  if(!deal){toast('That deal no longer exists','error');return;}
+  stagingDealId=deal.id;
+  document.getElementById('stageSheetTitle').textContent=
+    (deal.commodity||'Deal')+(deal.buyer?' — '+deal.buyer:'');
+  document.getElementById('stageOptions').innerHTML=ALLOWED_STAGES_CLIENT.map(st=>
+    `<button type="button" class="stage-opt ${st===deal.stage?'current':''}" onclick="setDealStage('${st}')">`+
+    `<span class="stage-dot" style="background:${stageColors[st]||'#999'}"></span>`+
+    `<span>${escapeHtml(st)}</span>`+
+    `${st===deal.stage?'<span style="margin-left:auto;font-size:12px;color:#888;">now</span>':''}`+
+    `</button>`).join('');
+  document.getElementById('stageOverlay').classList.add('show');
+  document.getElementById('stageSheet').classList.add('show');
+}
+
+function closeStageSheet(){
+  stagingDealId=null;
+  document.getElementById('stageOverlay').classList.remove('show');
+  document.getElementById('stageSheet').classList.remove('show');
+}
+
+function setDealStage(stage){
+  if(stagingDealId===null)return;
+  if(!ALLOWED_STAGES_CLIENT.includes(stage)){toast('Unknown stage','error');return;}
+  const deal=pipeline.find(d=>String(d.id)===String(stagingDealId));
+  if(!deal){toast('That deal no longer exists','error');closeStageSheet();return;}
+  if(deal.stage===stage){closeStageSheet();return;}
+  deal.stage=stage;
+  deal.stageChangedAt=new Date().toISOString();
+  persistLocal('pipeline',pipeline);saveToCloud('pipeline',deal);
+  closeStageSheet();renderAll();toast('Moved to '+stage+' ✓');
+}
+
 function renderPipelineQuick(){
   const el=document.getElementById('pipelineQuickList');
   const active=pipeline.filter(d=>d.stage!=='Closed Won'&&d.stage!=='Lost'&&d.stage!=='Closed Not Monetized');
   if(!active.length){el.innerHTML='<div class="empty-note">No active deals.</div>';return;}
-  el.innerHTML=active.map(d=>`<div class="pipe-row"><span class="pipe-dot" style="background:${stageColors[d.stage]||'#999'}"></span><div class="pipe-info"><div class="pipe-title">${escapeHtml(d.commodity)}${d.buyer?' — '+escapeHtml(d.buyer):''}</div><div class="pipe-stage">${escapeHtml(d.stage)}</div></div></div>`).join('');
+  el.innerHTML=active.map(d=>`<div class="pipe-row" onclick="openStageSheet('${d.id}')"><span class="pipe-dot" style="background:${stageColors[d.stage]||'#999'}"></span><div class="pipe-info"><div class="pipe-title">${escapeHtml(d.commodity)}${d.buyer?' — '+escapeHtml(d.buyer):''}</div><div class="pipe-stage">${escapeHtml(d.stage)}</div></div></div>`).join('');
 }
 
 // ============================================================
@@ -806,9 +900,13 @@ function renderNotes(){
   const el=document.getElementById('notesList');
   const sorted=[...notes].sort((a,b)=>b.id-a.id);
   if(!sorted.length){el.innerHTML='<div class="empty-note">No notes yet.</div>';return;}
-  el.innerHTML=sorted.map(n=>`<div class="item-card"><div class="item-note" style="margin-top:0;">${escapeHtml(n.text)}</div><div class="item-due">${escapeHtml(n.dateLabel||'')}</div><div class="item-actions"><button class="btn-del" onclick="deleteNote(${n.id})">Delete</button></div></div>`).join('');
+  el.innerHTML=sorted.map(n=>`<div class="item-card"><div class="item-note" style="margin-top:0;">${escapeHtml(n.text)}</div><div class="item-due">${escapeHtml(n.dateLabel||'')}</div><div class="item-actions"><button class="btn-del" onclick="deleteNote('${n.id}',this)">Delete</button></div></div>`).join('');
 }
-function deleteNote(id){notes=notes.filter(n=>n.id!==id);persistLocal('notes',notes);deleteFromCloud('notes',id);renderAll();toast('Note deleted','error');}
+function deleteNote(id,btn){
+  if(btn&&!armDelete('note:'+id,btn))return;
+  resetPendingDelete();
+  notes=notes.filter(n=>String(n.id)!==String(id));persistLocal('notes',notes);deleteFromCloud('notes',id);renderAll();toast('Note deleted','error');
+}
 
 function renderAll(){
   renderUpcoming();
@@ -827,11 +925,49 @@ document.getElementById('actionTagPicker').addEventListener('click',e=>{
   opt.classList.add('selected');selectedActionTag=opt.dataset.tag;
   document.getElementById('actionTagCustom').style.display=selectedActionTag==='Custom'?'block':'none';
 });
-function openActionSheet(){
+/* v19: the same sheet is used for adding and for editing. Passing a task in
+   fills the fields and makes Save update that task instead of creating one. */
+let editingActionId=null;
+
+function setActionTag(tag){
+  const picker=document.getElementById('actionTagPicker');
+  const opts=[...picker.querySelectorAll('.tag-opt')];
+  const match=opts.find(o=>o.dataset.tag===tag);
+  opts.forEach(o=>o.classList.remove('selected'));
+  if(match){
+    match.classList.add('selected');
+    selectedActionTag=tag;
+    document.getElementById('actionTagCustom').style.display='none';
+    document.getElementById('actionTagCustom').value='';
+  }else{
+    // A tag the pickers do not offer (e.g. one the AI produced) - keep it as Custom.
+    const custom=opts.find(o=>o.dataset.tag==='Custom');
+    if(custom)custom.classList.add('selected');
+    selectedActionTag='Custom';
+    document.getElementById('actionTagCustom').style.display='block';
+    document.getElementById('actionTagCustom').value=tag||'';
+  }
+}
+
+function openActionSheet(task){
+  editingActionId=task?task.id:null;
+  document.getElementById('actionTitle').value=task?(task.title||''):'';
+  document.getElementById('actionNote').value=task?(task.notes||''):'';
+  document.getElementById('actionDate').value=task?(task.due||''):'';
+  setActionTag(task?(task.category||'Follow-up'):'Follow-up');
+  document.getElementById('actionSheetTitle').textContent=task?'Edit Action':'Add Action';
+  document.getElementById('actionSaveBtn').textContent=task?'Update':'Save';
   document.getElementById('actionOverlay').classList.add('show');
   document.getElementById('actionSheet').classList.add('show');
 }
+
+function editAction(id){
+  const t=tasks.find(x=>String(x.id)===String(id));
+  if(!t){toast('That action no longer exists','error');return;}
+  openActionSheet(t);
+}
 function closeActionSheet(){
+  editingActionId=null;
   document.getElementById('actionOverlay').classList.remove('show');
   document.getElementById('actionSheet').classList.remove('show');
 }
@@ -839,7 +975,24 @@ function saveAction(){
   const title=document.getElementById('actionTitle').value.trim();
   if(!title){toast('Please enter a title','error');return;}
   const category=selectedActionTag==='Custom'?(document.getElementById('actionTagCustom').value.trim()||'Custom'):selectedActionTag;
-  const item={id:Date.now(),title,category,notes:document.getElementById('actionNote').value.trim(),due:document.getElementById('actionDate').value||'',completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const noteText=document.getElementById('actionNote').value.trim();
+  const due=document.getElementById('actionDate').value||'';
+
+  if(editingActionId!==null){
+    const existing=tasks.find(x=>String(x.id)===String(editingActionId));
+    if(!existing){toast('That action no longer exists','error');editingActionId=null;return;}
+    Object.assign(existing,{title,category,notes:noteText,due});
+    persistLocal('tasks',tasks);saveToCloud('tasks',existing);
+    editingActionId=null;
+    document.getElementById('actionTitle').value='';
+    document.getElementById('actionNote').value='';
+    document.getElementById('actionDate').value='';
+    document.getElementById('actionTagCustom').value='';
+    closeActionSheet();renderAll();toast('Action updated ✓');
+    return;
+  }
+
+  const item={id:makeId(),title,category,notes:noteText,due,completed:false,assigned:'',linked:'',priority:'Medium',fromCompanion:true,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   tasks.push(item);persistLocal('tasks',tasks);saveToCloud('tasks',item);
   document.getElementById('actionTitle').value='';
   document.getElementById('actionNote').value='';
@@ -877,7 +1030,7 @@ function saveQuickLead(){
     return;
   }
   quickLeadDupeArmed='';
-  const item={id:Date.now(),name,company:document.getElementById('qlCompany').value.trim(),type:'',country:'',phone:'',email:'',introBy:'',status:'New',followup:'',commodity:'',notes:document.getElementById('qlNote').value.trim(),createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const item={id:makeId(),name,company:document.getElementById('qlCompany').value.trim(),type:'',country:'',phone:'',email:'',introBy:'',status:'New',followup:'',commodity:'',notes:document.getElementById('qlNote').value.trim(),createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   leads.push(item);persistLocal('leads',leads);saveToCloud('leads',item);
   document.getElementById('qlName').value='';document.getElementById('qlCompany').value='';document.getElementById('qlNote').value='';
   closeLeadSheet();renderAll();toast('Lead saved ✓');
@@ -895,7 +1048,7 @@ function closeNoteSheet(){
 function saveNote(){
   const text=document.getElementById('noteText').value.trim();
   if(!text){toast('Please type a note','error');return;}
-  const item={id:Date.now(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString()};
+  const item={id:makeId(),text,dateLabel:new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),createdAt:new Date().toISOString()};
   notes.push(item);persistLocal('notes',notes);saveToCloud('notes',item);
   document.getElementById('noteText').value='';
   closeNoteSheet();renderAll();toast('Note saved ✓');
@@ -1028,12 +1181,70 @@ function updateCalcPreview(){
 }
 ['meetingDate','meetingTime'].forEach(id=>document.getElementById(id).addEventListener('input',updateCalcPreview));
 
-function openMeetingSheet(){
-  document.getElementById('meetingDate').value=today;
+/* v19: the meeting sheet now also edits an existing call. */
+let editingMeetingId=null;
+
+function setPurpose(tag){
+  const picker=document.getElementById('purposeTagPicker');
+  const opts=[...picker.querySelectorAll('.tag-opt')];
+  const match=opts.find(o=>o.dataset.tag===tag);
+  opts.forEach(o=>o.classList.remove('selected'));
+  if(match){
+    match.classList.add('selected');selectedPurpose=tag;
+    document.getElementById('meetingPurposeCustom').style.display='none';
+    document.getElementById('meetingPurposeCustom').value='';
+  }else{
+    const custom=opts.find(o=>o.dataset.tag==='Custom');
+    if(custom)custom.classList.add('selected');
+    selectedPurpose='Custom';
+    document.getElementById('meetingPurposeCustom').style.display='block';
+    document.getElementById('meetingPurposeCustom').value=tag||'';
+  }
+}
+
+function openMeetingSheet(meeting){
+  editingMeetingId=meeting?meeting.id:null;
+  if(meeting){
+    document.getElementById('meetingDate').value=meeting.date||today;
+    document.getElementById('meetingTime').value=meeting.time||'';
+    myLocation=meeting.myTz?{city:meeting.myCity,country:meeting.myCountry,tz:meeting.myTz}:null;
+    attendeeLocations=(meeting.attendees||[]).map(a=>({name:a.name,city:a.city,country:a.country,tz:a.tz}));
+    setPurpose(meeting.purpose||'Follow-up');
+  }else{
+    document.getElementById('meetingDate').value=today;
+    document.getElementById('meetingTime').value='';
+    myLocation=null;attendeeLocations=[];
+    setPurpose('Follow-up');
+  }
+  renderMyLocChip();renderAttendeeChips();updateCalcPreview();
+  document.getElementById('meetingSheetTitle').textContent=meeting?'Edit Call':'New Call / Zoom';
+  document.getElementById('meetingSaveBtn').textContent=meeting?'Update':'Save';
+  document.getElementById('meetingCancelCallBtn').style.display=meeting?'block':'none';
   document.getElementById('meetingOverlay').classList.add('show');
   document.getElementById('meetingSheet').classList.add('show');
 }
+
+function editMeeting(id){
+  const m=meetings.find(x=>String(x.id)===String(id));
+  if(!m){toast('That call no longer exists','error');return;}
+  openMeetingSheet(m);
+}
+
+/* Cancelling a call also takes two taps. */
+function cancelMeeting(){
+  const id=editingMeetingId;
+  if(id===null)return;
+  const btn=document.getElementById('meetingCancelCallBtn');
+  if(!armDelete('meeting:'+id,btn))return;
+  resetPendingDelete();
+  meetings=meetings.filter(x=>String(x.id)!==String(id));
+  persistLocal('meetings',meetings);deleteFromCloud('meetings',id);
+  editingMeetingId=null;
+  closeMeetingSheet();renderAll();toast('Call cancelled','error');
+}
 function closeMeetingSheet(){
+  editingMeetingId=null;
+  resetPendingDelete();
   document.getElementById('meetingOverlay').classList.remove('show');
   document.getElementById('meetingSheet').classList.remove('show');
 }
@@ -1044,7 +1255,20 @@ function saveMeeting(){
   if(!myLocation){toast('Please set your location','error');return;}
   const purpose=selectedPurpose==='Custom'?(document.getElementById('meetingPurposeCustom').value.trim()||'Meeting'):selectedPurpose;
   const attendeesWithTimes=attendeeLocations.map(a=>({name:a.name,city:a.city,country:a.country,tz:a.tz,localTime:convertTime(date,time,myLocation.tz,a.tz)}));
-  const item={id:Date.now(),date,time,purpose,myCity:myLocation.city,myCountry:myLocation.country,myTz:myLocation.tz,attendees:attendeesWithTimes,createdAt:new Date().toISOString()};
+  if(editingMeetingId!==null){
+    const existing=meetings.find(x=>String(x.id)===String(editingMeetingId));
+    if(!existing){toast('That call no longer exists','error');editingMeetingId=null;return;}
+    Object.assign(existing,{date,time,purpose,myCity:myLocation.city,myCountry:myLocation.country,myTz:myLocation.tz,attendees:attendeesWithTimes});
+    persistLocal('meetings',meetings);saveToCloud('meetings',existing);
+    editingMeetingId=null;
+    myLocation=null;attendeeLocations=[];
+    renderMyLocChip();renderAttendeeChips();
+    document.getElementById('meetingTime').value='';
+    closeMeetingSheet();renderAll();toast('Call updated ✓');
+    return;
+  }
+
+  const item={id:makeId(),date,time,purpose,myCity:myLocation.city,myCountry:myLocation.country,myTz:myLocation.tz,attendees:attendeesWithTimes,createdAt:new Date().toISOString()};
   meetings.push(item);persistLocal('meetings',meetings);saveToCloud('meetings',item);
   // Reset
   myLocation=null;attendeeLocations=[];
@@ -1081,7 +1305,7 @@ document.addEventListener('click',e=>{
 });
 
 // ============================================================
-// AI INBOX
+// INTAKE
 // ============================================================
 let INGEST_WORKER_URL=localStorage.getItem('jericho_ingest_worker_url')||'';
 let INGEST_AUTH_KEY=localStorage.getItem('jericho_ingest_auth_key')||'';
@@ -1518,6 +1742,13 @@ const DICT_SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 // If recognition gets worse, change this one value back to 'en-US'.
 const DICTATION_LANGUAGE = 'en-GB';
 
+// v19: how long to wait, after dictation stops, for the recogniser to deliver
+// the last thing you said. Was 1200ms. On a slow phone the final chunk can
+// still be in flight at that point, and finishing early is what loses it. In
+// the normal case the recogniser's own 'end' event finishes immediately, so a
+// longer net costs nothing and only helps when things are slow.
+const DICT_STOP_GRACE_MS = 3500;
+
 const DICTATION_DICTIONARY = [
   { find: /\bessay(s?)\b/gi, replace: 'assay$1' },
   { find: /\bindicative bit\b/gi, replace: 'indicative bid' },
@@ -1589,7 +1820,7 @@ document.addEventListener('visibilitychange',()=>{
     dictStopping=true;
     clearTimeout(dictMaxTimer);
     if(dictRec){try{dictRec.stop();}catch(e){}}else{finishDictation();}
-    setTimeout(()=>{if(!dictFinishCalled)finishDictation();},1200);
+    setTimeout(()=>{if(!dictFinishCalled)finishDictation();},DICT_STOP_GRACE_MS);
   }
 });
 
@@ -1728,7 +1959,7 @@ function stopDictation(silent){
   }else{
     finishDictation();
   }
-  setTimeout(()=>{if(!dictFinishCalled)finishDictation();},1200);
+  setTimeout(()=>{if(!dictFinishCalled)finishDictation();},DICT_STOP_GRACE_MS);
 }
 
 function finishDictation(){

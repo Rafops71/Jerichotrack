@@ -19,7 +19,10 @@ test('@robot Item22_note_can_be_deleted', async ({ page }) => {
   await verify.waitFor('jericho_companion_notes', d => d.text === text);
 
   await app.goToScreen(page, 'notes');
-  await page.locator('#notesList button:has-text("Delete")').first().click();
+  const del = page.locator('#notesList button.btn-del').first();
+  await del.click();                    // first tap only warns (see Item41)
+  await expect(del).toHaveText('Sure?');
+  await del.click();                    // second tap deletes
 
   const started = Date.now();
   let remaining = [];

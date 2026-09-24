@@ -133,3 +133,34 @@ test('@robot Item37_failures_are_explained_and_my_text_is_kept', async ({ page }
     await verify.stayedEmpty('jericho_leads', 500);
   }
 });
+
+/*
+ * Regression test for a bug the checklist caught.
+ *
+ * Item 18 was only ever tested with an action added by hand. Actions added by
+ * hand get a numeric id; actions added by AI Intake get a UUID. The card's
+ * buttons write the id straight into the HTML without quotes, so a UUID
+ * produces onclick="completeAction(3f2504e0-4f89-...)" - which is not valid
+ * JavaScript, and the button silently does nothing.
+ *
+ * Nobody ever hit this because AI Intake had never successfully run.
+ */
+test('@robot Item18_action_can_be_ticked_off_even_when_added_by_ai', async ({ page }) => {
+  await app.openApp(page);
+  await configure(page, 'ok');
+  await process(page, NOTES);
+  await expect(page.locator('#ingestReviewList .review-card').first()).toBeVisible({ timeout: 15000 });
+  await app.tap(page, 'confirmAndSaveIngest()');
+
+  const task = await verify.waitFor('jericho_tasks', d => /copper quote/i.test(d.title || ''),
+    { label: 'the AI-created task', timeoutMs: 15000 });
+  expect(task.completed).toBe(false);
+
+  await app.goToScreen(page, 'followups');
+  await page.locator('#fullFollowups button:has-text("Done")').first().click();
+
+  const done = await verify.waitFor('jericho_tasks',
+    d => d._id === task._id && d.completed === true,
+    { label: 'the AI-created task marked done', timeoutMs: 10000 });
+  expect(done.completed).toBe(true);
+});
