@@ -1,0 +1,49 @@
+name: Robot user
+
+# The gate: if any function on the approved checklist has no passing test,
+# this job fails. Nothing is published from a failed run.
+on:
+  push:
+    branches: [ main, 'claude/**' ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  robot:
+    name: Checklist gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # The local sandbox database runs on Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install
+        run: npm ci
+
+      - name: Install the browser the robot drives
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the robot user
+        env:
+          ROBOT_CHROME: ''     # let Playwright use the browser it just installed
+        run: node scripts/run-robot.js
+
+      - name: Keep the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: |
+            .robot/results.json
+            test-results/
+          retention-days: 14
