@@ -78,7 +78,7 @@ That Confirm gate is non-negotiable and is covered by a test.
   version check: if a device still shows "AI Inbox", it is serving a cached
   pre-v19 copy.
 
-**`worker/intake-worker-v2-groq.js`** — the deployable Intake worker
+**`worker/intake-worker-v3-groq.js`** — the deployable Intake worker
 - Rafael's own worker with **Groq** in place of Mistral. The extraction prompt,
   `verifySnippet`, `verifyContactFields`, `validateStage` and the stage
   whitelist are all untouched — those are the parts worth keeping.
@@ -90,7 +90,7 @@ That Confirm gate is non-negotiable and is covered by a test.
   from anyone who knew the address. v2 refuses to run without one.
 - Rate limits, retired models and a bad provider key now return readable
   messages instead of a bare status code.
-- `worker/tests/test-intake-worker-v2.mjs` exercises the real worker code with
+- `worker/tests/test-intake-worker-v3.mjs` exercises the real worker code with
   the provider stood in: **24 checks, all passing**, including that an invented
   email and an unverifiable quote are discarded, that a CIF destination is
   cleared from the origin field, that a genuine FOB origin is kept, and that
@@ -174,7 +174,7 @@ gate. The whole design rests on a human reading the cards.
 
 ## THE NEXT STEP
 
-**Done — 26 September 2026.** `worker/intake-worker-v2-groq.js` is deployed and
+**Done — 26 September 2026.** `worker/intake-worker-v3-groq.js` is deployed and
 verified by reading the code back out of Cloudflare, not by trusting the upload:
 `fillMissingDue`, `verifyOrigin`, `Europe/Brussels` and the `TODAY IS` line are
 all present in the live script. The three bindings survived the deploy
@@ -276,6 +276,39 @@ files.
 - Preferred look: bright blue / white / pastel — confirm before big UI changes.
 
 ---
+
+## The trade vocabulary (worker v3, 26 September 2026)
+
+Speech recognition mangles exactly the words this business runs on, and the app
+cannot influence that - Apple and Google hand over finished text, and the web
+standard's slot for supplying a vocabulary is ignored by browsers. So the
+context lives in the worker instead.
+
+The prompt now carries the commodities, forms, Incoterms, trade language and
+origins Rafael actually uses, with permission to read an obvious mishearing as
+the intended term when the sentence plainly supports it.
+
+**The hard case, and the reason a first attempt failed:** speech recognition
+usually substitutes an ORDINARY ENGLISH WORD, so the result does not look wrong.
+A first deploy corrected "manga knees" to manganese but left "essay" and
+"anti money ingots" untouched, because both read as normal English. Naming that
+pattern explicitly in the prompt fixed both.
+
+**The guard that had to come with it:** "anti-money laundering" and "AML" are
+real terms in this business. Without an explicit exception, the antimony rule
+would corrupt compliance notes. Verified live: a sentence about AML checks came
+back untouched, with no antimony anywhere in it.
+
+Live results after the second deploy, on one dictated sentence:
+"manga knees ore" -> manganese ore, "essay" -> assay, "anti money ingots" ->
+antimony ingots, applied consistently across every field. The sourceSnippet on
+each item still held the original mangled words, so the user can always see
+what was really said.
+
+The unit tests assert the vocabulary, the worked examples and the AML guard are
+all present in the prompt the worker actually sends - a careless edit cannot
+drop them silently. Whether the model reads a given mishearing correctly is its
+own behaviour and is checked by live runs, not by those tests.
 
 ## Agreed and queued, not built
 

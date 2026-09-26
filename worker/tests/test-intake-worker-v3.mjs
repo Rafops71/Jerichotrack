@@ -1,5 +1,5 @@
 /* Exercises the real v2 worker code, with Groq itself stood in for. */
-const mod = await import('../intake-worker-v2-groq.js');
+const mod = await import('../intake-worker-v3-groq.js');
 const worker = mod.default;
 
 const env = { GROQ_API_KEY:'gsk_test', AI_MODEL:'openai/gpt-oss-120b', INGEST_AUTH_KEY:'pw123' };
@@ -195,6 +195,36 @@ let n7 = await runNet('Chase Diego soon, whenever he gets back.', t('Chase Diego
 chk4('stays blank when there is no date at all', n7.data.tasks[0].due===null, String(n7.data.tasks[0].due));
 console.log(`  ${p4} passed, ${f4} failed`);
 
+/* ---- the trade vocabulary must actually reach the model ----
+   Whether the model READS a mangled word correctly is its own behaviour and is
+   checked by live runs, not here. What is checked here is that the vocabulary,
+   the worked examples and the false-positive guard are all in the prompt the
+   worker sends - so a careless edit cannot silently drop them. */
+console.log('\nTRADE VOCABULARY IN THE PROMPT\n');
+let promptSent = null;
+globalThis.fetch = async (u, o) => {
+  promptSent = JSON.parse(o.body).messages[0].content;
+  return new Response(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content:
+    JSON.stringify({leads:[],tasks:[],commslog:[],broker_quotes:[],pipeline:[],notes:[]}) } }] }), { status: 200 });
+};
+await call({'Content-Type':'application/json','X-API-Key':'pw123'},{text:'anything'});
+
+let p5 = 0, f5 = 0;
+const chk5 = (n, c, d='') => { if (c) { p5++; console.log('  PASS', n); } else { f5++; console.log('  FAIL', n, d); } };
+const inPrompt = t => promptSent.toLowerCase().includes(t.toLowerCase());
+
+for (const term of ['manganese','antimony','cathode','billet','quotational period','off-taker','bill of lading'])
+  chk5(`vocabulary carries "${term}"`, inPrompt(term));
+for (const code of ['EXW','FCA','CPT','CIP','DAP','DPU','DDP','FOB','CFR','CIF'])
+  chk5(`Incoterm ${code} listed`, promptSent.includes(code));
+chk5('names the hard case: an ordinary word in the wrong place', inPrompt('ORDINARY ENGLISH WORD'));
+chk5('gives the copper kettles example', inPrompt('copper kettles'));
+chk5('gives the anti money ingots example', inPrompt('anti money ingots'));
+chk5('guards anti-money laundering from being "fixed"', inPrompt('anti-money laundering'));
+chk5('still demands a verbatim quote', inPrompt('verbatim'));
+chk5('still forbids adding a fact', inPrompt('adding a fact is not'));
+console.log(`  ${p5} passed, ${f5} failed`);
+
 globalThis.fetch = realFetch;
-console.log(`\n  TOTAL: ${pass+p2+p3+p4} passed, ${fail+f2+f3+f4} failed\n`);
-process.exit((fail+f2+f3+f4)?1:0);
+console.log(`\n  TOTAL: ${pass+p2+p3+p4+p5} passed, ${fail+f2+f3+f4+f5} failed\n`);
+process.exit((fail+f2+f3+f4+f5)?1:0);
