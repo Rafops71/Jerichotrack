@@ -44,8 +44,7 @@ module.exports = [
     manual: 'Needs a real microphone and Apple/Google speech recognition. The browser the robot drives has neither.' },
   { n: 27, group: 'Dictation',    text: 'What I say turns into text in the right box',
     manual: 'Requires real speech recognition; cannot be simulated honestly.' },
-  { n: 28, group: 'Dictation',    text: 'Words it reliably mishears get corrected automatically',
-    manual: 'Depends on real recognition output. The correction list itself could be unit-tested later.' },
+  { n: 28, group: 'Dictation',    text: 'Words it reliably mishears get corrected automatically' },
   { n: 29, group: 'Dictation',    text: 'The last thing I said is not lost when I tap stop',
     manual: 'KNOWN BUG, reported by you. Needs a real device to reproduce and confirm a fix.' },
   { n: 30, group: 'Dictation',    text: 'It is obvious whether it is listening or not',
@@ -71,5 +70,7 @@ module.exports = [
   { n: 46, group: 'Appearance',   text: 'A pale colour still leaves the header text readable' },
 
   { n: 47, group: 'Version',      text: 'The version number is always shown in the banner' },
-  { n: 48, group: 'Version',      text: 'The number shown matches the actual version of the file' }
+  { n: 48, group: 'Version',      text: 'The number shown matches the actual version of the file' },
+
+  { n: 49, group: 'Dictation',    text: 'I can add my own corrections for words it keeps getting wrong' }
 ];

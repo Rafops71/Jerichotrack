@@ -1,4 +1,4 @@
-<!-- companion-v21.html -->
+<!-- companion-v22.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,6 +43,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
                padding: 11px 13px; font: inherit; color: inherit; cursor: pointer; }
 .look-layout.on { border-color: var(--c-primary); border-width: 2px; }
 .look-layout b { display: block; font-size: 13px; }
+.small-add { background: var(--c-primary); color: var(--c-on-primary); border: none; border-radius: 9px;
+             padding: 0 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.dict-row { display: flex; align-items: center; gap: 8px; background: white; border-radius: 9px;
+            padding: 8px 10px; margin-bottom: 6px; font-size: 13px; }
+.dict-row .arrow { color: #bbb; }
+.dict-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.dict-row button { background: #f0f0f0; color: #999; border: none; border-radius: 7px; padding: 4px 9px;
+                   font-size: 12px; cursor: pointer; }
 .look-layout em { display: block; font-style: normal; font-size: 12px; color: #888; margin-top: 2px; }
 .sync-pill { font-size: 10px; padding: 3px 9px; border-radius: 10px; display: inline-block; margin-top: 8px; }
 .sync-pill.online { background: rgba(39,174,96,0.25); color: #8ee0ab; }
@@ -306,7 +314,8 @@ window.addEventListener('unhandledrejection', function (e) {
 <div class="sheet-overlay" id="lookOverlay" onclick="closeLookSheet()"></div>
 <div class="sheet" id="lookSheet">
   <div class="sheet-handle"></div>
-  <h3>Appearance</h3>
+  <h3>Settings</h3>
+  <div class="sec-h" style="margin-top:0;">Appearance</div>
   <div class="field">
     <label>Start from</label>
     <div class="look-swatches" id="lookPresets"></div>
@@ -339,8 +348,21 @@ window.addEventListener('unhandledrejection', function (e) {
       <button type="button" class="look-layout" data-l="wide"><b>Wide</b><em>Two columns where the screen allows it.</em></button>
     </div>
   </div>
+  <div class="sec-h">Dictation words</div>
+  <div class="field">
+    <div style="font-size:12px;color:#888;margin-bottom:8px;">
+      Words dictation keeps getting wrong. Type what it <em>writes</em>, then what it
+      <em>should</em> say. Yours are applied after the built-in list, so they win.
+    </div>
+    <div id="dictWordList"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <input id="dictHeard" type="text" placeholder="it writes..." style="flex:1;min-width:0;">
+      <input id="dictMeant" type="text" placeholder="should be..." style="flex:1;min-width:0;">
+      <button type="button" class="small-add" onclick="addDictWord()">Add</button>
+    </div>
+  </div>
   <div class="sheet-actions">
-    <button class="btn-sheet-cancel" onclick="resetLook()">Reset</button>
+    <button class="btn-sheet-cancel" onclick="resetLook()">Reset colours</button>
     <button class="btn-sheet-save" onclick="closeLookSheet()">Done</button>
   </div>
 </div>
@@ -757,7 +779,7 @@ function convertTime(dateStr,timeStr,fromTz,toTz){
    checkVersionLabel() compares it with the comment at the top of this file, so
    a bump in one place and not the other is caught immediately rather than
    leaving a wrong number on screen. */
-const APP_VERSION='v21';
+const APP_VERSION='v22';
 
 function showVersion(){
   const el=document.getElementById('appVersion');
@@ -837,8 +859,44 @@ function renderLookControls(){
   });
 }
 
+function renderDictWords(){
+  const el=document.getElementById('dictWordList');
+  if(!el)return;
+  if(!customDictionary.length){
+    el.innerHTML='<div class="empty-note" style="padding:2px 0;">None yet.</div>';
+    return;
+  }
+  el.innerHTML=customDictionary.map((e,i)=>
+    `<div class="dict-row"><span class="grow">${escapeHtml(e.find)}</span>`+
+    `<span class="arrow">→</span><span class="grow">${escapeHtml(e.replace)}</span>`+
+    `<button type="button" onclick="removeDictWord(${i})">Remove</button></div>`).join('');
+}
+
+function addDictWord(){
+  const heard=document.getElementById('dictHeard').value.trim();
+  const meant=document.getElementById('dictMeant').value.trim();
+  if(!heard){toast('Type what dictation writes','error');return;}
+  if(!meant){toast('Type what it should say','error');return;}
+  if(heard.toLowerCase()===meant.toLowerCase()){toast('Those are the same','error');return;}
+  if(customDictionary.some(e=>e.find.toLowerCase()===heard.toLowerCase())){
+    toast('You already have a correction for that','error');return;
+  }
+  customDictionary.push({find:heard,replace:meant});
+  saveCustomDictionary();renderDictWords();
+  document.getElementById('dictHeard').value='';
+  document.getElementById('dictMeant').value='';
+  toast('Correction added ✓');
+}
+
+function removeDictWord(i){
+  customDictionary.splice(i,1);
+  saveCustomDictionary();renderDictWords();
+  toast('Removed','error');
+}
+
 function openLookSheet(){
   renderLookControls();
+  renderDictWords();
   document.getElementById('lookOverlay').classList.add('show');
   document.getElementById('lookSheet').classList.add('show');
 }
@@ -1982,13 +2040,47 @@ const DICTATION_DICTIONARY = [
   { find: /\bquotation period\b/gi, replace: 'quotational period' },
   { find: /\ba couple grade\b/gi, replace: 'a copper grade' },
   { find: /\bthe great that\b/gi, replace: 'the grade that' },
-  { find: /\bbeating offer\b/gi, replace: 'competing offer' }
+  { find: /\bbeating offer\b/gi, replace: 'competing offer' },
+
+  /* Reported by Rafael from real dictation on 26 September 2026. Both are
+     commodities he trades constantly, so a mishearing goes straight into a
+     record. Each needs the preceding word, so an ordinary "kettle" or
+     "delight" in unrelated text is left alone. */
+  { find: /\bcopper kettles\b/gi, replace: 'copper cathodes' },
+  { find: /\bcopper kettle\b/gi,  replace: 'copper cathode' },
+  { find: /\bsteel delights\b/gi, replace: 'steel billets' },
+  { find: /\bsteel delight\b/gi,  replace: 'steel billet' }
 ];
+
+/* Rafael's own corrections, added from Settings. Applied after the built-in
+   list, so he can override anything above. Each entry is {find, replace} with
+   find stored as plain text, not a pattern - it is his words, not code. */
+const CUSTOM_DICT_KEY='jericho_dictation_words';
+let customDictionary=[];
+function loadCustomDictionary(){
+  try{
+    const raw=localStorage.getItem(CUSTOM_DICT_KEY);
+    customDictionary=raw?JSON.parse(raw):[];
+    if(!Array.isArray(customDictionary))customDictionary=[];
+  }catch(e){ customDictionary=[]; }
+}
+function saveCustomDictionary(){
+  try{ localStorage.setItem(CUSTOM_DICT_KEY,JSON.stringify(customDictionary)); }catch(e){}
+}
+function escapeForRegex(t){ return String(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+loadCustomDictionary();
 
 function applyDictationDictionary(text){
   let corrected=text;
   let changed=0;
-  DICTATION_DICTIONARY.forEach(entry=>{
+  // Rafael's own entries run after the built-in ones, so his win.
+  const all=DICTATION_DICTIONARY.concat(
+    customDictionary
+      .filter(e=>e&&String(e.find||'').trim())
+      .map(e=>({find:new RegExp('\\b'+escapeForRegex(String(e.find).trim())+'\\b','gi'),
+                replace:String(e.replace||'')}))
+  );
+  all.forEach(entry=>{
     const before=corrected;
     corrected=corrected.replace(entry.find,entry.replace);
     entry.find.lastIndex=0;
