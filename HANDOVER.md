@@ -17,7 +17,7 @@ JerichoTrack on desktop, so anything entered in either appears in both.
 
 - **Repo:** https://github.com/Rafops71/Jerichotrack (GitHub Pages serves `main`)
 - **App file:** `companion.html` — one file, no build step
-- **Current version:** v19. **Merged to `main` and live.** Development continues
+- **Current version:** v21. **Merged to `main` and live.** Development continues
   on branch `claude/optimistic-euler-9xy09u`.
 - **Restore point:** branch `pre-v19-main` holds the last v17 state. To roll the
   live app back: `git push origin pre-v19-main:main --force-with-lease`
@@ -174,10 +174,30 @@ gate. The whole design rests on a human reading the cards.
 
 ## THE NEXT STEP
 
-**Redeploy** `worker/intake-worker-v2-groq.js` — the deployed copy has the
-Incoterms and cross-paragraph fixes but **not** the date fix. Then re-run
-"remind me to send Maria the SPA draft by 30 September" and confirm the task
-comes back with a real due date rather than a blank one.
+**Done — 26 September 2026.** `worker/intake-worker-v2-groq.js` is deployed and
+verified by reading the code back out of Cloudflare, not by trusting the upload:
+`fillMissingDue`, `verifyOrigin`, `Europe/Brussels` and the `TODAY IS` line are
+all present in the live script. The three bindings survived the deploy
+(`keep_bindings` on the upload); a wrong password still returns 401.
+
+Live results, five runs against real Groq:
+- "by 30 September" → `due: 2026-09-30` on all five, every time from the model
+  itself. The code net did not need to fire (`dueDerived` false throughout).
+- "CIF Rotterdam" → `origin: null`, with `CIF Rotterdam` kept in `terms`.
+- A deal mentioned in a separate sentence came back with `seller` and `price`
+  null rather than borrowed from the offer paragraph.
+- A lead whose number was not in the text came back with `email` and `phone`
+  null.
+
+**Not yet observed in production:** the due-date net firing. It is deployed and
+covered by seven unit cases, but the model has not slipped since deploying, so
+nothing has exercised it live. Do not describe it as proven in production.
+
+Deploying by API: `PUT /accounts/{id}/workers/scripts/jericho-ai-inbox`, as
+multipart with a `metadata` part naming `main_module: "worker.js"` and
+`keep_bindings: ["secret_text","plain_text"]`. The script part's **filename**
+must be `worker.js` — matching the field name is not enough, and getting it
+wrong returns "No such module: worker.js".
 
 Both origin directions are already proven live: a CIF destination is cleared
 (with `originNote` attached) and a genuine FOB origin is kept, including in the
