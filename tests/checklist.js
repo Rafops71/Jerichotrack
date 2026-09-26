@@ -68,5 +68,8 @@ module.exports = [
   { n: 43, group: 'Appearance',   text: 'I can change the colours, and the app remembers next time' },
   { n: 44, group: 'Appearance',   text: 'I can choose between the three layouts' },
   { n: 45, group: 'Appearance',   text: 'Reset puts it back to how it looked before' },
-  { n: 46, group: 'Appearance',   text: 'A pale colour still leaves the header text readable' }
+  { n: 46, group: 'Appearance',   text: 'A pale colour still leaves the header text readable' },
+
+  { n: 47, group: 'Version',      text: 'The version number is always shown in the banner' },
+  { n: 48, group: 'Version',      text: 'The number shown matches the actual version of the file' }
 ];
