@@ -107,8 +107,6 @@ That Confirm gate is non-negotiable and is covered by a test.
   deployed and probably should not be.** See below.
 
 ### Not done
-- **The live test.** Nobody has ever run real text through the real worker.
-  This is the only thing actually blocking the feature.
 - **Firestore security rules never verified.** Unknown whether the intended
   "must be signed in" rule was ever applied to `jericho-operation`. Worth
   checking, because the Firebase config is public in a public repo — that is
@@ -123,6 +121,20 @@ That Confirm gate is non-negotiable and is covered by a test.
 - **Leads have nowhere to live in Companion.** You can add a lead, but no
   screen lists them. Once saved on the phone it is invisible until you open
   JerichoTrack on the desktop.
+- **The "New Lead" tag on Add Action is a trap.** Choosing it writes a TASK
+  with category "New Lead". No lead is created and nothing appears in the leads
+  collection. It looks like a contact was captured when it was not. Suggested
+  fix: choosing that tag should open the Quick Add Lead sheet instead, so one
+  tag has one obvious outcome.
+- **Dictation fails silently in Brave.** Brave deliberately disables the Web
+  Speech API's results, so `webkitSpeechRecognition` exists, the app believes
+  dictation is available, and nothing ever comes back. Rafael uses Brave on his
+  laptop and reasonably concluded dictation was bad rather than absent. The app
+  should detect that specific failure and say so, naming Safari or Chrome.
+- **Name matching is not built.** The worker now knows the trade's vocabulary,
+  but not Rafael's own contacts. Sending the existing lead and company names
+  with the text would let it resolve a mangled person or firm to someone he has
+  actually met, and would improve every time he adds a contact.
 
 ---
 
