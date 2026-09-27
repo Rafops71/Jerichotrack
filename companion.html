@@ -1,4 +1,4 @@
-<!-- companion-v22.html -->
+<!-- companion-v23.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -779,7 +779,7 @@ function convertTime(dateStr,timeStr,fromTz,toTz){
    checkVersionLabel() compares it with the comment at the top of this file, so
    a bump in one place and not the other is caught immediately rather than
    leaving a wrong number on screen. */
-const APP_VERSION='v22';
+const APP_VERSION='v23';
 
 function showVersion(){
   const el=document.getElementById('appVersion');
@@ -1205,6 +1205,22 @@ function renderAll(){
 let selectedActionTag='Follow-up';
 document.getElementById('actionTagPicker').addEventListener('click',e=>{
   const opt=e.target.closest('.tag-opt');if(!opt)return;
+
+  /* v23: "New Lead" used to write a TASK with that label and create no lead at
+     all. It looked like a contact had been captured when nothing had. One tag
+     now has one outcome: it takes you to Quick Add Lead, carrying across
+     whatever you had already typed. */
+  if(opt.dataset.tag==='New Lead'&&editingActionId===null){
+    const typed=document.getElementById('actionTitle').value.trim();
+    const note=document.getElementById('actionNote').value.trim();
+    closeActionSheet();
+    openLeadSheet();
+    if(typed)document.getElementById('qlName').value=typed;
+    if(note)document.getElementById('qlNote').value=note;
+    toast('Adding a lead, not a task');
+    return;
+  }
+
   document.querySelectorAll('#actionTagPicker .tag-opt').forEach(o=>o.classList.remove('selected'));
   opt.classList.add('selected');selectedActionTag=opt.dataset.tag;
   document.getElementById('actionTagCustom').style.display=selectedActionTag==='Custom'?'block':'none';
@@ -1288,6 +1304,11 @@ function saveAction(){
 // LEAD SHEET
 function openLeadSheet(){
   quickLeadDupeArmed='';
+  // Cleared here rather than on close, so values handed over from the action
+  // sheet (see the New Lead tag) survive being placed after this runs.
+  document.getElementById('qlName').value='';
+  document.getElementById('qlCompany').value='';
+  document.getElementById('qlNote').value='';
   document.getElementById('leadOverlay').classList.add('show');
   document.getElementById('leadSheet').classList.add('show');
 }

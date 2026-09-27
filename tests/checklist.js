@@ -72,5 +72,7 @@ module.exports = [
   { n: 47, group: 'Version',      text: 'The version number is always shown in the banner' },
   { n: 48, group: 'Version',      text: 'The number shown matches the actual version of the file' },
 
-  { n: 49, group: 'Dictation',    text: 'I can add my own corrections for words it keeps getting wrong' }
+  { n: 49, group: 'Dictation',    text: 'I can add my own corrections for words it keeps getting wrong' },
+
+  { n: 50, group: 'Leads',        text: 'Choosing the "New Lead" tag really adds a lead, not a task' }
 ];
