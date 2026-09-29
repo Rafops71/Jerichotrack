@@ -13,7 +13,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .header-right { text-align: right; }
 .header-right .hdate { font-size: 12px; opacity: 0.7; display: block; }
 .header-right .hclock { font-size: 15px; font-weight: bold; opacity: 0.9; display: block; margin-top: 2px; letter-spacing: 1px; }
-.sync-status { font-size: 11px; padding: 3px 10px; border-radius: 10px; display: inline-block; margin-top: 4px; }
+.sync-status { font-size: 11px; padding: 3px 10px; border-radius: 10px; display: inline-block; margin-top: 4px; cursor: pointer; }
 .sync-status.online { background: rgba(39,174,96,0.25); color: #8ee0ab; }
 .sync-status.offline { background: rgba(231,76,60,0.25); color: #f5a89f; }
 .sync-status.syncing { background: rgba(232,160,32,0.25); color: #f5d090; }
@@ -156,7 +156,7 @@ tr:hover td { background: #fafbfc; }
   <div class="header-right">
     <span class="hdate" id="currentDate"></span>
     <span class="hclock" id="currentTime"></span>
-    <span class="sync-status syncing" id="syncStatus">🔄 Connecting...</span>
+    <span class="sync-status syncing" id="syncStatus" role="button" tabindex="0" onclick="explainSync()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();explainSync();}">🔄 Connecting...</span>
   </div>
 </div>
 
@@ -703,6 +703,16 @@ function toast(msg,type='info',duration=3500){
 // refusal used to flip the whole banner to "Offline", which was misleading when
 // most collections were syncing perfectly well -- and hid the real cause.
 const syncDenied=new Set();
+function explainSync(){
+  if(syncDenied.size){
+    toast('Not syncing: '+[...syncDenied].map(c=>c.replace('jericho_','')).join(', ')+
+      '. These save on this device only. Fix the Firestore rules in the Firebase console.','error',9000);
+  } else if(window._fbReady){
+    toast('All collections are syncing live.','success');
+  } else {
+    toast('Not connected yet \u2014 anything you add is saved on this device and will sync when it reconnects.','info',6000);
+  }
+}
 function setSyncStatus(state,collection){
   const el=document.getElementById('syncStatus');
   if(!el)return;
@@ -712,8 +722,7 @@ function setSyncStatus(state,collection){
     el.classList.add('offline');
     const n=syncDenied.size;
     el.textContent='⚠️ '+n+' collection'+(n===1?'':'s')+' not syncing';
-    el.title='Firestore refused these: '+[...syncDenied].join(', ')+
-      '. Everything else is live. Fix the security rules in the Firebase console.';
+    el.title='Tap for detail';
     return;
   }
   el.title='';
@@ -1786,10 +1795,29 @@ function drawMapGlobe(){
   draw();
 
   let dragging=false,p0=null,r0=null;
-  cv.addEventListener('pointerdown',ev=>{ dragging=true; cv.classList.add('dragging');
+  const active=new Map(); let pinchFrom=null, pinchZoom=zoom, moved=0;
+  function pinchGap(){
+    const pts=[...active.values()];
+    return Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+  }
+  function spotAt(clientX,clientY){
+    const r=cv.getBoundingClientRect(), sx=W/r.width;
+    const mx=(clientX-r.left)*sx, my=(clientY-r.top)*sx;
+    let best=null,bd=1e9;
+    spots.forEach(sp=>{ if(!visible(sp.ll))return; const xy=proj(sp.ll); if(!xy)return;
+      const d=Math.hypot(xy[0]-mx,xy[1]-my); if(d<20&&d<bd){bd=d;best=sp;} });
+    return best;
+  }
+  cv.addEventListener('pointerdown',ev=>{
+    active.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    if(active.size===2){ dragging=false; pinchFrom=pinchGap(); pinchZoom=zoom; return; }
+    dragging=true; moved=0; cv.classList.add('dragging');
     cv.setPointerCapture(ev.pointerId); p0=[ev.clientX,ev.clientY]; r0=rot.slice(); });
   cv.addEventListener('pointermove',ev=>{
+    if(active.has(ev.pointerId)) active.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    if(active.size===2&&pinchFrom){ setZoom(pinchZoom*(pinchGap()/pinchFrom)); return; }
     if(dragging&&p0){
+      moved=Math.max(moved,Math.hypot(ev.clientX-p0[0],ev.clientY-p0[1]));
       // Dragging turns less per pixel the further you are zoomed in, so the
       // globe stays controllable rather than flicking round.
       const k=0.26/zoom;
@@ -1808,7 +1836,23 @@ function drawMapGlobe(){
       mapTip(ev,'<b>'+best.label+'</b><span>'+names+(best.people.length>4?' +'+(best.people.length-4)+' more':'')+'</span>');
     } else hideMapTip();
   });
-  window.addEventListener('pointerup',()=>{ dragging=false; cv.classList.remove('dragging'); });
+  cv.addEventListener('pointerup',ev=>{
+    // A tap that did not turn the globe is a request to inspect that pin: on a
+    // touch screen there is no hover to do it with.
+    if(moved<6&&active.size===1){
+      const sp=spotAt(ev.clientX,ev.clientY);
+      hover=sp||null; draw();
+      if(sp){
+        mapTip(ev,'<b>'+sp.label+'</b><span>'+sp.people.slice(0,4).map(x=>x.company||x.name).join(', ')+
+          (sp.people.length>4?' +'+(sp.people.length-4)+' more':'')+'</span>');
+        setTimeout(hideMapTip,4000);
+      } else hideMapTip();
+    }
+  });
+  window.addEventListener('pointerup',ev=>{ active.delete(ev.pointerId);
+    if(active.size<2) pinchFrom=null;
+    dragging=false; cv.classList.remove('dragging'); });
+  window.addEventListener('pointercancel',ev=>{ active.delete(ev.pointerId); pinchFrom=null; dragging=false; });
   cv.addEventListener('pointerleave',()=>{ hover=null; hideMapTip(); draw(); });
   cv.addEventListener('wheel',ev=>{ ev.preventDefault(); setZoom(zoom*(ev.deltaY<0?1.14:1/1.14)); },{passive:false});
 
