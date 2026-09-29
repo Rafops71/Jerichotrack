@@ -1,5 +1,5 @@
 /**
- * Jericho Intake Worker - v2 (Groq)
+ * Jericho Intake Worker - v3 (Groq)
  *
  * This is the SAME worker as before. The extraction prompt, the anti-invention
  * rules, the snippet verification and the contact-field verification are all
@@ -198,6 +198,62 @@ DATES - the text usually gives them in human form, and you must convert them:
 - A date you have worked out from today's date is NOT an invention. It is a conversion, and it is required. Returning null because you were unsure of the year is wrong now that you have been given the year.
 - Only return null when the text genuinely names no time at all. Vague words with no anchor - "soon", "shortly", "when he gets back" - stay null.
 - Never return a date in the past. If your working produces one, you have misread it; return null instead.
+
+THE TRADE THIS TEXT COMES FROM. The writer is a commodities trader. These are
+the terms he actually uses. Much of the text is voice-dictated, and speech
+recognition mangles exactly these words because they are not everyday English.
+
+  Commodities: manganese, chrome, lithium, antimony, tin, lead, aluminium,
+    cobalt, copper, zinc, nickel, iron ore, yellow corn, quinoa, sugar
+  Forms and grades: cathode, cathodes, billet, billets, ore, concentrate,
+    concentrates, alloy, alloys, ingot, ingots, scrap, fines, lumps
+  Incoterms: EXW, FCA, CPT, CIP, DAP, DPU, DDP, FOB, CFR, CIF, FAS
+  Trade language: off-taker, offtake, SPA, LOI, ICPO, proof of funds,
+    bill of lading, assay, quotational period, indicative bid, firm offer,
+    commercial quantity, payment terms, delivery terms, broker, miner,
+    shipment window, letter of credit
+  Origins often named: South Africa, Peru, Zimbabwe, Chile, Brazil, Zambia,
+    Nigeria, DRC, Mexico, Kazakhstan, Turkey, Ghana, Namibia, Botswana
+
+READING MANGLED WORDS. Where a word or phrase in the text is an obvious
+phonetic match for a term above AND the sentence plainly supports it, read it
+as the intended term. Real examples from this user's dictation:
+  "copper kettles"  -> copper cathodes
+  "steel delights"  -> steel billets
+  "manga knees"     -> manganese
+  "essay results"   -> assay results
+THE HARD CASE, and the one that matters most: speech recognition usually
+replaces a trade term with an ORDINARY ENGLISH WORD. It therefore does not look
+wrong. It reads perfectly and means nothing commercially. When an everyday word
+sits where a trade term plainly belongs, that is a mishearing, not a choice of
+words. Seen in this user's own dictation:
+  "essay" / "essays"            -> assay / assays  (testing a cargo)
+  "anti money ingots"           -> antimony ingots
+  "copper kettles"              -> copper cathodes
+  "steel delights"              -> steel billets
+  "a couple grade"              -> a copper grade
+  "fright"                      -> freight
+  "the great of the ore"        -> the grade of the ore
+Apply the correction CONSISTENTLY: if you read it as assay in one field, it is
+assay in every field, not assay in one and essay in another.
+
+TERMS THAT ARE NOT MISHEARINGS - do not "fix" these:
+  "anti-money laundering", "AML"   - a real requirement in this business, and
+                                     nothing to do with antimony
+  "due diligence", "KYC"           - real
+  "essay" where the text genuinely discusses writing                - real
+If the sentence is about compliance, paperwork or checks on a counterparty,
+leave the words alone. Only the commercial sense of a cargo triggers a reading.
+
+This is not inventing. You are reading what was said, not adding information.
+The limits are strict:
+- It must be phonetically close AND unmistakable from the surrounding sentence.
+  If you are weighing two possibilities, leave the text alone.
+- NEVER introduce a commodity, quantity, price or party that is not being
+  discussed. Correcting a word is allowed; adding a fact is not.
+- The sourceSnippet must STILL be copied verbatim from the original text,
+  mangled words included, so the user can see exactly what was said and check
+  you. Never "tidy" a quote.
 
 Additional hard constraints:
 - INCOTERMS - READ CAREFULLY. A port or city named after CIF, CFR, CIP, DAP, DDP or DPU is the DESTINATION, not the origin. A port or city named after FOB, FCA, EXW or FAS is the ORIGIN. "CIF Rotterdam" means the goods are going TO Rotterdam; it says nothing about where they come from, so "origin" must be null. Only fill "origin" when the text states where the goods come from - a country of origin, a mine, a producer, a load port. Putting a destination in the origin field is a serious error in this business.
@@ -545,7 +601,7 @@ ${sourceText}
       ok: true,
       data: result,
       meta: {
-        workerVersion: "v2-groq",
+        workerVersion: "v3-groq",
         model: env.AI_MODEL,
         originalLength: sourceText.length,
         extractedAt: new Date().toISOString()

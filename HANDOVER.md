@@ -78,7 +78,7 @@ That Confirm gate is non-negotiable and is covered by a test.
   version check: if a device still shows "AI Inbox", it is serving a cached
   pre-v19 copy.
 
-**`worker/intake-worker-v2-groq.js`** — the deployable Intake worker
+**`worker/intake-worker-v3-groq.js`** — the deployable Intake worker
 - Rafael's own worker with **Groq** in place of Mistral. The extraction prompt,
   `verifySnippet`, `verifyContactFields`, `validateStage` and the stage
   whitelist are all untouched — those are the parts worth keeping.
@@ -90,7 +90,7 @@ That Confirm gate is non-negotiable and is covered by a test.
   from anyone who knew the address. v2 refuses to run without one.
 - Rate limits, retired models and a bad provider key now return readable
   messages instead of a bare status code.
-- `worker/tests/test-intake-worker-v2.mjs` exercises the real worker code with
+- `worker/tests/test-intake-worker-v3.mjs` exercises the real worker code with
   the provider stood in: **24 checks, all passing**, including that an invented
   email and an unverifiable quote are discarded, that a CIF destination is
   cleared from the origin field, that a genuine FOB origin is kept, and that
@@ -107,8 +107,6 @@ That Confirm gate is non-negotiable and is covered by a test.
   deployed and probably should not be.** See below.
 
 ### Not done
-- **The live test.** Nobody has ever run real text through the real worker.
-  This is the only thing actually blocking the feature.
 - **Firestore security rules never verified.** Unknown whether the intended
   "must be signed in" rule was ever applied to `jericho-operation`. Worth
   checking, because the Firebase config is public in a public repo — that is
@@ -123,6 +121,20 @@ That Confirm gate is non-negotiable and is covered by a test.
 - **Leads have nowhere to live in Companion.** You can add a lead, but no
   screen lists them. Once saved on the phone it is invisible until you open
   JerichoTrack on the desktop.
+- **The "New Lead" tag on Add Action is a trap.** Choosing it writes a TASK
+  with category "New Lead". No lead is created and nothing appears in the leads
+  collection. It looks like a contact was captured when it was not. Suggested
+  fix: choosing that tag should open the Quick Add Lead sheet instead, so one
+  tag has one obvious outcome.
+- **Dictation fails silently in Brave.** Brave deliberately disables the Web
+  Speech API's results, so `webkitSpeechRecognition` exists, the app believes
+  dictation is available, and nothing ever comes back. Rafael uses Brave on his
+  laptop and reasonably concluded dictation was bad rather than absent. The app
+  should detect that specific failure and say so, naming Safari or Chrome.
+- **Name matching is not built.** The worker now knows the trade's vocabulary,
+  but not Rafael's own contacts. Sending the existing lead and company names
+  with the text would let it resolve a mangled person or firm to someone he has
+  actually met, and would improve every time he adds a contact.
 
 ---
 
@@ -174,7 +186,7 @@ gate. The whole design rests on a human reading the cards.
 
 ## THE NEXT STEP
 
-**Done — 26 September 2026.** `worker/intake-worker-v2-groq.js` is deployed and
+**Done — 26 September 2026.** `worker/intake-worker-v3-groq.js` is deployed and
 verified by reading the code back out of Cloudflare, not by trusting the upload:
 `fillMissingDue`, `verifyOrigin`, `Europe/Brussels` and the `TODAY IS` line are
 all present in the live script. The three bindings survived the deploy
@@ -276,6 +288,39 @@ files.
 - Preferred look: bright blue / white / pastel — confirm before big UI changes.
 
 ---
+
+## The trade vocabulary (worker v3, 26 September 2026)
+
+Speech recognition mangles exactly the words this business runs on, and the app
+cannot influence that - Apple and Google hand over finished text, and the web
+standard's slot for supplying a vocabulary is ignored by browsers. So the
+context lives in the worker instead.
+
+The prompt now carries the commodities, forms, Incoterms, trade language and
+origins Rafael actually uses, with permission to read an obvious mishearing as
+the intended term when the sentence plainly supports it.
+
+**The hard case, and the reason a first attempt failed:** speech recognition
+usually substitutes an ORDINARY ENGLISH WORD, so the result does not look wrong.
+A first deploy corrected "manga knees" to manganese but left "essay" and
+"anti money ingots" untouched, because both read as normal English. Naming that
+pattern explicitly in the prompt fixed both.
+
+**The guard that had to come with it:** "anti-money laundering" and "AML" are
+real terms in this business. Without an explicit exception, the antimony rule
+would corrupt compliance notes. Verified live: a sentence about AML checks came
+back untouched, with no antimony anywhere in it.
+
+Live results after the second deploy, on one dictated sentence:
+"manga knees ore" -> manganese ore, "essay" -> assay, "anti money ingots" ->
+antimony ingots, applied consistently across every field. The sourceSnippet on
+each item still held the original mangled words, so the user can always see
+what was really said.
+
+The unit tests assert the vocabulary, the worked examples and the AML guard are
+all present in the prompt the worker actually sends - a careless edit cannot
+drop them silently. Whether the model reads a given mishearing correctly is its
+own behaviour and is checked by live runs, not by those tests.
 
 ## Agreed and queued, not built
 
