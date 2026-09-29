@@ -955,7 +955,8 @@ function applyWorkerQuote(feed,d){
   // anything we cannot date: a stale print in front of a buyer is the worst case.
   if(!d||typeof d.price!=='number'||d.ageDays===undefined||d.ageDays>10){errCard(feed.card,'Stale — check manually');return;}
   const ts=priceCache[feed.key]?.ts||Date.now();
-  fillCard(feed.card,'$'+d.price.toFixed(2),(d.unit||'')+' · '+d.asOf,d.change,d.pct,d.source||'FT',ts);
+  const shown='$'+d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  fillCard(feed.card,shown,(d.unit||'')+' · '+d.asOf,d.change,d.pct,d.source||'FT',ts);
 }
 async function fetchAllPrices(force){
   const msg=document.getElementById('priceMsg');
@@ -983,6 +984,13 @@ function buildTicker(){
     if(oil.d.brent?.value)items.push({n:'BRENT',p:'$'+parseFloat(oil.d.brent.value).toFixed(2)});
     if(oil.d.wti?.value)items.push({n:'WTI',p:'$'+parseFloat(oil.d.wti.value).toFixed(2)});
   }
+  // The worker-backed feeds run through the same staleness rule as their cards:
+  // a price too old to show on the Prices tab must not reappear in the ticker.
+  WORKER_FEEDS.forEach(f=>{
+    const c=priceCache[f.key];
+    if(c?.d&&typeof c.d.price==='number'&&c.d.ageDays!==undefined&&c.d.ageDays<=10)
+      items.push({n:f.ticker,p:'$'+c.d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
+  });
   if(!items.length){document.getElementById('tickerTrack').innerHTML='<div class="ticker-item"><span class="t-name">No price data</span><span class="t-price">Go to Prices → Refresh</span></div>';return;}
   const all=[...items,...items];
   document.getElementById('tickerTrack').innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
@@ -1780,8 +1788,11 @@ function drawMapGlobe(){
   document.getElementById('mapCount').textContent=hits.length+' of '+people.length+' shown';
   const list=document.getElementById('mapList');
   if(!hits.length){
-    list.innerHTML='<div class="mlh">Matches</div><div class="empty">Nobody in your book matches <strong>'+
-      label+'</strong>. That is a gap worth filling.</div>';
+    list.innerHTML='<div class="mlh">Matches</div><div class="empty">'+(MAPQ.filter==='ALL'
+      ? (people.length
+          ? 'None of your '+people.length+' contacts has a country the map recognises. Add a country, or a city, to place them.'
+          : 'No contacts or leads yet. Add one and it will appear here.')
+      : 'Nobody in your book matches <strong>'+label+'</strong>. That is a gap worth filling.')+'</div>';
   } else {
     list.innerHTML='<div class="mlh">Matches &middot; '+hits.length+'</div>'+
       hits.slice().sort((a,b)=>(a.country||'').localeCompare(b.country||'')).map((p,i)=>

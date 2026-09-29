@@ -31,13 +31,15 @@ const SYMBOLS = {
     xid: "18366493",
     symbol: "PL",
     name: "Platinum",
-    unit: "USD / troy oz"
+    unit: "USD / kg",
+    perTroyOz: true
   },
   "/palladium": {
     xid: "18483223",
     symbol: "PA",
     name: "Palladium",
-    unit: "USD / troy oz"
+    unit: "USD / kg",
+    perTroyOz: true
   }
 };
 
@@ -45,6 +47,16 @@ const SYMBOLS = {
 // rather than guessing, and never serve a close we cannot put a date on.
 const CACHE_SECONDS = 900;
 const MAX_AGE_DAYS = 10;
+
+// FT quotes the PGMs per troy ounce, but this desk trades and quotes metal by
+// the kilogram, as the gold and silver cards already do. Convert once here so
+// every reader of this worker gets the same unit.
+const TROY_OZ_KG = 0.0311035;
+
+// Bumped whenever the shape or units of a response change: the cache key carries
+// it, so a deploy takes effect at once instead of serving the old shape for the
+// rest of the cache window.
+const PAYLOAD_VERSION = "2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -98,8 +110,9 @@ async function fetchQuote(spec) {
   while (i >= 0 && (values[i] === null || values[i] === undefined)) i--;
   if (i < 0 || !dates[i]) throw new Error("no dated close in upstream response");
 
-  const price = values[i];
-  const prev = i > 0 ? values[i - 1] : null;
+  const toKg = v => (v === null || v === undefined) ? v : v / TROY_OZ_KG;
+  const price = spec.perTroyOz ? toKg(values[i]) : values[i];
+  const prev = i > 0 ? (spec.perTroyOz ? toKg(values[i - 1]) : values[i - 1]) : null;
   const asOf = String(dates[i]).slice(0, 10);
   const ageDays = Math.floor((Date.now() - Date.parse(asOf)) / 86400000);
 
@@ -135,7 +148,7 @@ export default {
     if (request.method !== "GET") return json({ ok: false, error: "method not allowed" }, 405);
 
     const cache = caches.default;
-    const cacheKey = new Request(url.origin + url.pathname, { method: "GET" });
+    const cacheKey = new Request(url.origin + url.pathname + "?v=" + PAYLOAD_VERSION, { method: "GET" });
     const hit = await cache.match(cacheKey);
     if (hit) return hit;
 
