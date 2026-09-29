@@ -598,6 +598,8 @@ signInAnonymously(auth).catch((err) => {
 const KEY_GOLDPRICEZ='a0287c10549de17fca6c786e1350e1e7a0287c10';
 const KEY_EIA='1ZzE1tup0ZDoNkJaxUKIjmO3OoxL2Kdnk8aT2meZ';
 const KEY_METALS_DEV='UKWP4CPKJC1AR0PNFDUJ503PNFDUJ';
+// Iron ore is proxied: markets.ft.com sends no CORS header, so the browser cannot call it direct.
+const PRICES_WORKER='https://jericho-prices.rafael-e.workers.dev';
 const HUNTER_KEY=''; // Add your free Hunter.io API key here between the quotes when you have one
 
 // DATE + CLOCK
@@ -774,7 +776,7 @@ function fillCard(id,price,unit,change,pct,source,ts){
 function errCard(id,msg){const el=document.getElementById('card_'+id);if(!el)return;const label=el.dataset.label||id;el.innerHTML=`<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;}
 function renderPriceGrids(){
   document.getElementById('gridCurrency').innerHTML=makeCard('EURUSD','EUR / USD','currency')+makeCard('USDZAR','USD / ZAR','currency')+makeCard('EURZAR','EUR / ZAR','currency');
-  document.getElementById('gridMetals').innerHTML=makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal');
+  document.getElementById('gridMetals').innerHTML=makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal')+makeCard('IRONORE','Iron Ore 62% Fe','metal');
   document.getElementById('gridEnergy').innerHTML=makeCard('BRENT','Brent Crude','energy')+makeCard('WTI','WTI Crude','energy');
 }
 async function fetchCurrencies(force){
@@ -852,11 +854,27 @@ function applyOil(d){
   if(d.wti?.value)fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
   else errCard('WTI','No EIA data');
 }
+async function fetchIronOre(force){
+  if(!force&&!isStale('ironore',1)){applyIronOre(priceCache['ironore'].d);return;}
+  try{
+    const r=await fetch(PRICES_WORKER+'/ironore');
+    const j=await r.json();
+    if(!j||!j.ok||typeof j.price!=='number'){errCard('IRONORE',(j&&j.error)?'Feed error':'No data');return;}
+    priceCache['ironore']={d:j,ts:Date.now()};saveCache();applyIronOre(j);
+  }catch(e){errCard('IRONORE','Feed unreachable');}
+}
+function applyIronOre(d){
+  // A frozen feed still returns a plausible-looking number, so refuse to show
+  // anything we cannot date: a stale print in front of a buyer is the worst case.
+  if(!d||typeof d.price!=='number'||d.ageDays===undefined||d.ageDays>10){errCard('IRONORE','Stale — check manually');return;}
+  const ts=priceCache['ironore']?.ts||Date.now();
+  fillCard('IRONORE','$'+d.price.toFixed(2),(d.unit||'USD / metric tonne')+' · '+d.asOf,d.change,d.pct,d.source||'FT / CME TIO c1',ts);
+}
 async function fetchAllPrices(force){
   const msg=document.getElementById('priceMsg');
   if(msg)msg.textContent='Fetching prices...';
   renderPriceGrids();
-  await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force)]);
+  await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force),fetchIronOre(force)]);
   const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   if(msg)msg.textContent='Prices loaded.';
   const pt=document.getElementById('priceTime');if(pt)pt.textContent='Last refresh: '+now;
