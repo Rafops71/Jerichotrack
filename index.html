@@ -62,6 +62,10 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .map-filter label { font-size:13px; font-weight:bold; color:#555; }
 .map-filter select { padding:9px 10px; border:1px solid #ddd; border-radius:4px; font-size:14px; max-width:100%; min-width:230px; background:#fff; }
 .map-count { font-size:12px; color:#777; }
+.map-zoom { display:inline-flex; gap:4px; align-items:center; }
+.zbtn { width:30px; height:30px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; font-size:16px; line-height:1; color:#1a2e4a; }
+.zbtn.wide { width:auto; padding:0 10px; font-size:12px; }
+.zbtn:hover { background:#f4f6f9; }
 .map-blurb { font-size:13px; color:#666; margin:0 0 12px; max-width:70ch; }
 .map-split { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:14px; align-items:start; }
 @media(max-width:820px){ .map-split{ grid-template-columns:1fr; } }
@@ -235,6 +239,7 @@ tr:hover td { background: #fafbfc; }
   <div class="form-group"><label>Full Name *</label><input id="leadName" type="text" placeholder="Name"></div>
   <div class="form-group"><label>Company</label><input id="leadCompany" type="text" placeholder="Company name"></div>
   <div class="form-group"><label>Type</label><select id="leadType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading Company</option><option>Other</option></select></div>
+  <div class="form-group"><label>City</label><input id="leadCity" type="text" placeholder="e.g. Rotterdam"></div>
   <div class="form-group"><label>Country</label><input id="leadCountry" type="text" placeholder="Country"></div>
   <div class="form-group"><label>Phone / WhatsApp</label><input id="leadPhone" type="text" placeholder="+1 234 567 890"></div>
   <div class="form-group"><label>Email</label><input id="leadEmail" type="text" placeholder="email@example.com"></div>
@@ -295,6 +300,7 @@ tr:hover td { background: #fafbfc; }
   <div class="form-group"><label>Full Name *</label><input id="contactName" type="text" placeholder="Full name"></div>
   <div class="form-group"><label>Company</label><input id="contactCompany" type="text" placeholder="Company name"></div>
   <div class="form-group"><label>Role / Type</label><select id="contactType"><option value="">Select...</option><option>Broker</option><option>Buyer</option><option>Seller</option><option>Principal</option><option>Agent</option><option>Financier</option><option>Logistics Provider</option><option>Mining Company</option><option>Refinery</option><option>Smelter</option><option>Trading House</option><option>End User</option><option>Other</option></select></div>
+  <div class="form-group"><label>City</label><input id="contactCity" type="text" placeholder="e.g. Rustenburg"></div>
   <div class="form-group"><label>Country</label><input id="contactCountry" type="text" placeholder="Country"></div>
   <div class="form-group"><label>Phone / WhatsApp</label><input id="contactPhone" type="text" placeholder="+1 234 567 890"></div>
   <div class="form-group"><label>Email</label>
@@ -552,6 +558,12 @@ tr:hover td { background: #fafbfc; }
     <label for="mapFilter">Show</label>
     <select id="mapFilter" onchange="applyMapFilter()"></select>
     <span id="mapCount" class="map-count"></span>
+    <span class="map-zoom">
+      <button type="button" class="zbtn" onclick="mapZoom(-1)" aria-label="Zoom out">&minus;</button>
+      <button type="button" class="zbtn" onclick="mapZoom(1)" aria-label="Zoom in">+</button>
+      <button type="button" class="zbtn wide" onclick="mapZoom(0)">Reset</button>
+      <span id="mapZoomLabel" class="map-count"></span>
+    </span>
   </div>
 
   <p id="mapBlurb" class="map-blurb"></p>
@@ -1061,10 +1073,11 @@ function showAddLead(){document.getElementById('addLeadForm').style.display='blo
 function hideAddLead(){document.getElementById('addLeadForm').style.display='none';}
 function saveLead(){
   const name=document.getElementById('leadName').value;if(!name){toast('Please enter a name','error');return;}
-  const item={id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:getCommoditySelection('lead'),notes:document.getElementById('leadNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const item={id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,city:document.getElementById('leadCity').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:getCommoditySelection('lead'),notes:document.getElementById('leadNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   leads.push(item);persist('leads',leads);renderLeads();hideAddLead();
+  placeOnMap(item,'leads');
   saveItemToCloud('leads',item);
-  ['leadName','leadCompany','leadNotes','leadIntroBy'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('lead');
+  ['leadName','leadCompany','leadNotes','leadIntroBy','leadCity'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('lead');
   toast('Lead saved','success');
 }
 function renderLeads(q=''){
@@ -1105,10 +1118,11 @@ function showAddContact(){document.getElementById('addContactForm').style.displa
 function hideAddContact(){document.getElementById('addContactForm').style.display='none';}
 function saveContact(){
   const name=document.getElementById('contactName').value;if(!name){toast('Please enter a name','error');return;}
-  const item={id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:getCommoditySelection('contact'),introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const item={id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,city:document.getElementById('contactCity').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:getCommoditySelection('contact'),introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   contacts.push(item);persist('contacts',contacts);renderContacts();hideAddContact();
+  placeOnMap(item,'contacts');
   saveItemToCloud('contacts',item);
-  ['contactName','contactCompany','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('contact');
+  ['contactName','contactCompany','contactNotes','contactIntroBy','contactLinkedin','contactCity'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('contact');
   toast('Contact saved','success');
 }
 function renderContacts(_,q=''){
@@ -1349,6 +1363,79 @@ function updateDashboard(){
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
+// ------------------------------------------------------------
+// Turning a typed city into a map position. Open-Meteo needs no
+// key and allows browser calls; results are cached locally so the
+// same city is never looked up twice.
+// ------------------------------------------------------------
+let geoCache=JSON.parse(localStorage.getItem('jericho_geocache')||'{}');
+function geoKey(city,country){ return ((city||'')+'|'+(country||'')).trim().toLowerCase(); }
+const COUNTRY_ALIAS={ 'uae':'united arab emirates','usa':'united states','us':'united states',
+  'uk':'united kingdom','england':'united kingdom','scotland':'united kingdom','wales':'united kingdom',
+  'drc':'congo kinshasa','democratic republic of congo':'congo kinshasa','dr congo':'congo kinshasa',
+  'south korea':'korea','north korea':'korea','ivory coast':'cote divoire','holland':'netherlands',
+  'turkey':'turkiye','czech republic':'czechia','burma':'myanmar','swaziland':'eswatini' };
+function normCountry(v){
+  let t=(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
+  t=t.replace(/^(the|republic of|kingdom of|state of|united republic of|peoples republic of|islamic republic of|federal republic of)\s+/g,'').trim();
+  return COUNTRY_ALIAS[t]||t;
+}
+function countryMatches(a,b){
+  const x=normCountry(a), y=normCountry(b);
+  if(!x||!y) return false;
+  return x===y || x.indexOf(y)>=0 || y.indexOf(x)>=0;
+}
+async function geocode(city,country){
+  const k=geoKey(city,country);
+  if(!city) return null;
+  if(geoCache[k]!==undefined) return geoCache[k];
+  try{
+    const u='https://geocoding-api.open-meteo.com/v1/search?count=5&language=en&format=json&name='+encodeURIComponent(city);
+    const r=await fetch(u); if(!r.ok) throw 0;
+    const j=await r.json(), res=j.results||[];
+    // Prefer the hit in the country already on the record; a city name alone is
+    // ambiguous and putting a contact on the wrong continent is worse than not
+    // placing them at all.
+    const want=(country||'').trim();
+    const pick = res.find(x=>countryMatches(x.country,want))
+              || res.find(x=>(x.country_code||'').toLowerCase()===want.toLowerCase())
+              || (want?null:res[0]);
+    geoCache[k]= pick ? {lon:pick.longitude,lat:pick.latitude,label:pick.name+', '+(pick.country||'')} : null;
+  }catch(e){ return null; }
+  localStorage.setItem('jericho_geocache',JSON.stringify(geoCache));
+  return geoCache[k];
+}
+// Saving never waits on the network: the record is already stored, and the
+// coordinates are added afterwards if the lookup succeeds.
+async function placeOnMap(item,key){
+  if(!item.city) return;
+  const g=await geocode(item.city,item.country);
+  if(!g) return;
+  item.lon=g.lon; item.lat=g.lat;
+  persist(key,key==='contacts'?contacts:leads);
+  saveItemToCloud(key,item);
+}
+// Fills in coordinates for records saved before the city field existed.
+async function backfillMap(btn){
+  const todo=[...contacts.map(c=>[c,'contacts']),...leads.map(l=>[l,'leads'])]
+    .filter(([r])=>r.city&&(r.lon===undefined||r.lat===undefined));
+  if(!todo.length){ toast('Every contact with a city is already placed','info'); return; }
+  if(btn){ btn.disabled=true; btn.textContent='Placing 0/'+todo.length+'…'; }
+  let done=0,ok=0;
+  for(const [rec,key] of todo){
+    const g=await geocode(rec.city,rec.country);
+    if(g){ rec.lon=g.lon; rec.lat=g.lat; saveItemToCloud(key,rec); ok++; }
+    done++;
+    if(btn) btn.textContent='Placing '+done+'/'+todo.length+'…';
+    await new Promise(r=>setTimeout(r,220)); // stay a polite neighbour
+  }
+  persist('contacts',contacts); persist('leads',leads);
+  if(btn){ btn.disabled=false; btn.textContent='Place cities on map'; }
+  toast(ok+' of '+todo.length+' placed by city','success');
+  if(MAPQ.loaded) renderMapView();
+}
+
 // ============================================================
 // MAP — three ways to see the book: globe, network, flow.
 // Libraries and the world atlas load on first open, not on page
@@ -1400,9 +1487,11 @@ function mapPeople(){
   // not closed with yet, and it still belongs on the map.
   const out=[];
   contacts.forEach(c=>out.push({kind:'Contact',name:c.name,company:c.company||'',role:c.type||'',
-    country:c.country||'',mats:splitMats(c.commodity),trust:c.trust||'Unknown'}));
+    city:c.city||'',country:c.country||'',lon:c.lon,lat:c.lat,
+    mats:splitMats(c.commodity),trust:c.trust||'Unknown'}));
   leads.forEach(l=>out.push({kind:'Lead',name:l.name,company:l.company||'',role:l.type||'',
-    country:l.country||'',mats:splitMats(l.commodity),trust:'Unknown'}));
+    city:l.city||'',country:l.country||'',lon:l.lon,lat:l.lat,
+    mats:splitMats(l.commodity),trust:'Unknown'}));
   return out;
 }
 function splitMats(v){ return (v||'').split(',').map(t=>t.trim()).filter(Boolean); }
@@ -1476,6 +1565,10 @@ function matchesFilter(p){
   if(kind==='N::') return (p.company||p.name)===val;
   return true;
 }
+function mapZoom(dir){
+  if(!MAPQ.setZoom) return;
+  MAPQ.setZoom(dir===0?1:(MAPQ.zoom||1)*(dir>0?1.5:1/1.5));
+}
 function applyMapFilter(){ MAPQ.filter=document.getElementById('mapFilter').value; renderMapView(); }
 
 function mapTip(ev,html){
@@ -1510,7 +1603,13 @@ function drawMapGlobe(){
   const stage=document.getElementById('mapStage');
   const people=mapPeople();
   const placed=[], unplaced=[];
-  people.forEach(p=>{ const ll=llFor(p.country); if(ll){ p.ll=ll; placed.push(p); } else unplaced.push(p); });
+  people.forEach(p=>{
+    // A geocoded city wins; otherwise the country centroid still puts the
+    // contact on the right landmass, just not on the right street.
+    if(typeof p.lon==='number'&&typeof p.lat==='number'){ p.ll=[p.lon,p.lat]; p.exact=true; placed.push(p); return; }
+    const ll=llFor(p.country);
+    if(ll){ p.ll=ll; p.exact=false; placed.push(p); } else unplaced.push(p);
+  });
 
   const W=900,H=560, dpr=Math.min(2,window.devicePixelRatio||1);
   const cv=document.createElement('canvas');
@@ -1520,19 +1619,32 @@ function drawMapGlobe(){
 
   const land=topojson.feature(MAPQ.atlas,MAPQ.atlas.objects.countries);
   const borders=topojson.mesh(MAPQ.atlas,MAPQ.atlas.objects.countries,(a,b)=>a!==b);
-  const proj=d3.geoOrthographic().translate([W/2,H/2]).scale(H/2-26).clipAngle(90);
+  const base=H/2-26;
+  const proj=d3.geoOrthographic().translate([W/2,H/2]).clipAngle(90);
   const path=d3.geoPath(proj,ctx), grat=d3.geoGraticule10();
-  let rot=[-22,-12,0], hover=null;
+  let rot=MAPQ.rot?MAPQ.rot.slice():[-22,-12,0];
+  let zoom=MAPQ.zoom||1, hover=null;
 
-  // Group by country so several contacts in one place do not stack invisibly.
   const hits=placed.filter(matchesFilter);
-  const byCountry={};
-  hits.forEach(p=>{ const k=p.country.trim().toLowerCase(); (byCountry[k]=byCountry[k]||{ll:p.ll,country:p.country,people:[]}).people.push(p); });
-  const spots=Object.values(byCountry);
+  // Zoomed out, several contacts in one country would sit on top of each other,
+  // so they are drawn as one marker carrying a count. Zoomed in, each city
+  // separates and is drawn and labelled on its own.
+  function grouped(){
+    const g={};
+    hits.forEach(p=>{
+      const k = zoom>=2.2 ? (p.exact? (p.city||'')+'|'+p.country : p.country) : p.country;
+      (g[k]=g[k]||{ll:p.ll,label: zoom>=2.2 ? (p.exact?(p.city||p.country):p.country) : p.country,
+                    country:p.country,people:[]}).people.push(p);
+    });
+    return Object.values(g);
+  }
+  let spots=grouped();
 
   function visible(ll){ const c=proj.rotate(); return d3.geoDistance(ll,[-c[0],-c[1]])<Math.PI/2-0.02; }
   function draw(){
-    proj.rotate(rot); ctx.clearRect(0,0,W,H);
+    proj.rotate(rot).scale(base*zoom);
+    ctx.save(); ctx.clearRect(0,0,W,H);
+    ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
     const cx=W/2,cy=H/2,R=proj.scale();
     const g=ctx.createRadialGradient(cx,cy,R*0.72,cx,cy,R*1.16);
     g.addColorStop(0,'rgba(42,120,214,.15)'); g.addColorStop(1,'rgba(42,120,214,0)');
@@ -1540,11 +1652,9 @@ function drawMapGlobe(){
     ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.fillStyle='#e8eef5'; ctx.fill();
     ctx.beginPath(); path(grat); ctx.strokeStyle='#c8d2dd'; ctx.lineWidth=0.5; ctx.stroke();
     ctx.beginPath(); path(land); ctx.fillStyle='#d7dde4'; ctx.fill();
-    ctx.beginPath(); path(borders); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=0.6; ctx.stroke();
+    ctx.beginPath(); path(borders); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=Math.min(1.4,0.6*zoom); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=1; ctx.stroke();
 
-    // Everyone who did not match stays on the map, faint, so a gap is visible
-    // as a gap rather than as an empty ocean.
     placed.forEach(p=>{
       if(matchesFilter(p)||!visible(p.ll)) return;
       const xy=proj(p.ll); if(!xy) return;
@@ -1560,37 +1670,65 @@ function drawMapGlobe(){
       ctx.lineWidth=2.4; ctx.strokeStyle=trustColor(sp.people[0].trust); ctx.stroke();
       if(sp.people.length>1){
         ctx.fillStyle='#1a2e4a'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(String(sp.people.length),xy[0],xy[1]);
-        ctx.textBaseline='alphabetic';
+        ctx.fillText(String(sp.people.length),xy[0],xy[1]); ctx.textBaseline='alphabetic';
       }
-      if(hover===sp||spots.length<=12){
-        ctx.font='bold 11px Arial'; ctx.fillStyle='#1a2e4a'; ctx.textAlign='center';
-        ctx.fillText(sp.country,xy[0],xy[1]-r-6);
+      if(hover===sp||spots.length<=14||zoom>=2.2){
+        ctx.font='bold 11px Arial'; ctx.textAlign='center';
+        const t=sp.label, w=ctx.measureText(t).width;
+        ctx.fillStyle='rgba(255,255,255,.82)';
+        ctx.fillRect(xy[0]-w/2-3,xy[1]-r-17,w+6,14);
+        ctx.fillStyle='#1a2e4a'; ctx.fillText(t,xy[0],xy[1]-r-6);
       }
     });
+    ctx.restore();
+    const zl=document.getElementById('mapZoomLabel');
+    if(zl) zl.textContent=zoom.toFixed(1)+'×'+(zoom>=2.2?' · cities':' · countries');
   }
+  function setZoom(z){
+    const was=zoom>=2.2;
+    zoom=Math.max(1,Math.min(9,z)); MAPQ.zoom=zoom;
+    if((zoom>=2.2)!==was) spots=grouped();
+    draw();
+  }
+  MAPQ.setZoom=setZoom;
+  MAPQ.flyTo=function(ll){
+    const from=rot.slice(), to=[-ll[0],-ll[1],0], iv=d3.interpolate(from,to), t0=performance.now();
+    if(zoom<3) setZoom(3.4);
+    (function step(now){
+      const k=Math.min(1,(now-t0)/750), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      rot=iv(e); MAPQ.rot=rot.slice(); draw();
+      if(k<1) requestAnimationFrame(step);
+    })(t0);
+  };
   draw();
 
   let dragging=false,p0=null,r0=null;
   cv.addEventListener('pointerdown',ev=>{ dragging=true; cv.classList.add('dragging');
     cv.setPointerCapture(ev.pointerId); p0=[ev.clientX,ev.clientY]; r0=rot.slice(); });
   cv.addEventListener('pointermove',ev=>{
-    if(dragging&&p0){ rot[0]=r0[0]+(ev.clientX-p0[0])*0.26;
-      rot[1]=Math.max(-72,Math.min(72,r0[1]-(ev.clientY-p0[1])*0.26)); draw(); return; }
+    if(dragging&&p0){
+      // Dragging turns less per pixel the further you are zoomed in, so the
+      // globe stays controllable rather than flicking round.
+      const k=0.26/zoom;
+      rot[0]=r0[0]+(ev.clientX-p0[0])*k;
+      rot[1]=Math.max(-72,Math.min(72,r0[1]-(ev.clientY-p0[1])*k));
+      MAPQ.rot=rot.slice(); draw(); return;
+    }
     const r=cv.getBoundingClientRect(), sx=W/r.width;
     const mx=(ev.clientX-r.left)*sx, my=(ev.clientY-r.top)*sx;
     let best=null,bd=1e9;
     spots.forEach(sp=>{ if(!visible(sp.ll))return; const xy=proj(sp.ll); if(!xy)return;
       const d=Math.hypot(xy[0]-mx,xy[1]-my); if(d<16&&d<bd){bd=d;best=sp;} });
     if(best!==hover){ hover=best; draw(); }
-    if(best) mapTip(ev,'<b>'+best.country+'</b><span>'+best.people.length+
-      (best.people.length===1?' counterparty':' counterparties')+'</span>');
-    else hideMapTip();
+    if(best){
+      const names=best.people.slice(0,4).map(x=>x.company||x.name).join(', ');
+      mapTip(ev,'<b>'+best.label+'</b><span>'+names+(best.people.length>4?' +'+(best.people.length-4)+' more':'')+'</span>');
+    } else hideMapTip();
   });
   window.addEventListener('pointerup',()=>{ dragging=false; cv.classList.remove('dragging'); });
   cv.addEventListener('pointerleave',()=>{ hover=null; hideMapTip(); draw(); });
+  cv.addEventListener('wheel',ev=>{ ev.preventDefault(); setZoom(zoom*(ev.deltaY<0?1.14:1/1.14)); },{passive:false});
 
-  // Result list, and a plain answer when the answer is nobody.
   const label=MAPQ.filter==='ALL'?'everyone':document.getElementById('mapFilter').selectedOptions[0].textContent;
   document.getElementById('mapCount').textContent=hits.length+' of '+people.length+' shown';
   const list=document.getElementById('mapList');
@@ -1599,15 +1737,22 @@ function drawMapGlobe(){
       label+'</strong>. That is a gap worth filling.</div>';
   } else {
     list.innerHTML='<div class="mlh">Matches &middot; '+hits.length+'</div>'+
-      hits.slice().sort((a,b)=>(a.country||'').localeCompare(b.country||'')).map(p=>
-        '<button type="button" onclick="goToSection(\''+(p.kind==='Lead'?'leads':'contacts')+'\')">'+
-        '<b>'+(p.company||p.name)+'</b><span>'+(p.country||'no country')+
-        (p.role?' · '+p.role:'')+'</span></button>').join('');
+      hits.slice().sort((a,b)=>(a.country||'').localeCompare(b.country||'')).map((p,i)=>
+        '<button type="button" onclick="mapZoomTo('+i+')"><b>'+(p.company||p.name)+'</b><span>'+
+        (p.city?p.city+', ':'')+(p.country||'no country')+(p.role?' · '+p.role:'')+
+        (p.exact?'':' · country only')+'</span></button>').join('');
+    MAPQ.hits=hits;
   }
-  document.getElementById('mapUnplaced').textContent = unplaced.length
-    ? unplaced.length+' contact'+(unplaced.length===1?'':'s')+' could not be placed — the country is blank or not recognised: '+
-      unplaced.slice(0,6).map(p=>(p.company||p.name)+(p.country?' ('+p.country+')':'')).join(', ')+(unplaced.length>6?'…':'')
-    : '';
+  const noCity=hits.filter(p=>!p.exact).length;
+  document.getElementById('mapUnplaced').innerHTML =
+    (unplaced.length?unplaced.length+' contact'+(unplaced.length===1?'':'s')+' could not be placed — the country is blank or not recognised. ':'')+
+    (noCity?noCity+' shown at country level; add a city to place them exactly. ':'')+
+    '<button class="mapbtn" style="padding:5px 11px;font-size:12px;" onclick="backfillMap(this)">Place cities on map</button>';
+}
+// Clicking a match turns the globe to it and zooms in far enough to read cities.
+function mapZoomTo(i){
+  const p=(MAPQ.hits||[])[i]; if(!p||!p.ll||!MAPQ.flyTo) return;
+  MAPQ.flyTo(p.ll);
 }
 
 /* ---------- NETWORK ---------- */
