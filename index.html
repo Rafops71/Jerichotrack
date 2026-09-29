@@ -562,6 +562,7 @@ tr:hover td { background: #fafbfc; }
       <button type="button" class="zbtn" onclick="mapZoom(-1)" aria-label="Zoom out">&minus;</button>
       <button type="button" class="zbtn" onclick="mapZoom(1)" aria-label="Zoom in">+</button>
       <button type="button" class="zbtn wide" onclick="mapZoom(0)">Reset</button>
+      <button type="button" class="zbtn wide" id="globeStyleBtn" onclick="toggleGlobeStyle(this)" title="Switch the map look">Operations</button>
       <span id="mapZoomLabel" class="map-count"></span>
     </span>
   </div>
@@ -1480,7 +1481,31 @@ const COUNTRY_LL={
  'australia':[133.8,-25.3],'new zealand':[174.9,-40.9],'papua new guinea':[143.96,-6.3]
 };
 
-let MAPQ={ loaded:false, view:'globe', filter:'ALL', globe:null, atlas:null };
+let MAPQ={ loaded:false, view:'globe', filter:'ALL', globe:null, atlas:null,
+  style:(localStorage.getItem('jericho_globe_style')||'ops') };
+function reliefTone(lat){
+  const a=Math.abs(lat);
+  if(a>68) return '#eef1f3';
+  if(a>58) return '#c3cbb6';
+  if(a>44) return '#a8b98a';
+  if(a>34) return '#c2bd85';
+  if(a>22) return '#d8c79a';
+  if(a>12) return '#b6ba76';
+  return '#8ba86a';
+}
+const GLOBE_STYLES={
+  ops:{ name:'Operations', ocean:'#e8eef5', grat:'#c8d2dd', border:'#b9c2cd', rim:'#b9c2cd',
+        halo:'rgba(42,120,214,.15)', shade:0, label:'#1a2e4a', labelBg:'rgba(255,255,255,.82)', serif:false },
+  atlas:{ name:'Atlas', ocean:'#1f5d86', oceanDeep:'#0d3c5c', grat:'rgba(226,190,120,.30)',
+        border:'rgba(92,74,48,.45)', rim:'#8a6f43', halo:'rgba(120,180,225,.28)', shade:.34,
+        label:'#2b2416', labelBg:'rgba(246,238,220,.92)', serif:true }
+};
+function toggleGlobeStyle(btn){
+  MAPQ.style = MAPQ.style==='ops' ? 'atlas' : 'ops';
+  localStorage.setItem('jericho_globe_style',MAPQ.style);
+  if(btn) btn.textContent=GLOBE_STYLES[MAPQ.style].name;
+  renderMapView();
+}
 
 function mapPeople(){
   // Leads and contacts share a shape here; a lead is a counterparty you have
@@ -1526,6 +1551,8 @@ async function openMap(){
     }
   }
   loading.style.display='none';
+  const gb=document.getElementById('globeStyleBtn');
+  if(gb) gb.textContent=GLOBE_STYLES[MAPQ.style].name;
   buildMapFilter();
   renderMapView();
 }
@@ -1642,18 +1669,37 @@ function drawMapGlobe(){
 
   function visible(ll){ const c=proj.rotate(); return d3.geoDistance(ll,[-c[0],-c[1]])<Math.PI/2-0.02; }
   function draw(){
+    const S=GLOBE_STYLES[MAPQ.style]||GLOBE_STYLES.ops;
     proj.rotate(rot).scale(base*zoom);
     ctx.save(); ctx.clearRect(0,0,W,H);
     ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
     const cx=W/2,cy=H/2,R=proj.scale();
-    const g=ctx.createRadialGradient(cx,cy,R*0.72,cx,cy,R*1.16);
-    g.addColorStop(0,'rgba(42,120,214,.15)'); g.addColorStop(1,'rgba(42,120,214,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,R*1.16,0,2*Math.PI); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.fillStyle='#e8eef5'; ctx.fill();
-    ctx.beginPath(); path(grat); ctx.strokeStyle='#c8d2dd'; ctx.lineWidth=0.5; ctx.stroke();
-    ctx.beginPath(); path(land); ctx.fillStyle='#d7dde4'; ctx.fill();
-    ctx.beginPath(); path(borders); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=Math.min(1.4,0.6*zoom); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=1; ctx.stroke();
+    const g=ctx.createRadialGradient(cx,cy,R*0.74,cx,cy,R*1.18);
+    g.addColorStop(0,S.halo); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,R*1.18,0,2*Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI);
+    if(S.oceanDeep){
+      const og=ctx.createRadialGradient(cx-R*0.28,cy-R*0.3,R*0.1,cx,cy,R);
+      og.addColorStop(0,S.ocean); og.addColorStop(1,S.oceanDeep); ctx.fillStyle=og;
+    } else ctx.fillStyle=S.ocean;
+    ctx.fill();
+    ctx.beginPath(); path(grat); ctx.strokeStyle=S.grat; ctx.lineWidth=0.55; ctx.stroke();
+    if(S.shade>0){
+      // Per-country fill, so each landmass can carry its own climate tone.
+      land.features.forEach(f=>{ ctx.beginPath(); path(f);
+        ctx.fillStyle=reliefTone(d3.geoCentroid(f)[1]); ctx.fill(); });
+    } else { ctx.beginPath(); path(land); ctx.fillStyle='#d7dde4'; ctx.fill(); }
+    ctx.beginPath(); path(borders); ctx.strokeStyle=S.border; ctx.lineWidth=Math.min(1.4,0.6*zoom); ctx.stroke();
+    if(S.shade>0){
+      // A lit sphere, the way a globe under one lamp reads.
+      ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.clip();
+      const sg=ctx.createRadialGradient(cx-R*0.42,cy-R*0.46,R*0.06,cx-R*0.1,cy-R*0.1,R*1.25);
+      sg.addColorStop(0,'rgba(255,255,255,'+(S.shade*0.75)+')');
+      sg.addColorStop(0.45,'rgba(255,255,255,0)');
+      sg.addColorStop(1,'rgba(0,0,0,'+(S.shade*1.25)+')');
+      ctx.fillStyle=sg; ctx.fillRect(cx-R,cy-R,R*2,R*2); ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.strokeStyle=S.rim; ctx.lineWidth=1.2; ctx.stroke();
 
     placed.forEach(p=>{
       if(matchesFilter(p)||!visible(p.ll)) return;
@@ -1673,11 +1719,12 @@ function drawMapGlobe(){
         ctx.fillText(String(sp.people.length),xy[0],xy[1]); ctx.textBaseline='alphabetic';
       }
       if(hover===sp||spots.length<=14||zoom>=2.2){
-        ctx.font='bold 11px Arial'; ctx.textAlign='center';
+        ctx.font=S.serif?'italic bold 12px Georgia, serif':'bold 11px Arial';
+        ctx.textAlign='center';
         const t=sp.label, w=ctx.measureText(t).width;
-        ctx.fillStyle='rgba(255,255,255,.82)';
-        ctx.fillRect(xy[0]-w/2-3,xy[1]-r-17,w+6,14);
-        ctx.fillStyle='#1a2e4a'; ctx.fillText(t,xy[0],xy[1]-r-6);
+        ctx.fillStyle=S.labelBg;
+        ctx.fillRect(xy[0]-w/2-4,xy[1]-r-18,w+8,15);
+        ctx.fillStyle=S.label; ctx.fillText(t,xy[0],xy[1]-r-6);
       }
     });
     ctx.restore();
