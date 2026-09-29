@@ -236,7 +236,7 @@ tr:hover td { background: #fafbfc; }
 <div id="addDealForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Deal</h3>
 <div class="form-grid">
-  <div class="form-group"><label>Commodity *</label><input id="dealCommodity" type="text" placeholder="e.g. Chrome Ore"></div>
+  <div class="form-group"><label>Commodity *</label><div id="dealCommodityPicker"></div></div>
   <div class="form-group"><label>Broker / Introducer</label><input id="dealBroker" type="text" placeholder="Who introduced this deal?"></div>
   <div class="form-group"><label>Buyer</label><input id="dealBuyer" type="text" placeholder="Buyer name"></div>
   <div class="form-group"><label>Seller</label><input id="dealSeller" type="text" placeholder="Seller name"></div>
@@ -956,17 +956,15 @@ function showSection(s,btn){
 }
 
 // LEADS
-// What a contact or lead actually deals in. Ore and refined metal are separate
-// entries because they are separate trades: a copper concentrate seller and a
-// cathode buyer are not the same counterparty, and neither is a chrome ore
-// miner and a ferrochrome smelter. Grade stays out of it -- a broker trades
-// chrome ore, not only 42% -- so the grade-level list stays in the broker quote
-// form where a grade is what is being quoted. Services sit alongside the
-// materials so a freight forwarder is findable the same way.
+// What a contact, lead or deal deals in. Copper ore and copper cathodes are
+// separate entries because they are separate trades -- a concentrate seller and
+// a cathode buyer are not the same counterparty. Grade stays out of it: a broker
+// trades chrome ore, not only 42%, so the grade-level list stays in the broker
+// quote form where a grade is what is being quoted. Services sit alongside the
+// materials so a freight forwarder is findable the same way. Deals use the same
+// list as contacts so a deal's material matches the people who trade it.
 const COMMODITY_GROUPS=[
-  {label:'Ores & Concentrates',items:['Chrome Ore','Manganese Ore','Iron Ore','Copper Ore / Concentrate','Antimony Ore / Concentrate','Spodumene (Lithium Concentrate)','PGM Concentrate']},
-  {label:'Refined Metals & Alloys',items:['Ferrochrome','Ferromanganese','Silico-Manganese','Copper Cathodes','Antimony Metal / Ingot','Lithium Carbonate','Lithium Hydroxide','Platinum','Palladium','Rhodium','Gold','Silver']},
-  {label:'Energy',items:['Crude Oil']},
+  {label:'Materials',items:['Chrome Ore','Ferrochrome','Manganese Ore','Iron Ore','Antimony','Lithium','Platinum','Palladium','Rhodium','Gold','Silver','Copper Ore','Copper Cathodes','Crude Oil']},
   {label:'Services & Logistics',items:['Shipping / Ocean Freight','Freight Forwarding','Inspection & Assay','Warehousing & Storage','Customs Clearance','Trade Finance','Insurance']}
 ];
 function renderCommodityPicker(prefix){
@@ -1014,11 +1012,11 @@ const stages=['New','Waiting Documents','Waiting Financials','Negotiation','Fina
 function showAddDeal(){document.getElementById('addDealForm').style.display='block';}
 function hideAddDeal(){document.getElementById('addDealForm').style.display='none';}
 function saveDeal(){
-  const commodity=document.getElementById('dealCommodity').value;if(!commodity){toast('Please enter a commodity','error');return;}
+  const commodity=getCommoditySelection('deal');if(!commodity){toast('Please select a commodity','error');return;}
   const item={id:Date.now(),commodity,broker:document.getElementById('dealBroker').value,buyer:document.getElementById('dealBuyer').value,seller:document.getElementById('dealSeller').value,quantity:document.getElementById('dealQuantity').value,unit:document.getElementById('dealUnit').value,price:document.getElementById('dealPrice').value,origin:document.getElementById('dealOrigin').value,stage:document.getElementById('dealStage').value,trust:document.getElementById('dealTrust').value,notes:document.getElementById('dealNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   pipeline.push(item);persist('pipeline',pipeline);renderPipeline();hideAddDeal();
   saveItemToCloud('pipeline',item);
-  ['dealCommodity','dealNotes','dealPrice','dealOrigin'].forEach(id=>document.getElementById(id).value='');
+  ['dealNotes','dealPrice','dealOrigin'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('deal');
   toast('Deal saved','success');
 }
 function getTrustColor(t){return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#ccc';}
@@ -1283,7 +1281,7 @@ function updateDashboard(){
 }
 
 updateDashboard();
-renderCommodityPicker('lead');renderCommodityPicker('contact');
+renderCommodityPicker('lead');renderCommodityPicker('contact');renderCommodityPicker('deal');
 fetchCurrencies(false).then(()=>buildTicker());
 </script>
 
