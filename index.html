@@ -19,12 +19,12 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .sync-status.syncing { background: rgba(232,160,32,0.25); color: #f5d090; }
 .ticker-bar { background: #0f1e30; color: #e0e0e0; padding: 7px 0; overflow: hidden; position: relative; border-bottom: 2px solid #e8a020; }
 .ticker-wrap { overflow: hidden; }
-.ticker-track { display: inline-flex; animation: tickerScroll 20s linear infinite; white-space: nowrap; }
+.ticker-track { display: inline-flex; animation: tickerScroll var(--ticker-secs, 30s) linear infinite; white-space: nowrap; will-change: transform; }
 .ticker-bar:hover .ticker-track { animation-play-state: paused; }
 .ticker-item { display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 13px; border-right: 1px solid #2a3f5a; }
 .ticker-item .t-name { color: #7ea8cc; font-weight: bold; font-size: 11px; text-transform: uppercase; }
 .ticker-item .t-price { color: white; font-weight: bold; }
-@keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-50%); } }
+@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .nav { background: #22395e; padding: 0 15px; display: flex; gap: 2px; flex-wrap: wrap; }
 .nav button { background: none; border: none; color: #aac4e0; padding: 12px 14px; cursor: pointer; font-size: 13px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .nav button.active, .nav button:hover { color: white; border-bottom: 3px solid #e8a020; }
@@ -699,10 +699,24 @@ function toast(msg,type='info',duration=3500){
 }
 
 // SYNC STATUS INDICATOR
-function setSyncStatus(state){
+// Collections whose live listener was refused by the Firestore rules. One
+// refusal used to flip the whole banner to "Offline", which was misleading when
+// most collections were syncing perfectly well -- and hid the real cause.
+const syncDenied=new Set();
+function setSyncStatus(state,collection){
   const el=document.getElementById('syncStatus');
   if(!el)return;
+  if(state==='denied'&&collection){ syncDenied.add(collection); }
   el.classList.remove('online','offline','syncing');
+  if(syncDenied.size&&state!=='offline'){
+    el.classList.add('offline');
+    const n=syncDenied.size;
+    el.textContent='⚠️ '+n+' collection'+(n===1?'':'s')+' not syncing';
+    el.title='Firestore refused these: '+[...syncDenied].join(', ')+
+      '. Everything else is live. Fix the security rules in the Firebase console.';
+    return;
+  }
+  el.title='';
   if(state==='online'){el.classList.add('online');el.textContent='✅ Synced — Live';}
   else if(state==='offline'){el.classList.add('offline');el.textContent='⚠️ Offline — saving locally';}
   else{el.classList.add('syncing');el.textContent='🔄 Connecting...';}
@@ -794,7 +808,9 @@ function startCloudSync(){
       firstLoadCount++;
     },(error)=>{
       console.warn('Sync error on '+colName+':',error);
-      setSyncStatus('offline');
+      // A refusal is a rules problem, not a lost connection: say which.
+      if(error&&error.code==='permission-denied') setSyncStatus('denied',colName);
+      else setSyncStatus('offline');
     });
   });
 }
@@ -991,9 +1007,21 @@ function buildTicker(){
     if(c?.d&&typeof c.d.price==='number'&&c.d.ageDays!==undefined&&c.d.ageDays<=10)
       items.push({n:f.ticker,p:'$'+c.d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})});
   });
-  if(!items.length){document.getElementById('tickerTrack').innerHTML='<div class="ticker-item"><span class="t-name">No price data</span><span class="t-price">Go to Prices → Refresh</span></div>';return;}
+  const track=document.getElementById('tickerTrack');
+  if(!items.length){
+    track.style.animation='none';
+    track.innerHTML='<div class="ticker-item"><span class="t-name">No price data</span><span class="t-price">Go to Prices → Refresh</span></div>';
+    return;
+  }
+  // Rewriting the strip restarts the scroll from the beginning, so only touch it
+  // when a price has actually changed.
+  const sig=items.map(i=>i.n+'='+i.p).join('|');
+  if(track.dataset.sig===sig) return;
+  track.dataset.sig=sig;
+  track.style.animation='';
+  track.style.setProperty('--ticker-secs',(items.length*4.5).toFixed(0)+'s');
   const all=[...items,...items];
-  document.getElementById('tickerTrack').innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
+  track.innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
 }
 
 // HUNTER.IO EMAIL VERIFY
