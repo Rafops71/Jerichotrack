@@ -55,6 +55,13 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .form-group textarea { height: 75px; resize: vertical; }
 .email-row { display: flex; gap: 6px; }
 .email-row input { flex: 1; }
+.cmd-picker { border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; max-height: 190px; overflow-y: auto; background: #fff; }
+.cmd-group { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #1a2e4a; opacity: 0.65; margin: 6px 0 4px 0; }
+.cmd-group:first-child { margin-top: 0; }
+.cmd-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 10px; }
+.cmd-opt { font-size: 13px; font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.cmd-opt input { width: auto; margin: 0; }
+.cmd-other { margin-top: 8px; }
 .table-box { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); overflow-x: auto; margin-bottom: 20px; }
 table { width: 100%; border-collapse: collapse; min-width: 500px; }
 thead tr { background: #1a2e4a; color: white; }
@@ -206,7 +213,7 @@ tr:hover td { background: #fafbfc; }
   <div class="form-group"><label>Introduced By</label><input id="leadIntroBy" type="text" placeholder="Who introduced this lead?"></div>
   <div class="form-group"><label>Status</label><select id="leadStatus"><option>New</option><option>Contacted</option><option>Qualified</option><option>Opportunity</option><option>Dead</option></select></div>
   <div class="form-group"><label>Follow-up Date</label><input id="leadFollowup" type="date"></div>
-  <div class="form-group"><label>Commodity Interest</label><input id="leadCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
+  <div class="form-group"><label>Commodity Interest</label><div id="leadCommodityPicker"></div></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="leadNotes" placeholder="How did you meet? What opportunity?"></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -268,7 +275,7 @@ tr:hover td { background: #fafbfc; }
       <button type="button" class="btn-hunter" onclick="verifyEmail()">🔍 Verify</button>
     </div>
   </div>
-  <div class="form-group"><label>Commodity Focus</label><input id="contactCommodity" type="text" placeholder="e.g. Chrome, Manganese"></div>
+  <div class="form-group"><label>Commodity Focus / Services</label><div id="contactCommodityPicker"></div></div>
   <div class="form-group"><label>Introduced By</label><input id="contactIntroBy" type="text" placeholder="Who introduced this contact?"></div>
   <div class="form-group"><label>Trust Level</label><select id="contactTrust"><option>Green</option><option>Yellow</option><option>Red</option><option>Unknown</option></select></div>
   <div class="form-group"><label>KYC Status</label><select id="contactKyc"><option>No KYC</option><option>Partial KYC</option><option>Full KYC</option></select></div>
@@ -731,8 +738,8 @@ function globalSearchFn(q){
   if(!q||q.length<2){res.style.display='none';return;}
   const ql=q.toLowerCase();
   const items=[];
-  leads.forEach(l=>{if((l.name+l.company+l.country+(l.commodity||'')+(l.notes||'')).toLowerCase().includes(ql))items.push({type:'Lead',label:l.name+(l.company?' — '+l.company:'')+(l.commodity?' · '+l.commodity:''),section:'leads'});});
-  contacts.forEach(c=>{if((c.name+c.company+c.country+(c.commodity||'')+(c.notes||'')).toLowerCase().includes(ql))items.push({type:'Contact',label:c.name+(c.company?' — '+c.company:'')+(c.commodity?' · '+c.commodity:''),section:'contacts'});});
+  leads.forEach(l=>{if((l.name+l.company+l.country+(l.type||'')+(l.commodity||'')+(l.notes||'')).toLowerCase().includes(ql))items.push({type:'Lead',label:l.name+(l.company?' — '+l.company:'')+(l.commodity?' · '+l.commodity:''),section:'leads'});});
+  contacts.forEach(c=>{if((c.name+c.company+c.country+(c.type||'')+(c.commodity||'')+(c.notes||'')).toLowerCase().includes(ql))items.push({type:'Contact',label:c.name+(c.company?' — '+c.company:'')+(c.commodity?' · '+c.commodity:''),section:'contacts'});});
   pipeline.forEach(d=>{if((d.commodity+d.buyer+d.seller+d.broker+(d.notes||'')).toLowerCase().includes(ql))items.push({type:'Deal',label:d.commodity+(d.buyer?' → '+d.buyer:''),section:'pipeline'});});
   tasks.forEach(t=>{if((t.title+(t.linked||'')+(t.notes||'')).toLowerCase().includes(ql))items.push({type:'Task',label:t.title,section:'tasks'});});
   documents.forEach(d=>{if((d.name+(d.party||'')+(d.linked||'')).toLowerCase().includes(ql))items.push({type:'Doc',label:d.name,section:'documents'});});
@@ -949,14 +956,43 @@ function showSection(s,btn){
 }
 
 // LEADS
+// What a contact or lead actually deals in. Materials are kept at material
+// level, not grade level -- a broker trades chrome ore, not only 42% -- while
+// the grade-level list stays in the broker quote form where a grade matters.
+// Services sit alongside them so a freight forwarder is findable the same way.
+const COMMODITY_GROUPS=[
+  {label:'Materials',items:['Chrome Ore','Ferrochrome','Manganese Ore','Iron Ore','Antimony','Lithium','Platinum','Palladium','Rhodium','Gold','Silver','Copper','Crude Oil']},
+  {label:'Services & Logistics',items:['Shipping / Ocean Freight','Freight Forwarding','Inspection & Assay','Warehousing & Storage','Customs Clearance','Trade Finance','Insurance']}
+];
+function renderCommodityPicker(prefix){
+  const el=document.getElementById(prefix+'CommodityPicker');if(!el)return;
+  el.innerHTML='<div class="cmd-picker">'+COMMODITY_GROUPS.map(g=>
+    '<div class="cmd-group">'+g.label+'</div><div class="cmd-opts">'+g.items.map(i=>
+      `<label class="cmd-opt"><input type="checkbox" value="${i}"> ${i}</label>`).join('')+'</div>').join('')+
+    `</div><div class="cmd-other"><input id="${prefix}CommodityOther" type="text" placeholder="Anything else, comma separated"></div>`;
+}
+// Stored as the same comma-separated string the field has always held, so the
+// entries typed before this picker existed stay readable and searchable.
+function getCommoditySelection(prefix){
+  const el=document.getElementById(prefix+'CommodityPicker');if(!el)return '';
+  const picked=[...el.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);
+  const other=(document.getElementById(prefix+'CommodityOther')||{}).value||'';
+  other.split(',').map(t=>t.trim()).filter(Boolean).forEach(t=>picked.push(t));
+  return picked.join(', ');
+}
+function clearCommoditySelection(prefix){
+  const el=document.getElementById(prefix+'CommodityPicker');if(!el)return;
+  el.querySelectorAll('input[type=checkbox]:checked').forEach(c=>{c.checked=false;});
+  const o=document.getElementById(prefix+'CommodityOther');if(o)o.value='';
+}
 function showAddLead(){document.getElementById('addLeadForm').style.display='block';}
 function hideAddLead(){document.getElementById('addLeadForm').style.display='none';}
 function saveLead(){
   const name=document.getElementById('leadName').value;if(!name){toast('Please enter a name','error');return;}
-  const item={id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:document.getElementById('leadCommodity').value,notes:document.getElementById('leadNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const item={id:Date.now(),name,company:document.getElementById('leadCompany').value,type:document.getElementById('leadType').value,country:document.getElementById('leadCountry').value,phone:document.getElementById('leadPhone').value,email:document.getElementById('leadEmail').value,introBy:document.getElementById('leadIntroBy').value,status:document.getElementById('leadStatus').value,followup:document.getElementById('leadFollowup').value,commodity:getCommoditySelection('lead'),notes:document.getElementById('leadNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   leads.push(item);persist('leads',leads);renderLeads();hideAddLead();
   saveItemToCloud('leads',item);
-  ['leadName','leadCompany','leadNotes','leadIntroBy','leadCommodity'].forEach(id=>document.getElementById(id).value='');
+  ['leadName','leadCompany','leadNotes','leadIntroBy'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('lead');
   toast('Lead saved','success');
 }
 function renderLeads(q=''){
@@ -997,10 +1033,10 @@ function showAddContact(){document.getElementById('addContactForm').style.displa
 function hideAddContact(){document.getElementById('addContactForm').style.display='none';}
 function saveContact(){
   const name=document.getElementById('contactName').value;if(!name){toast('Please enter a name','error');return;}
-  const item={id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:document.getElementById('contactCommodity').value,introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
+  const item={id:Date.now(),name,company:document.getElementById('contactCompany').value,type:document.getElementById('contactType').value,country:document.getElementById('contactCountry').value,phone:document.getElementById('contactPhone').value,email:document.getElementById('contactEmail').value,commodity:getCommoditySelection('contact'),introBy:document.getElementById('contactIntroBy').value,trust:document.getElementById('contactTrust').value,kyc:document.getElementById('contactKyc').value,followup:document.getElementById('contactFollowup').value,linkedin:document.getElementById('contactLinkedin').value,notes:document.getElementById('contactNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
   contacts.push(item);persist('contacts',contacts);renderContacts();hideAddContact();
   saveItemToCloud('contacts',item);
-  ['contactName','contactCompany','contactCommodity','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');
+  ['contactName','contactCompany','contactNotes','contactIntroBy','contactLinkedin'].forEach(id=>document.getElementById(id).value='');clearCommoditySelection('contact');
   toast('Contact saved','success');
 }
 function renderContacts(_,q=''){
@@ -1242,6 +1278,7 @@ function updateDashboard(){
 }
 
 updateDashboard();
+renderCommodityPicker('lead');renderCommodityPicker('contact');
 fetchCurrencies(false).then(()=>buildTicker());
 </script>
 
