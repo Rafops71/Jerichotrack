@@ -956,12 +956,17 @@ function showSection(s,btn){
 }
 
 // LEADS
-// What a contact or lead actually deals in. Materials are kept at material
-// level, not grade level -- a broker trades chrome ore, not only 42% -- while
-// the grade-level list stays in the broker quote form where a grade matters.
-// Services sit alongside them so a freight forwarder is findable the same way.
+// What a contact or lead actually deals in. Ore and refined metal are separate
+// entries because they are separate trades: a copper concentrate seller and a
+// cathode buyer are not the same counterparty, and neither is a chrome ore
+// miner and a ferrochrome smelter. Grade stays out of it -- a broker trades
+// chrome ore, not only 42% -- so the grade-level list stays in the broker quote
+// form where a grade is what is being quoted. Services sit alongside the
+// materials so a freight forwarder is findable the same way.
 const COMMODITY_GROUPS=[
-  {label:'Materials',items:['Chrome Ore','Ferrochrome','Manganese Ore','Iron Ore','Antimony','Lithium','Platinum','Palladium','Rhodium','Gold','Silver','Copper','Crude Oil']},
+  {label:'Ores & Concentrates',items:['Chrome Ore','Manganese Ore','Iron Ore','Copper Ore / Concentrate','Antimony Ore / Concentrate','Spodumene (Lithium Concentrate)','PGM Concentrate']},
+  {label:'Refined Metals & Alloys',items:['Ferrochrome','Ferromanganese','Silico-Manganese','Copper Cathodes','Antimony Metal / Ingot','Lithium Carbonate','Lithium Hydroxide','Platinum','Palladium','Rhodium','Gold','Silver']},
+  {label:'Energy',items:['Crude Oil']},
   {label:'Services & Logistics',items:['Shipping / Ocean Freight','Freight Forwarding','Inspection & Assay','Warehousing & Storage','Customs Clearance','Trade Finance','Insurance']}
 ];
 function renderCommodityPicker(prefix){
