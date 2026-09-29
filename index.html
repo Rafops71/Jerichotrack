@@ -731,8 +731,8 @@ function globalSearchFn(q){
   if(!q||q.length<2){res.style.display='none';return;}
   const ql=q.toLowerCase();
   const items=[];
-  leads.forEach(l=>{if((l.name+l.company+l.country+(l.notes||'')).toLowerCase().includes(ql))items.push({type:'Lead',label:l.name+(l.company?' — '+l.company:''),section:'leads'});});
-  contacts.forEach(c=>{if((c.name+c.company+c.country+(c.notes||'')).toLowerCase().includes(ql))items.push({type:'Contact',label:c.name+(c.company?' — '+c.company:''),section:'contacts'});});
+  leads.forEach(l=>{if((l.name+l.company+l.country+(l.commodity||'')+(l.notes||'')).toLowerCase().includes(ql))items.push({type:'Lead',label:l.name+(l.company?' — '+l.company:'')+(l.commodity?' · '+l.commodity:''),section:'leads'});});
+  contacts.forEach(c=>{if((c.name+c.company+c.country+(c.commodity||'')+(c.notes||'')).toLowerCase().includes(ql))items.push({type:'Contact',label:c.name+(c.company?' — '+c.company:'')+(c.commodity?' · '+c.commodity:''),section:'contacts'});});
   pipeline.forEach(d=>{if((d.commodity+d.buyer+d.seller+d.broker+(d.notes||'')).toLowerCase().includes(ql))items.push({type:'Deal',label:d.commodity+(d.buyer?' → '+d.buyer:''),section:'pipeline'});});
   tasks.forEach(t=>{if((t.title+(t.linked||'')+(t.notes||'')).toLowerCase().includes(ql))items.push({type:'Task',label:t.title,section:'tasks'});});
   documents.forEach(d=>{if((d.name+(d.party||'')+(d.linked||'')).toLowerCase().includes(ql))items.push({type:'Doc',label:d.name,section:'documents'});});
@@ -776,7 +776,7 @@ function fillCard(id,price,unit,change,pct,source,ts){
 function errCard(id,msg){const el=document.getElementById('card_'+id);if(!el)return;const label=el.dataset.label||id;el.innerHTML=`<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;}
 function renderPriceGrids(){
   document.getElementById('gridCurrency').innerHTML=makeCard('EURUSD','EUR / USD','currency')+makeCard('USDZAR','USD / ZAR','currency')+makeCard('EURZAR','EUR / ZAR','currency');
-  document.getElementById('gridMetals').innerHTML=makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal')+makeCard('IRONORE','Iron Ore 62% Fe','metal');
+  document.getElementById('gridMetals').innerHTML=makeCard('GOLD','Gold (XAU)','metal')+makeCard('SILVER','Silver (XAG)','metal')+makeCard('COPPER','Copper','metal')+makeCard('IRONORE','Iron Ore 62% Fe','metal')+makeCard('PLATINUM','Platinum','metal')+makeCard('PALLADIUM','Palladium','metal');
   document.getElementById('gridEnergy').innerHTML=makeCard('BRENT','Brent Crude','energy')+makeCard('WTI','WTI Crude','energy');
 }
 async function fetchCurrencies(force){
@@ -854,27 +854,34 @@ function applyOil(d){
   if(d.wti?.value)fillCard('WTI','$'+parseFloat(d.wti.value).toFixed(2),'USD / barrel · '+d.wti.period,null,null,'EIA (US Gov)',ts);
   else errCard('WTI','No EIA data');
 }
-async function fetchIronOre(force){
-  if(!force&&!isStale('ironore',1)){applyIronOre(priceCache['ironore'].d);return;}
+// Feeds served by the prices worker. Each is a live daily settlement; the
+// worker refuses a close older than 10 days and so does applyWorkerQuote.
+const WORKER_FEEDS=[
+  {key:'ironore',path:'/ironore',card:'IRONORE',ticker:'Iron Ore'},
+  {key:'platinum',path:'/platinum',card:'PLATINUM',ticker:'Platinum'},
+  {key:'palladium',path:'/palladium',card:'PALLADIUM',ticker:'Palladium'}
+];
+async function fetchWorkerQuote(feed,force){
+  if(!force&&!isStale(feed.key,1)){applyWorkerQuote(feed,priceCache[feed.key].d);return;}
   try{
-    const r=await fetch(PRICES_WORKER+'/ironore');
+    const r=await fetch(PRICES_WORKER+feed.path);
     const j=await r.json();
-    if(!j||!j.ok||typeof j.price!=='number'){errCard('IRONORE',(j&&j.error)?'Feed error':'No data');return;}
-    priceCache['ironore']={d:j,ts:Date.now()};saveCache();applyIronOre(j);
-  }catch(e){errCard('IRONORE','Feed unreachable');}
+    if(!j||!j.ok||typeof j.price!=='number'){errCard(feed.card,(j&&j.error)?'Feed error':'No data');return;}
+    priceCache[feed.key]={d:j,ts:Date.now()};saveCache();applyWorkerQuote(feed,j);
+  }catch(e){errCard(feed.card,'Feed unreachable');}
 }
-function applyIronOre(d){
+function applyWorkerQuote(feed,d){
   // A frozen feed still returns a plausible-looking number, so refuse to show
   // anything we cannot date: a stale print in front of a buyer is the worst case.
-  if(!d||typeof d.price!=='number'||d.ageDays===undefined||d.ageDays>10){errCard('IRONORE','Stale — check manually');return;}
-  const ts=priceCache['ironore']?.ts||Date.now();
-  fillCard('IRONORE','$'+d.price.toFixed(2),(d.unit||'USD / metric tonne')+' · '+d.asOf,d.change,d.pct,d.source||'FT / CME TIO c1',ts);
+  if(!d||typeof d.price!=='number'||d.ageDays===undefined||d.ageDays>10){errCard(feed.card,'Stale — check manually');return;}
+  const ts=priceCache[feed.key]?.ts||Date.now();
+  fillCard(feed.card,'$'+d.price.toFixed(2),(d.unit||'')+' · '+d.asOf,d.change,d.pct,d.source||'FT',ts);
 }
 async function fetchAllPrices(force){
   const msg=document.getElementById('priceMsg');
   if(msg)msg.textContent='Fetching prices...';
   renderPriceGrids();
-  await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force),fetchIronOre(force)]);
+  await Promise.all([fetchCurrencies(force),fetchMetals(force),fetchOil(force),...WORKER_FEEDS.map(f=>fetchWorkerQuote(f,force))]);
   const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   if(msg)msg.textContent='Prices loaded.';
   const pt=document.getElementById('priceTime');if(pt)pt.textContent='Last refresh: '+now;

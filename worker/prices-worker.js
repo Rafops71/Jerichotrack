@@ -1,8 +1,9 @@
 /**
  * Jericho Prices Worker
  * -----------------------------------------------------------------------------
- * Serves the one commodity in Jericho's manual set that has a genuine live
- * feed: Iron Ore 62% Fe CFR China (TSI) — the CME "TIO" contract, front month.
+ * Serves the commodities Jericho tracks that have a genuine live feed:
+ * Iron Ore 62% Fe CFR China (TSI) — the CME "TIO" contract, front month —
+ * plus the two PGMs that matter to South African trade, platinum and palladium.
  *
  * Why a worker at all: markets.ft.com returns no Access-Control-Allow-Origin
  * header, so index.html cannot call it directly from the browser. This proxy
@@ -12,13 +13,33 @@
  * Deploy separately from the intake worker so a failure here cannot affect
  * Intake:  wrangler deploy worker/prices-worker.js --name jericho-prices
  *
- * Route:  GET /ironore
+ * Routes:  GET /ironore   /platinum   /palladium
  */
 
-// FT's internal chart series endpoint, and the XID behind the iron ore tearsheet
-// at markets.ft.com/data/commodities/tearsheet/summary?c=Iron+ore
+// FT's internal chart series endpoint. Each XID comes from the corresponding
+// tearsheet at markets.ft.com/data/commodities/tearsheet/summary?c=<name>
 const FT_SERIES = "https://markets.ft.com/data/chartapi/series";
-const FT_XID = "608346748";
+
+const SYMBOLS = {
+  "/ironore": {
+    xid: "608346748",
+    symbol: "TIO",
+    name: "Iron Ore 62% Fe, CFR China (TSI)",
+    unit: "USD / metric tonne"
+  },
+  "/platinum": {
+    xid: "18366493",
+    symbol: "PL",
+    name: "Platinum",
+    unit: "USD / troy oz"
+  },
+  "/palladium": {
+    xid: "18483223",
+    symbol: "PA",
+    name: "Palladium",
+    unit: "USD / troy oz"
+  }
+};
 
 // The upstream is undocumented, so treat any shape change as a hard failure
 // rather than guessing, and never serve a close we cannot put a date on.
@@ -38,7 +59,7 @@ function json(obj, status) {
   });
 }
 
-async function fetchIronOre() {
+async function fetchQuote(spec) {
   const body = {
     days: 10,
     dataNormalized: false,
@@ -49,7 +70,7 @@ async function fetchIronOre() {
     timeServiceFormat: "JSON",
     returnDateType: "ISO8601",
     elements: [
-      { Label: "a", Type: "price", Symbol: FT_XID, OverlayIndicators: [], Params: {} }
+      { Label: "a", Type: "price", Symbol: spec.xid, OverlayIndicators: [], Params: {} }
     ]
   };
 
@@ -92,15 +113,15 @@ async function fetchIronOre() {
 
   return {
     ok: true,
-    symbol: "TIO",
-    name: "Iron Ore 62% Fe, CFR China (TSI)",
+    symbol: spec.symbol,
+    name: spec.name,
     price,
-    unit: "USD / metric tonne",
+    unit: spec.unit,
     asOf,
     ageDays,
     change,
     pct: change === null || !prev ? null : (change / prev) * 100,
-    source: "FT / CME TIO c1"
+    source: "FT"
   };
 }
 
@@ -109,16 +130,17 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
 
     const url = new URL(request.url);
-    if (url.pathname !== "/ironore") return json({ ok: false, error: "not found" }, 404);
+    const spec = SYMBOLS[url.pathname];
+    if (!spec) return json({ ok: false, error: "not found" }, 404);
     if (request.method !== "GET") return json({ ok: false, error: "method not allowed" }, 405);
 
     const cache = caches.default;
-    const cacheKey = new Request(url.origin + "/ironore", { method: "GET" });
+    const cacheKey = new Request(url.origin + url.pathname, { method: "GET" });
     const hit = await cache.match(cacheKey);
     if (hit) return hit;
 
     try {
-      const payload = await fetchIronOre();
+      const payload = await fetchQuote(spec);
       const res = json(payload);
       res.headers.set("Cache-Control", "public, max-age=" + CACHE_SECONDS);
       await cache.put(cacheKey, res.clone());
