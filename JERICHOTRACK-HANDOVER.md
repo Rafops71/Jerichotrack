@@ -32,7 +32,7 @@ These were said plainly and more than once. They are not preferences.
 | Thing | State |
 |---|---|
 | `jericho-prices` Cloudflare Worker | **LIVE**, deployed 29 Sep 2026 |
-| Everything in `index.html` | **NOT deployed.** Branch only. |
+| Everything in `index.html` | **NOT deployed.** Branch only — merging to `main` deploys it. |
 | `jericho-ai-inbox` worker (Intake) | Untouched this session |
 | companion.html | Untouched this session |
 
@@ -410,10 +410,24 @@ The required-field check still works: saving with nothing selected is refused.
 
 ## To go live
 
+**There is no Firebase hosting step.** `firebase.json` carries only Firestore
+rules and emulator ports, and `.firebaserc` points at `jericho-test`, not at a
+production project. The site is served by **GitHub Pages from `main`**:
+
+> https://rafops71.github.io/Jerichotrack/
+
+So merging to `main` *is* the deploy. Pages rebuilds within a minute or two.
+
 ```
 git checkout main
 git merge claude/awesome-clarke-4pr9d6      # brings 20 commits, 9 from this session
-firebase deploy --only hosting
+git push origin main
 ```
 
 The `jericho-prices` worker is already deployed and does not need redeploying.
+
+To roll back, push the previous `main` commit:
+
+```
+git push origin <previous-main-sha>:main --force-with-lease
+```
