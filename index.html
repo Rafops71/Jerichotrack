@@ -55,6 +55,33 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .form-group textarea { height: 75px; resize: vertical; }
 .email-row { display: flex; gap: 6px; }
 .email-row input { flex: 1; }
+.map-switch { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.mapbtn { background:#fff; border:1px solid #ddd; color:#555; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:13px; }
+.mapbtn.active { background:#1a2e4a; border-color:#1a2e4a; color:#fff; font-weight:bold; }
+.map-filter { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+.map-filter label { font-size:13px; font-weight:bold; color:#555; }
+.map-filter select { padding:9px 10px; border:1px solid #ddd; border-radius:4px; font-size:14px; max-width:100%; min-width:230px; background:#fff; }
+.map-count { font-size:12px; color:#777; }
+.map-blurb { font-size:13px; color:#666; margin:0 0 12px; max-width:70ch; }
+.map-split { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:14px; align-items:start; }
+@media(max-width:820px){ .map-split{ grid-template-columns:1fr; } }
+.map-stage { position:relative; background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.08); overflow:hidden; min-width:0; min-height:180px; }
+.map-stage canvas, .map-stage svg { display:block; width:100%; height:auto; }
+.map-stage canvas { cursor:grab; touch-action:none; }
+.map-stage canvas.dragging { cursor:grabbing; }
+.map-loading { padding:40px 20px; text-align:center; color:#999; font-size:14px; }
+.map-list { background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.08); overflow:hidden; max-height:520px; overflow-y:auto; }
+.map-list .mlh { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#999; padding:10px 12px 7px; border-bottom:1px solid #eee; }
+.map-list button { width:100%; text-align:left; background:none; border:none; border-bottom:1px solid #f0f0f0; padding:9px 12px; cursor:pointer; font-size:12.5px; color:#555; font-family:inherit; }
+.map-list button:hover { background:#fdf6e8; color:#1a2e4a; }
+.map-list button b { display:block; color:#1a2e4a; font-size:12.5px; }
+.map-list button span { font-size:11px; color:#999; }
+.map-list .empty { padding:16px 12px; font-size:12.5px; color:#999; }
+.map-tip { position:absolute; pointer-events:none; opacity:0; transition:opacity .12s; background:#0f1e30; color:#fff; border-radius:4px; padding:7px 10px; font-size:12px; max-width:230px; z-index:5; line-height:1.4; }
+.map-tip b { font-weight:bold; }
+.map-tip span { display:block; font-size:11px; color:#9fb3cc; margin-top:2px; }
+.map-note { font-size:12px; color:#999; margin:10px 0 0; font-style:italic; }
+
 .cmd-picker { border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; max-height: 190px; overflow-y: auto; background: #fff; }
 .cmd-group { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #1a2e4a; opacity: 0.65; margin: 6px 0 4px 0; }
 .cmd-group:first-child { margin-top: 0; }
@@ -153,6 +180,7 @@ tr:hover td { background: #fafbfc; }
   <button onclick="showSection('documents',this)">Documents</button>
   <button onclick="showSection('prices',this)">Prices</button>
   <button onclick="showSection('relationships',this)">Relationships</button>
+  <button onclick="showSection('map',this)">Map</button>
   <button onclick="showSection('backup',this)">Backup</button>
 </div>
 
@@ -457,7 +485,14 @@ tr:hover td { background: #fafbfc; }
 <h3 style="color:#1a2e4a;margin-top:0;">New Broker Quote / Manual Price</h3>
 <div class="form-grid">
   <div class="form-group"><label>Commodity *</label>
-  <select id="qCommodity"><option value="">Select...</option><option>Chrome Ore 38% Cr2O3</option><option>Chrome Ore 40% Cr2O3</option><option>Chrome Ore 42% Cr2O3</option><option>Chrome Ore 44% Cr2O3</option><option>Chrome Ore 46% Cr2O3</option><option>Manganese Ore 36% Mn</option><option>Manganese Ore 38% Mn</option><option>Manganese Ore 42% Mn</option><option>Manganese Ore 44% Mn</option><option>Ferrochrome HC</option><option>Ferrochrome MC</option><option>Ferrochrome LC</option><option>Lithium Carbonate 99.5%</option><option>Lithium Hydroxide</option><option>Iron Ore 62% Fe CFR China</option><option>Antimony</option><option>Other</option></select></div>
+  <select id="qCommodity"><option value="">Select...</option><option>Chrome Ore 38% Cr2O3</option><option>Chrome Ore 40% Cr2O3</option><option>Chrome Ore 42% Cr2O3</option><option>Chrome Ore 44% Cr2O3</option><option>Chrome Ore 46% Cr2O3</option><option>Manganese Ore 36% Mn</option><option>Manganese Ore 38% Mn</option><option>Manganese Ore 42% Mn</option><option>Manganese Ore 44% Mn</option><option>Ferrochrome HC</option><option>Ferrochrome MC</option><option>Ferrochrome LC</option><option>Lithium Carbonate 99.5%</option><option>Lithium Hydroxide</option><option>Iron Ore 62% Fe CFR China
+<option>Hot Briquetted Iron (HBI)
+<option>Pig Iron
+<option>Billet
+<option>Steel Scrap
+<option>Ferrous Scrap – BONUS
+<option>Ferrous Scrap – HMS 1&amp;2
+<option>PNS Scrap</option><option>Antimony</option><option>Other</option></select></div>
   <div class="form-group"><label>Price</label><input id="qPrice" type="text" placeholder="e.g. USD 185/MT"></div>
   <div class="form-group"><label>Origin</label><input id="qOrigin" type="text" placeholder="e.g. South Africa, Zimbabwe"></div>
   <div class="form-group"><label>Delivery Terms</label><input id="qTerms" type="text" placeholder="e.g. FOB, CIF China"></div>
@@ -504,6 +539,31 @@ tr:hover td { background: #fafbfc; }
 </div>
 
 <!-- BACKUP -->
+
+<div id="map-section" style="display:none;" class="content">
+  <div class="section-title">Map &mdash; how your book connects</div>
+  <div class="map-switch">
+    <button class="mapbtn active" onclick="showMapView('globe',this)">Globe</button>
+    <button class="mapbtn" onclick="showMapView('network',this)">Network</button>
+    <button class="mapbtn" onclick="showMapView('flow',this)">Flow</button>
+  </div>
+
+  <div id="mapFilterBar" class="map-filter">
+    <label for="mapFilter">Show</label>
+    <select id="mapFilter" onchange="applyMapFilter()"></select>
+    <span id="mapCount" class="map-count"></span>
+  </div>
+
+  <p id="mapBlurb" class="map-blurb"></p>
+
+  <div class="map-split">
+    <div class="map-stage" id="mapStage"><div class="map-tip" id="mapTip"></div>
+      <div class="map-loading" id="mapLoading">Loading map&hellip;</div>
+    </div>
+    <aside class="map-list" id="mapList"></aside>
+  </div>
+  <p id="mapUnplaced" class="map-note"></p>
+</div>
 
 <div id="backup-section" style="display:none;" class="content">
 <div class="section-title">Data Backup & Restore</div>
@@ -939,8 +999,8 @@ function verifyEmail(){
 function showSection(s,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
-  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',backup:'backup-section'};
+  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','map-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
+  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',map:'map-section',backup:'backup-section'};
   document.getElementById(map[s]).style.display='block';
   if(s==='dashboard')updateDashboard();
   else if(s==='leads')renderLeads();
@@ -952,19 +1012,24 @@ function showSection(s,btn){
   else if(s==='documents')renderDocs();
   else if(s==='prices'){renderPriceGrids();renderQuotes();fetchAllPrices(false);}
   else if(s==='relationships')renderRelationships();
+  else if(s==='map')openMap();
   else if(s==='backup')updateBackupStats();
 }
 
 // LEADS
 // What a contact, lead or deal deals in. Copper ore and copper cathodes are
 // separate entries because they are separate trades -- a concentrate seller and
-// a cathode buyer are not the same counterparty. Grade stays out of it: a broker
+// a cathode buyer are not the same counterparty. The ferrous feedstock sits in
+// its own group for the same reason: a scrap yard and a pig iron supplier are
+// not interchangeable, and twenty materials in one flat list stop being
+// scannable. Grade stays out of it: a broker
 // trades chrome ore, not only 42%, so the grade-level list stays in the broker
 // quote form where a grade is what is being quoted. Services sit alongside the
 // materials so a freight forwarder is findable the same way. Deals use the same
 // list as contacts so a deal's material matches the people who trade it.
 const COMMODITY_GROUPS=[
-  {label:'Materials',items:['Chrome Ore','Ferrochrome','Manganese Ore','Iron Ore','Antimony','Lithium','Platinum','Palladium','Rhodium','Gold','Silver','Copper Ore','Copper Cathodes','Crude Oil']},
+  {label:'Ores & Metals',items:['Chrome Ore','Ferrochrome','Manganese Ore','Iron Ore','Antimony','Lithium','Platinum','Palladium','Rhodium','Gold','Silver','Copper Ore','Copper Cathodes','Crude Oil']},
+  {label:'Iron & Steel',items:['Hot Briquetted Iron (HBI)','Pig Iron','Billet','Steel Scrap','Ferrous Scrap \u2013 BONUS','Ferrous Scrap \u2013 HMS 1&2','PNS Scrap']},
   {label:'Services & Logistics',items:['Shipping / Ocean Freight','Freight Forwarding','Inspection & Assay','Warehousing & Storage','Customs Clearance','Trade Finance','Insurance']}
 ];
 function renderCommodityPicker(prefix){
@@ -976,6 +1041,10 @@ function renderCommodityPicker(prefix){
 }
 // Stored as the same comma-separated string the field has always held, so the
 // entries typed before this picker existed stay readable and searchable.
+// The separator is a comma, so an item carrying one would be read back as two
+// materials. Guard it here rather than trusting every future list edit.
+if(COMMODITY_GROUPS.some(g=>g.items.some(i=>i.indexOf(',')>=0)))
+  console.warn('Commodity list: an item contains a comma and will not round-trip.');
 function getCommoditySelection(prefix){
   const el=document.getElementById(prefix+'CommodityPicker');if(!el)return '';
   const picked=[...el.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);
@@ -1278,6 +1347,401 @@ function updateDashboard(){
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
   document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
+}
+
+// ============================================================
+// MAP — three ways to see the book: globe, network, flow.
+// Libraries and the world atlas load on first open, not on page
+// load, so the rest of the app starts as fast as it always did.
+// ============================================================
+const MAP_LIBS=[
+  'https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js'
+];
+const MAP_ATLAS='https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+// Country centroids, so a contact you already stored by country alone still
+// lands somewhere sensible. A contact whose country is not here is listed
+// under the map rather than silently dropped.
+const COUNTRY_LL={
+ 'south africa':[25.1,-29.0],'zimbabwe':[29.9,-19.0],'zambia':[27.8,-13.1],'mozambique':[35.5,-18.7],
+ 'namibia':[17.1,-22.6],'botswana':[24.7,-22.3],'tanzania':[34.9,-6.4],'drc':[23.7,-4.0],
+ 'democratic republic of congo':[23.7,-4.0],'congo':[15.8,-0.2],'ghana':[-1.0,7.9],'guinea':[-11.3,9.9],
+ 'nigeria':[8.7,9.1],'kenya':[37.9,-0.0],'egypt':[30.8,26.8],'morocco':[-7.1,31.8],'algeria':[1.7,28.0],
+ 'ivory coast':[-5.5,7.5],"cote d'ivoire":[-5.5,7.5],'sierra leone':[-11.8,8.5],'liberia':[-9.4,6.4],
+ 'gabon':[11.6,-0.8],'angola':[17.9,-11.2],'madagascar':[46.9,-18.8],'sudan':[30.2,12.9],
+ 'china':[104.2,35.9],'india':[78.9,20.6],'japan':[138.3,36.2],'south korea':[127.8,35.9],
+ 'korea':[127.8,35.9],'taiwan':[121.0,23.7],'indonesia':[113.9,-0.8],'malaysia':[101.98,4.2],
+ 'singapore':[103.8,1.35],'thailand':[100.99,15.9],'vietnam':[108.3,14.06],'philippines':[121.8,12.9],
+ 'pakistan':[69.3,30.4],'bangladesh':[90.4,23.7],'kazakhstan':[66.9,48.0],'uzbekistan':[64.6,41.4],
+ 'mongolia':[103.8,46.9],'russia':[105.3,61.5],'turkey':[35.2,39.0],'iran':[53.7,32.4],
+ 'saudi arabia':[45.1,23.9],'uae':[54.0,23.4],'united arab emirates':[54.0,23.4],'oman':[56.0,21.5],
+ 'qatar':[51.2,25.4],'kuwait':[47.5,29.3],'israel':[34.9,31.0],'jordan':[36.2,30.6],
+ 'germany':[10.5,51.2],'netherlands':[5.3,52.1],'belgium':[4.5,50.5],'france':[2.2,46.2],
+ 'spain':[-3.7,40.5],'portugal':[-8.2,39.4],'italy':[12.6,41.9],'switzerland':[8.2,46.8],
+ 'austria':[14.6,47.5],'poland':[19.1,51.9],'czechia':[15.5,49.8],'czech republic':[15.5,49.8],
+ 'slovakia':[19.7,48.7],'hungary':[19.5,47.2],'romania':[25.0,45.9],'bulgaria':[25.5,42.7],
+ 'greece':[21.8,39.1],'ukraine':[31.2,48.4],'sweden':[18.6,60.1],'norway':[8.5,60.5],
+ 'finland':[25.7,61.9],'denmark':[9.5,56.3],'united kingdom':[-3.4,55.4],'uk':[-3.4,55.4],
+ 'england':[-1.5,52.4],'ireland':[-8.2,53.4],'serbia':[21.0,44.0],'croatia':[15.2,45.1],
+ 'slovenia':[14.995,46.15],'bosnia':[17.7,43.9],'north macedonia':[21.7,41.6],'albania':[20.2,41.2],
+ 'united states':[-98.5,39.8],'usa':[-98.5,39.8],'us':[-98.5,39.8],'canada':[-106.3,56.1],
+ 'mexico':[-102.6,23.6],'brazil':[-51.9,-14.2],'argentina':[-63.6,-38.4],'chile':[-71.5,-35.7],
+ 'peru':[-75.0,-9.2],'colombia':[-74.3,4.6],'venezuela':[-66.6,6.4],'bolivia':[-63.6,-16.3],
+ 'ecuador':[-78.2,-1.8],'paraguay':[-58.4,-23.4],'uruguay':[-55.8,-32.5],'guyana':[-58.9,4.9],
+ 'australia':[133.8,-25.3],'new zealand':[174.9,-40.9],'papua new guinea':[143.96,-6.3]
+};
+
+let MAPQ={ loaded:false, view:'globe', filter:'ALL', globe:null, atlas:null };
+
+function mapPeople(){
+  // Leads and contacts share a shape here; a lead is a counterparty you have
+  // not closed with yet, and it still belongs on the map.
+  const out=[];
+  contacts.forEach(c=>out.push({kind:'Contact',name:c.name,company:c.company||'',role:c.type||'',
+    country:c.country||'',mats:splitMats(c.commodity),trust:c.trust||'Unknown'}));
+  leads.forEach(l=>out.push({kind:'Lead',name:l.name,company:l.company||'',role:l.type||'',
+    country:l.country||'',mats:splitMats(l.commodity),trust:'Unknown'}));
+  return out;
+}
+function splitMats(v){ return (v||'').split(',').map(t=>t.trim()).filter(Boolean); }
+function llFor(country){ return COUNTRY_LL[(country||'').trim().toLowerCase()]||null; }
+function trustColor(t){ return t==='Green'?'#27ae60':t==='Yellow'?'#e8a020':t==='Red'?'#e74c3c':'#9aa5b1'; }
+function matColor(m){
+  const P=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#6b7280'];
+  let h=0; for(let i=0;i<m.length;i++) h=(h*31+m.charCodeAt(i))>>>0;
+  return P[h%P.length];
+}
+
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector('script[data-map="'+src+'"]')) return res();
+    const el=document.createElement('script');
+    el.src=src; el.dataset.map=src; el.onload=()=>res(); el.onerror=()=>rej(new Error('load failed: '+src));
+    document.head.appendChild(el);
+  });
+}
+async function openMap(){
+  const loading=document.getElementById('mapLoading');
+  if(!MAPQ.loaded){
+    try{
+      loading.textContent='Loading map…';
+      for(const u of MAP_LIBS) await loadScript(u);
+      const r=await fetch(MAP_ATLAS); if(!r.ok) throw new Error('atlas HTTP '+r.status);
+      MAPQ.atlas=await r.json();
+      MAPQ.loaded=true;
+    }catch(e){
+      loading.textContent='Map could not load — check your connection and reopen this tab.';
+      return;
+    }
+  }
+  loading.style.display='none';
+  buildMapFilter();
+  renderMapView();
+}
+function showMapView(v,btn){
+  document.querySelectorAll('.mapbtn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  MAPQ.view=v;
+  document.getElementById('mapFilterBar').style.display = (v==='globe')?'flex':'none';
+  renderMapView();
+}
+function buildMapFilter(){
+  const sel=document.getElementById('mapFilter');
+  if(sel.dataset.built) return;
+  const people=mapPeople();
+  const used=new Set(); people.forEach(p=>p.mats.forEach(m=>used.add(m)));
+  // Every material is listed, including the ones nobody trades yet: looking one
+  // up and being told nobody matches is the point, not an empty dropdown.
+  const groups=COMMODITY_GROUPS.map(g=>({label:g.label, items:g.items.slice()}));
+  const extra=[...used].filter(u=>!COMMODITY_GROUPS.some(g=>g.items.includes(u))).sort();
+  let html='<option value="ALL">Everyone on the map</option>';
+  groups.forEach(g=>{
+    html+='<optgroup label="'+g.label+'">'+g.items.map(i=>'<option value="M::'+i+'">'+i+(used.has(i)?'':' \u00b7 none yet')+'</option>').join('')+'</optgroup>';
+  });
+  if(extra.length) html+='<optgroup label="Other materials">'+extra.map(i=>'<option value="M::'+i+'">'+i+'</option>').join('')+'</optgroup>';
+  const roles=[...new Set(people.map(p=>p.role).filter(Boolean))].sort();
+  if(roles.length) html+='<optgroup label="Role">'+roles.map(r=>'<option value="R::'+r+'">'+r+'</option>').join('')+'</optgroup>';
+  const names=people.slice().sort((a,b)=>(a.company||a.name).localeCompare(b.company||b.name));
+  if(names.length) html+='<optgroup label="Contacts">'+names.map(p=>'<option value="N::'+(p.company||p.name)+'">'+(p.company?p.company+' — '+p.name:p.name)+'</option>').join('')+'</optgroup>';
+  sel.innerHTML=html; sel.dataset.built='1';
+}
+function matchesFilter(p){
+  const f=MAPQ.filter;
+  if(f==='ALL') return true;
+  const kind=f.slice(0,3), val=f.slice(3);
+  if(kind==='M::') return p.mats.includes(val);
+  if(kind==='R::') return p.role===val;
+  if(kind==='N::') return (p.company||p.name)===val;
+  return true;
+}
+function applyMapFilter(){ MAPQ.filter=document.getElementById('mapFilter').value; renderMapView(); }
+
+function mapTip(ev,html){
+  const t=document.getElementById('mapTip'), st=document.getElementById('mapStage');
+  t.innerHTML=html;
+  const r=st.getBoundingClientRect();
+  let x=ev.clientX-r.left+14, y=ev.clientY-r.top+14;
+  if(x+240>r.width) x=Math.max(6,r.width-246);
+  if(y+80>r.height) y=Math.max(6,y-94);
+  t.style.left=x+'px'; t.style.top=y+'px'; t.style.opacity=1;
+}
+function hideMapTip(){ document.getElementById('mapTip').style.opacity=0; }
+
+const MAP_BLURB={
+  globe:'Pick a material, a role or a contact. Everyone who matches lights up where they are; everyone else fades. Drag the globe to turn it.',
+  network:'Every counterparty and every material is a point, joined where they trade it. Related parties pull together, so the shape of your book appears on its own.',
+  flow:'Origin country on the left, material in the middle, the role that receives it on the right. Band thickness is the number of counterparties on that leg.'
+};
+
+function renderMapView(){
+  if(!MAPQ.loaded) return;
+  const stage=document.getElementById('mapStage');
+  stage.querySelectorAll('canvas,svg').forEach(n=>n.remove());
+  document.getElementById('mapBlurb').textContent=MAP_BLURB[MAPQ.view];
+  if(MAPQ.view==='globe') drawMapGlobe();
+  else if(MAPQ.view==='network') drawMapNetwork();
+  else drawMapFlow();
+}
+
+/* ---------- GLOBE ---------- */
+function drawMapGlobe(){
+  const stage=document.getElementById('mapStage');
+  const people=mapPeople();
+  const placed=[], unplaced=[];
+  people.forEach(p=>{ const ll=llFor(p.country); if(ll){ p.ll=ll; placed.push(p); } else unplaced.push(p); });
+
+  const W=900,H=560, dpr=Math.min(2,window.devicePixelRatio||1);
+  const cv=document.createElement('canvas');
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.aspectRatio=W+' / '+H;
+  const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  stage.appendChild(cv);
+
+  const land=topojson.feature(MAPQ.atlas,MAPQ.atlas.objects.countries);
+  const borders=topojson.mesh(MAPQ.atlas,MAPQ.atlas.objects.countries,(a,b)=>a!==b);
+  const proj=d3.geoOrthographic().translate([W/2,H/2]).scale(H/2-26).clipAngle(90);
+  const path=d3.geoPath(proj,ctx), grat=d3.geoGraticule10();
+  let rot=[-22,-12,0], hover=null;
+
+  // Group by country so several contacts in one place do not stack invisibly.
+  const hits=placed.filter(matchesFilter);
+  const byCountry={};
+  hits.forEach(p=>{ const k=p.country.trim().toLowerCase(); (byCountry[k]=byCountry[k]||{ll:p.ll,country:p.country,people:[]}).people.push(p); });
+  const spots=Object.values(byCountry);
+
+  function visible(ll){ const c=proj.rotate(); return d3.geoDistance(ll,[-c[0],-c[1]])<Math.PI/2-0.02; }
+  function draw(){
+    proj.rotate(rot); ctx.clearRect(0,0,W,H);
+    const cx=W/2,cy=H/2,R=proj.scale();
+    const g=ctx.createRadialGradient(cx,cy,R*0.72,cx,cy,R*1.16);
+    g.addColorStop(0,'rgba(42,120,214,.15)'); g.addColorStop(1,'rgba(42,120,214,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,R*1.16,0,2*Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.fillStyle='#e8eef5'; ctx.fill();
+    ctx.beginPath(); path(grat); ctx.strokeStyle='#c8d2dd'; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.beginPath(); path(land); ctx.fillStyle='#d7dde4'; ctx.fill();
+    ctx.beginPath(); path(borders); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=0.6; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.strokeStyle='#b9c2cd'; ctx.lineWidth=1; ctx.stroke();
+
+    // Everyone who did not match stays on the map, faint, so a gap is visible
+    // as a gap rather than as an empty ocean.
+    placed.forEach(p=>{
+      if(matchesFilter(p)||!visible(p.ll)) return;
+      const xy=proj(p.ll); if(!xy) return;
+      ctx.globalAlpha=0.16; ctx.beginPath(); ctx.arc(xy[0],xy[1],3,0,2*Math.PI);
+      ctx.fillStyle='#9aa5b1'; ctx.fill(); ctx.globalAlpha=1;
+    });
+    spots.forEach(sp=>{
+      if(!visible(sp.ll)) return;
+      const xy=proj(sp.ll); if(!xy) return;
+      const r=5+Math.sqrt(sp.people.length)*2.6;
+      ctx.beginPath(); ctx.arc(xy[0],xy[1],r,0,2*Math.PI);
+      ctx.fillStyle='#fff'; ctx.fill();
+      ctx.lineWidth=2.4; ctx.strokeStyle=trustColor(sp.people[0].trust); ctx.stroke();
+      if(sp.people.length>1){
+        ctx.fillStyle='#1a2e4a'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(String(sp.people.length),xy[0],xy[1]);
+        ctx.textBaseline='alphabetic';
+      }
+      if(hover===sp||spots.length<=12){
+        ctx.font='bold 11px Arial'; ctx.fillStyle='#1a2e4a'; ctx.textAlign='center';
+        ctx.fillText(sp.country,xy[0],xy[1]-r-6);
+      }
+    });
+  }
+  draw();
+
+  let dragging=false,p0=null,r0=null;
+  cv.addEventListener('pointerdown',ev=>{ dragging=true; cv.classList.add('dragging');
+    cv.setPointerCapture(ev.pointerId); p0=[ev.clientX,ev.clientY]; r0=rot.slice(); });
+  cv.addEventListener('pointermove',ev=>{
+    if(dragging&&p0){ rot[0]=r0[0]+(ev.clientX-p0[0])*0.26;
+      rot[1]=Math.max(-72,Math.min(72,r0[1]-(ev.clientY-p0[1])*0.26)); draw(); return; }
+    const r=cv.getBoundingClientRect(), sx=W/r.width;
+    const mx=(ev.clientX-r.left)*sx, my=(ev.clientY-r.top)*sx;
+    let best=null,bd=1e9;
+    spots.forEach(sp=>{ if(!visible(sp.ll))return; const xy=proj(sp.ll); if(!xy)return;
+      const d=Math.hypot(xy[0]-mx,xy[1]-my); if(d<16&&d<bd){bd=d;best=sp;} });
+    if(best!==hover){ hover=best; draw(); }
+    if(best) mapTip(ev,'<b>'+best.country+'</b><span>'+best.people.length+
+      (best.people.length===1?' counterparty':' counterparties')+'</span>');
+    else hideMapTip();
+  });
+  window.addEventListener('pointerup',()=>{ dragging=false; cv.classList.remove('dragging'); });
+  cv.addEventListener('pointerleave',()=>{ hover=null; hideMapTip(); draw(); });
+
+  // Result list, and a plain answer when the answer is nobody.
+  const label=MAPQ.filter==='ALL'?'everyone':document.getElementById('mapFilter').selectedOptions[0].textContent;
+  document.getElementById('mapCount').textContent=hits.length+' of '+people.length+' shown';
+  const list=document.getElementById('mapList');
+  if(!hits.length){
+    list.innerHTML='<div class="mlh">Matches</div><div class="empty">Nobody in your book matches <strong>'+
+      label+'</strong>. That is a gap worth filling.</div>';
+  } else {
+    list.innerHTML='<div class="mlh">Matches &middot; '+hits.length+'</div>'+
+      hits.slice().sort((a,b)=>(a.country||'').localeCompare(b.country||'')).map(p=>
+        '<button type="button" onclick="goToSection(\''+(p.kind==='Lead'?'leads':'contacts')+'\')">'+
+        '<b>'+(p.company||p.name)+'</b><span>'+(p.country||'no country')+
+        (p.role?' · '+p.role:'')+'</span></button>').join('');
+  }
+  document.getElementById('mapUnplaced').textContent = unplaced.length
+    ? unplaced.length+' contact'+(unplaced.length===1?'':'s')+' could not be placed — the country is blank or not recognised: '+
+      unplaced.slice(0,6).map(p=>(p.company||p.name)+(p.country?' ('+p.country+')':'')).join(', ')+(unplaced.length>6?'…':'')
+    : '';
+}
+
+/* ---------- NETWORK ---------- */
+function drawMapNetwork(){
+  const stage=document.getElementById('mapStage');
+  const people=mapPeople().filter(p=>p.mats.length);
+  document.getElementById('mapCount').textContent='';
+  document.getElementById('mapUnplaced').textContent='';
+  if(!people.length){
+    document.getElementById('mapList').innerHTML='<div class="mlh">Network</div><div class="empty">No contact or lead has a commodity recorded yet.</div>';
+    return;
+  }
+  const W=900,H=560;
+  const mats=[...new Set(people.flatMap(p=>p.mats))];
+  const nodes=[], links=[];
+  mats.forEach(m=>nodes.push({id:'M:'+m,label:m,kind:'m'}));
+  people.forEach(p=>{
+    const id='P:'+(p.company||p.name);
+    if(nodes.some(n=>n.id===id)) return;
+    nodes.push({id,label:p.company||p.name,kind:'p',p});
+    p.mats.forEach(m=>links.push({source:id,target:'M:'+m,mat:m}));
+  });
+  nodes.forEach(n=>{ n.r = n.kind==='m'
+    ? 8+Math.sqrt(links.filter(l=>l.target==='M:'+n.label).length)*3.2 : 6; });
+
+  const svg=d3.create('svg').attr('viewBox','0 0 '+W+' '+H)
+    .attr('preserveAspectRatio','xMidYMid meet').style('max-width','100%');
+  const link=svg.append('g').selectAll('line').data(links).join('line')
+    .attr('stroke',d=>matColor(d.mat)).attr('stroke-opacity',.34).attr('stroke-width',1.5);
+  const node=svg.append('g').selectAll('g').data(nodes).join('g').style('cursor','pointer');
+  node.append('circle').attr('r',d=>d.r)
+    .attr('fill',d=>d.kind==='m'?matColor(d.label):'#fff')
+    .attr('stroke',d=>d.kind==='m'?'#fff':trustColor(d.p.trust))
+    .attr('stroke-width',d=>d.kind==='m'?2:2.2);
+  node.append('text').attr('text-anchor','middle').attr('dy',d=>-d.r-5)
+    .attr('font-size',d=>d.kind==='m'?11:10).attr('font-weight',d=>d.kind==='m'?'bold':'normal')
+    .attr('fill',d=>d.kind==='m'?'#1a2e4a':'#666').text(d=>d.label);
+  node.on('mouseenter',function(ev,d){
+    const keep={}; keep[d.id]=1;
+    links.forEach(l=>{ const s=l.source.id||l.source,t=l.target.id||l.target;
+      if(s===d.id)keep[t]=1; if(t===d.id)keep[s]=1; });
+    node.style('opacity',n=>keep[n.id]?1:.13);
+    link.style('opacity',l=>{ const s=l.source.id||l.source,t=l.target.id||l.target;
+      return (s===d.id||t===d.id)?.95:.05; });
+    mapTip(ev, d.kind==='m' ? '<b>'+d.label+'</b><span>material</span>'
+      : '<b>'+d.label+'</b><span>'+(d.p.role||'no role')+(d.p.country?' · '+d.p.country:'')+'</span>');
+  }).on('mouseleave',function(){ node.style('opacity',1); link.style('opacity',.34); hideMapTip(); });
+
+  const sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id).distance(76).strength(.5))
+    .force('charge',d3.forceManyBody().strength(-330))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collide',d3.forceCollide().radius(d=>d.r+(d.kind==='m'?30:38)).strength(.9))
+    .on('tick',()=>{
+      nodes.forEach(d=>{ d.x=Math.max(d.r+54,Math.min(W-d.r-54,d.x)); d.y=Math.max(d.r+18,Math.min(H-d.r-12,d.y)); });
+      link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+      node.attr('transform',d=>'translate('+d.x+','+d.y+')');
+    });
+  sim.tick(200);
+  node.call(d3.drag()
+    .on('start',(ev,d)=>{ if(!ev.active)sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on('drag',(ev,d)=>{ d.fx=ev.x; d.fy=ev.y; })
+    .on('end',(ev,d)=>{ if(!ev.active)sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+  stage.appendChild(svg.node());
+
+  document.getElementById('mapList').innerHTML='<div class="mlh">Materials &middot; '+mats.length+'</div>'+
+    mats.slice().sort().map(m=>'<button type="button" onclick="goToSection(\'contacts\')"><b>'+m+
+      '</b><span>'+people.filter(p=>p.mats.includes(m)).length+' counterparties</span></button>').join('');
+}
+
+/* ---------- FLOW ---------- */
+function drawMapFlow(){
+  const stage=document.getElementById('mapStage');
+  const people=mapPeople().filter(p=>p.mats.length&&p.country&&p.role);
+  document.getElementById('mapCount').textContent='';
+  document.getElementById('mapUnplaced').textContent='';
+  if(!people.length){
+    document.getElementById('mapList').innerHTML='<div class="mlh">Flow</div><div class="empty">Needs contacts with a country, a role and a commodity recorded.</div>';
+    return;
+  }
+  const W=900,H=560;
+  const names=[], nidx={};
+  const nid=n=>{ if(!(n in nidx)){ nidx[n]=names.length; names.push(n);} return nidx[n]; };
+  const lm={};
+  people.forEach(p=>p.mats.forEach(m=>{
+    const v=1/p.mats.length;
+    // Country and role can collide as labels; keep the columns distinct.
+    const a='▸ '+p.country, b=m, c=p.role+' ◂';
+    lm[a+'\u0000'+b]=(lm[a+'\u0000'+b]||0)+v;
+    lm[b+'\u0000'+c]=(lm[b+'\u0000'+c]||0)+v;
+  }));
+  const links=Object.keys(lm).map(k=>{ const a=k.split('\u0000');
+    return {source:nid(a[0]),target:nid(a[1]),value:lm[k]}; });
+  const nodes=names.map(n=>({name:n}));
+
+  const svg=d3.create('svg').attr('viewBox','0 0 '+W+' '+H)
+    .attr('preserveAspectRatio','xMidYMid meet').style('max-width','100%');
+  let graph;
+  try{
+    graph=d3.sankey().nodeWidth(13).nodePadding(9).extent([[136,16],[W-150,H-14]])
+      ({nodes:nodes.map(d=>Object.assign({},d)),links:links.map(d=>Object.assign({},d))});
+  }catch(e){
+    document.getElementById('mapList').innerHTML='<div class="mlh">Flow</div><div class="empty">This book has a loop the flow view cannot draw — use Network instead.</div>';
+    return;
+  }
+  const isMat=n=>!n.startsWith('▸ ')&&!n.endsWith(' ◂');
+  const clean=n=>n.replace(/^▸ /,'').replace(/ ◂$/,'');
+
+  svg.append('g').selectAll('path').data(graph.links).join('path')
+    .attr('d',d3.sankeyLinkHorizontal()).attr('fill','none')
+    .attr('stroke',d=>isMat(d.source.name)?matColor(clean(d.source.name))
+      :isMat(d.target.name)?matColor(clean(d.target.name)):'#9aa5b1')
+    .attr('stroke-opacity',.34).attr('stroke-width',d=>Math.max(1.4,d.width))
+    .style('cursor','pointer')
+    .on('mouseenter',function(ev,d){ d3.select(this).attr('stroke-opacity',.85);
+      mapTip(ev,'<b>'+clean(d.source.name)+' → '+clean(d.target.name)+'</b><span>'+d.value.toFixed(1)+'</span>'); })
+    .on('mouseleave',function(){ d3.select(this).attr('stroke-opacity',.34); hideMapTip(); });
+
+  const n=svg.append('g').selectAll('g').data(graph.nodes).join('g');
+  n.append('rect').attr('x',d=>d.x0).attr('y',d=>d.y0)
+    .attr('width',d=>d.x1-d.x0).attr('height',d=>Math.max(2,d.y1-d.y0)).attr('rx',2)
+    .attr('fill',d=>isMat(d.name)?matColor(clean(d.name)):'#1a2e4a');
+  n.append('text').attr('x',d=>d.x0<W/2?d.x0-7:d.x1+7).attr('y',d=>(d.y0+d.y1)/2)
+    .attr('dy','.35em').attr('text-anchor',d=>d.x0<W/2?'end':'start')
+    .attr('font-size',10.5).attr('fill','#555').text(d=>clean(d.name));
+  svg.append('text').attr('x',6).attr('y',12).attr('font-size',10).attr('fill','#999').text('ORIGIN');
+  svg.append('text').attr('x',W/2).attr('y',12).attr('text-anchor','middle').attr('font-size',10).attr('fill','#999').text('MATERIAL');
+  svg.append('text').attr('x',W-6).attr('y',12).attr('text-anchor','end').attr('font-size',10).attr('fill','#999').text('TAKEN BY');
+  stage.appendChild(svg.node());
+
+  const ctry=[...new Set(people.map(p=>p.country))].sort();
+  document.getElementById('mapList').innerHTML='<div class="mlh">Origins &middot; '+ctry.length+'</div>'+
+    ctry.map(c=>'<button type="button" onclick="goToSection(\'contacts\')"><b>'+c+'</b><span>'+
+      people.filter(p=>p.country===c).length+' counterparties</span></button>').join('');
 }
 
 updateDashboard();
