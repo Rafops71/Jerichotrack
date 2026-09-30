@@ -1,11 +1,41 @@
 rules_version = '2';
-// Sandbox rules used ONLY by the local robot-user emulator.
-// These are NOT the production rules for jericho-operation.
-// They mirror the intended production rule: signed-in (even anonymously) only.
+
+// Jericho Operation - Firestore rules
+//
+// Replaces Firebase's test-mode default, which allowed anyone on the internet
+// to read and write everything until 31 December 2026. That was not a
+// hypothetical: an unauthenticated write from outside succeeded on 28/09/2026.
+//
+// Both apps (companion.html and index.html) sign in anonymously at startup, so
+// requiring a signed-in caller changes nothing for Rafael and blocks anyone who
+// merely knows the project name.
+//
+// Note on strength: anonymous sign-in is open to anyone, so this is a door
+// rather than a deadbolt. It stops drive-by access. A real lock means a real
+// login, which is a separate decision.
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
-    }
+
+    // The collections the apps actually use.
+    match /jericho_leads/{doc}          { allow read, write: if request.auth != null; }
+    match /jericho_tasks/{doc}          { allow read, write: if request.auth != null; }
+    match /jericho_pipeline/{doc}       { allow read, write: if request.auth != null; }
+    match /jericho_meetings/{doc}       { allow read, write: if request.auth != null; }
+    match /jericho_companion_notes/{doc}{ allow read, write: if request.auth != null; }
+    match /jericho_commslog/{doc}       { allow read, write: if request.auth != null; }
+    match /jericho_broker_quotes/{doc}  { allow read, write: if request.auth != null; }
+
+    // The four the desktop app added later. They were never listed here, so the
+    // catch-all below refused them and anything entered on the desktop stayed on
+    // that one device. Same condition as the seven above; nothing wider.
+    match /jericho_contacts/{doc}       { allow read, write: if request.auth != null; }
+    match /jericho_commissions/{doc}    { allow read, write: if request.auth != null; }
+    match /jericho_documents/{doc}      { allow read, write: if request.auth != null; }
+    match /jericho_relationships/{doc}  { allow read, write: if request.auth != null; }
+
+    // Anything else is refused outright, signed in or not. A new collection has
+    // to be added here deliberately rather than inheriting access by accident.
+    match /{document=**} { allow read, write: if false; }
   }
 }
