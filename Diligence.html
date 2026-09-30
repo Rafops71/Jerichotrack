@@ -745,44 +745,9 @@ color: #4f46e5;
 .mech-table td { padding:6px 10px; border-bottom:1px solid var(--border); color:var(--gray-light); vertical-align:top; }
 .mech-table td:first-child { font-family:'DM Mono',monospace; font-size:11px; color:var(--gray); width:38%; }
 .doc-audit { margin-top:22px; padding-top:14px; border-top:1px solid var(--border); font-size:11px; color:var(--gray); font-family:'DM Mono',monospace; line-height:1.7; }
-
-/* Password gate. Same account and password as JerichoTrack and Companion.
-   This app keeps its research in the browser, not in Firestore, so the gate is
-   what protects it: it stops anyone picking up an unlocked device from reading
-   the history or running searches. Sign-in goes through the same Firebase
-   account so there is one password to remember, not three. */
-#lockScreen { position: fixed; inset: 0; z-index: 99999; background: #0f1e30;
-  display: flex; align-items: center; justify-content: center; padding: 24px; }
-#lockScreen.hidden { display: none; }
-.lock-box { width: 100%; max-width: 340px; text-align: center; color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
-.lock-box .lk-mark { font-size: 30px; margin-bottom: 10px; }
-.lock-box h1 { font-size: 18px; letter-spacing: 1px; margin: 0 0 4px; }
-.lock-box p { font-size: 13px; color: #9fb3cc; margin: 0 0 22px; }
-.lock-box input { width: 100%; padding: 14px; border-radius: 8px; font-size: 16px;
-  border: 1px solid #2a3f5a; background: #16283f; color: #fff; text-align: center; letter-spacing: 2px; }
-.lock-box input:focus { outline: none; border-color: #e8a020; }
-.lock-box button { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 8px;
-  background: #e8a020; color: #0f1e30; font-size: 15px; font-weight: bold; cursor: pointer; }
-.lock-box button:disabled { opacity: .55; cursor: default; }
-.lock-err { min-height: 18px; margin-top: 12px; font-size: 13px; color: #f5a89f; }
-.lock-note { margin-top: 18px; font-size: 11px; color: #5d7691; }
 </style>
 </head>
 <body>
-<div id="lockScreen">
-  <div class="lock-box">
-    <div class="lk-mark">&#9889;</div>
-    <h1>JERICHO DUE DILIGENCE ENGINE</h1>
-    <p>Enter your password to continue</p>
-    <input id="lockPass" type="password" autocomplete="current-password"
-           placeholder="Password" onkeydown="if(event.key==='Enter')doUnlock()">
-    <button id="lockBtn" onclick="doUnlock()">Unlock</button>
-    <div class="lock-err" id="lockErr"></div>
-    <div class="lock-note">Same password as JerichoTrack.</div>
-  </div>
-</div>
-
 <div class="app">
 
   <!-- Header -->
@@ -928,65 +893,6 @@ color: #4f46e5;
 
 <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.png">
 <input type="file" id="docFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onDocFilesChosen(this)">
-
-<script type="module">
-// Auth only. This app stores its research in the browser and never writes to
-// Firestore, so the Firebase connection here exists purely to check the one
-// password shared with JerichoTrack and Companion.
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import {
-  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-  setPersistence, browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-
-const fbApp = initializeApp({
-  apiKey: "AIzaSyAzcOYuhKN2bSZ_rOIJPwBJcamjNiTd9Mo",
-  authDomain: "jericho-operation.firebaseapp.com",
-  projectId: "jericho-operation",
-  storageBucket: "jericho-operation.firebasestorage.app",
-  messagingSenderId: "347478150117",
-  appId: "1:347478150117:web:31ee97e47582d7e85c3d0c"
-});
-const auth = getAuth(fbApp);
-const JERICHO_ACCOUNT = 'rafael@jerichotrack.app';
-window._fbAuth = { auth, signInWithEmailAndPassword, signOut, JERICHO_ACCOUNT };
-setPersistence(auth, browserLocalPersistence).catch(() => {});
-onAuthStateChanged(auth, (user) => {
-  window.dispatchEvent(new Event(user && !user.isAnonymous ? 'jericho-unlocked' : 'jericho-locked'));
-});
-</script>
-
-<script>
-// ---- Password gate -------------------------------------------------------
-function lockUI(locked){
-  const scr=document.getElementById('lockScreen');
-  if(scr) scr.classList.toggle('hidden',!locked);
-  if(locked){ const i=document.getElementById('lockPass'); if(i){ i.value=''; setTimeout(()=>i.focus(),50); } }
-}
-async function doUnlock(){
-  const inp=document.getElementById('lockPass'), btn=document.getElementById('lockBtn'), err=document.getElementById('lockErr');
-  const pass=(inp.value||'').trim();
-  if(!pass){ err.textContent='Enter your password.'; return; }
-  if(!window._fbAuth){ err.textContent='Still connecting \u2014 try again in a moment.'; return; }
-  btn.disabled=true; btn.textContent='Checking\u2026'; err.textContent='';
-  try{
-    const {auth,signInWithEmailAndPassword,JERICHO_ACCOUNT}=window._fbAuth;
-    await signInWithEmailAndPassword(auth,JERICHO_ACCOUNT,pass);
-  }catch(e){
-    const c=(e&&e.code)||'';
-    err.textContent = /wrong-password|invalid-credential|invalid-login/.test(c) ? 'Wrong password.'
-      : /too-many-requests/.test(c) ? 'Too many attempts \u2014 wait a minute.'
-      : /network/.test(c) ? 'No connection.' : 'Could not sign in.';
-    inp.value=''; inp.focus();
-  }finally{ btn.disabled=false; btn.textContent='Unlock'; }
-}
-async function doLock(){
-  try{ const {auth,signOut}=window._fbAuth; await signOut(auth); }catch(e){}
-  lockUI(true);
-}
-window.addEventListener('jericho-unlocked',()=>lockUI(false));
-window.addEventListener('jericho-locked',()=>lockUI(true));
-</script>
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────
