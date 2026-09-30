@@ -13,6 +13,28 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .header-right { text-align: right; }
 .header-right .hdate { font-size: 12px; opacity: 0.7; display: block; }
 .header-right .hclock { font-size: 15px; font-weight: bold; opacity: 0.9; display: block; margin-top: 2px; letter-spacing: 1px; }
+
+/* Password gate. Covers the app until the account signs in; the app markup
+   underneath is never populated with data while locked, because sync only
+   starts once Firebase reports a signed-in account. */
+#lockScreen { position: fixed; inset: 0; z-index: 9999; background: #0f1e30;
+  display: flex; align-items: center; justify-content: center; padding: 24px; }
+#lockScreen.hidden { display: none; }
+.lock-box { width: 100%; max-width: 340px; text-align: center; color: #fff; }
+.lock-box .lk-mark { font-size: 30px; margin-bottom: 10px; }
+.lock-box h1 { font-size: 19px; letter-spacing: 1px; margin: 0 0 4px; }
+.lock-box p { font-size: 13px; color: #9fb3cc; margin: 0 0 22px; }
+.lock-box input { width: 100%; padding: 14px; border-radius: 6px; font-size: 16px;
+  border: 1px solid #2a3f5a; background: #16283f; color: #fff; text-align: center; letter-spacing: 2px; }
+.lock-box input:focus { outline: none; border-color: #e8a020; }
+.lock-box button { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 6px;
+  background: #e8a020; color: #0f1e30; font-size: 15px; font-weight: bold; cursor: pointer; }
+.lock-box button:disabled { opacity: .55; cursor: default; }
+.lock-err { min-height: 18px; margin-top: 12px; font-size: 13px; color: #f5a89f; }
+.lock-note { margin-top: 18px; font-size: 11px; color: #5d7691; }
+.btn-lock { background: none; border: 1px solid rgba(255,255,255,.28); color: #cfe0f0;
+  font-size: 11px; padding: 3px 9px; border-radius: 10px; cursor: pointer; margin-left: 6px; }
+.btn-lock:hover { background: rgba(255,255,255,.1); }
 .sync-status { font-size: 11px; padding: 3px 10px; border-radius: 10px; display: inline-block; margin-top: 4px; cursor: pointer; }
 .sync-status.online { background: rgba(39,174,96,0.25); color: #8ee0ab; }
 .sync-status.offline { background: rgba(231,76,60,0.25); color: #f5a89f; }
@@ -151,11 +173,25 @@ tr:hover td { background: #fafbfc; }
 </head>
 <body>
 
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lk-mark">&#9889;</div>
+    <h1>JERICHO OPERATIONS CENTER</h1>
+    <p>Enter your password to continue</p>
+    <input id="lockPass" type="password" autocomplete="current-password"
+           placeholder="Password" onkeydown="if(event.key==='Enter')doUnlock()">
+    <button id="lockBtn" onclick="doUnlock()">Unlock</button>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-note">Your data is stored in the cloud and only this password opens it.</div>
+  </div>
+</div>
+
 <div class="header">
   <h1>⚡ JERICHO OPERATIONS CENTER</h1>
   <div class="header-right">
     <span class="hdate" id="currentDate"></span>
     <span class="hclock" id="currentTime"></span>
+    <button type="button" class="btn-lock" id="lockBtnTop" onclick="doLock()" hidden>Lock</button>
     <span class="sync-status syncing" id="syncStatus" role="button" tabindex="0" onclick="explainSync()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();explainSync();}">🔄 Connecting...</span>
   </div>
 </div>
@@ -621,7 +657,8 @@ import {
   enableIndexedDbPersistence, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+  setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -658,19 +695,27 @@ const SYNCED_COLLECTIONS = {
 
 window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, SYNCED_COLLECTIONS };
 
-// Anonymous auth: no login screen, no password to manage, but every request to
-// Firestore now carries a real auth token instead of being completely open.
-// This is what lets the Firestore rule require "request.auth != null" instead
-// of staying wide open to the internet. Sync only starts once sign-in succeeds.
+// One account, one password. The address below is a name for that account, not
+// a mailbox -- Rafael never types it, only the password. Anonymous sign-in is
+// gone: the Firestore rules name this account's uid, so an anonymous visitor who
+// finds the URL is refused by the database itself, not merely by this page.
+const JERICHO_ACCOUNT = 'rafael@jerichotrack.app';
+
+window._fbAuth = { auth, signInWithEmailAndPassword, signOut, JERICHO_ACCOUNT };
+
+// Stay signed in on this device until Lock is pressed, so the password is typed
+// once per device rather than every visit.
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+
 onAuthStateChanged(auth, (user) => {
-  if (user) {
+  if (user && !user.isAnonymous) {
     window._fbReady = true;
     window.dispatchEvent(new Event('firebase-ready'));
+    window.dispatchEvent(new Event('jericho-unlocked'));
+  } else {
+    window._fbReady = false;
+    window.dispatchEvent(new Event('jericho-locked'));
   }
-});
-signInAnonymously(auth).catch((err) => {
-  console.error('Anonymous sign-in failed:', err);
-  setSyncStatus('offline');
 });
 </script>
 
@@ -749,6 +794,45 @@ const DATA_MAP={
   brokerQuotes:{get:()=>brokerQuotes,set:(v)=>brokerQuotes=v,render:()=>renderQuotes(),lsKey:'jericho_broker_quotes'},
   relationships:{get:()=>relationships,set:(v)=>relationships=v,render:()=>renderRelationships(),lsKey:'jericho_relationships'}
 };
+
+// ---- Password gate -------------------------------------------------------
+// The gate is only a curtain; the lock is the Firestore rule naming this
+// account. Both matter: the rule is what actually refuses a stranger.
+function lockUI(locked){
+  const scr=document.getElementById('lockScreen');
+  if(scr) scr.classList.toggle('hidden',!locked);
+  const lb=document.getElementById('lockBtnTop');
+  if(lb) lb.hidden=locked;
+  if(locked){ const i=document.getElementById('lockPass'); if(i){ i.value=''; setTimeout(()=>i.focus(),50); } }
+}
+async function doUnlock(){
+  const inp=document.getElementById('lockPass'), btn=document.getElementById('lockBtn'), err=document.getElementById('lockErr');
+  const pass=(inp.value||'').trim();
+  if(!pass){ err.textContent='Enter your password.'; return; }
+  if(!window._fbAuth){ err.textContent='Still connecting \u2014 try again in a moment.'; return; }
+  btn.disabled=true; btn.textContent='Checking\u2026'; err.textContent='';
+  try{
+    const {auth,signInWithEmailAndPassword,JERICHO_ACCOUNT}=window._fbAuth;
+    await signInWithEmailAndPassword(auth,JERICHO_ACCOUNT,pass);
+    // onAuthStateChanged raises jericho-unlocked, which hides the gate.
+  }catch(e){
+    const code=(e&&e.code)||'';
+    err.textContent = /wrong-password|invalid-credential|invalid-login/.test(code)
+      ? 'Wrong password.'
+      : /too-many-requests/.test(code)
+        ? 'Too many attempts \u2014 wait a minute and try again.'
+        : /network/.test(code)
+          ? 'No connection.'
+          : 'Could not sign in.';
+    inp.value=''; inp.focus();
+  }finally{ btn.disabled=false; btn.textContent='Unlock'; }
+}
+async function doLock(){
+  try{ const {auth,signOut}=window._fbAuth; await signOut(auth); }catch(e){}
+  lockUI(true);
+}
+window.addEventListener('jericho-unlocked',()=>lockUI(false));
+window.addEventListener('jericho-locked',()=>lockUI(true));
 
 function loadAllFromLocalStorage(){
   leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
