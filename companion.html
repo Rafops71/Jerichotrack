@@ -212,10 +212,40 @@ html[data-layout="wide"] { --app-max: 1060px; }
 #ingestSourceText.dictating { border: 2px solid #c0392b; background: #fff6f5; }
 .dictation-hint { display: none; font-size: 11px; color: #a0620c; background: #fff8ea; border: 1px solid #f0d38a; border-radius: 8px; padding: 8px 10px; margin-top: 8px; line-height: 1.5; }
 .dictation-hint.show { display: block; }
+
+/* Password gate. Same account and password as JerichoTrack and Diligence. */
+#lockScreen { position: fixed; inset: 0; z-index: 99999; background: #0f1e30;
+  display: flex; align-items: center; justify-content: center; padding: 24px; }
+#lockScreen.hidden { display: none; }
+.lock-box { width: 100%; max-width: 320px; text-align: center; color: #fff; }
+.lock-box .lk-mark { font-size: 30px; margin-bottom: 10px; }
+.lock-box h1 { font-size: 17px; letter-spacing: 1px; margin: 0 0 4px; }
+.lock-box p { font-size: 13px; color: #9fb3cc; margin: 0 0 22px; }
+.lock-box input { width: 100%; padding: 14px; border-radius: 8px; font-size: 16px;
+  border: 1px solid #2a3f5a; background: #16283f; color: #fff; text-align: center; letter-spacing: 2px; }
+.lock-box input:focus { outline: none; border-color: #e8a020; }
+.lock-box button { width: 100%; margin-top: 10px; padding: 14px; border: none; border-radius: 8px;
+  background: #e8a020; color: #0f1e30; font-size: 15px; font-weight: bold; }
+.lock-box button:disabled { opacity: .55; }
+.lock-err { min-height: 18px; margin-top: 12px; font-size: 13px; color: #f5a89f; }
+.lock-note { margin-top: 18px; font-size: 11px; color: #5d7691; }
 </style>
 
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lk-mark">&#9889;</div>
+    <h1>JERICHO COMPANION</h1>
+    <p>Enter your password to continue</p>
+    <input id="lockPass" type="password" autocomplete="current-password"
+           placeholder="Password" onkeydown="if(event.key==='Enter')doUnlock()">
+    <button id="lockBtn" onclick="doUnlock()">Unlock</button>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-note">Same password as JerichoTrack.</div>
+  </div>
+</div>
+
 
 <div id="fatalErrorBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e74c3c;color:white;padding:14px 16px;font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;"></div>
 <script>
@@ -561,7 +591,8 @@ import {
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+  setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -593,24 +624,62 @@ const SYNCED_COLLECTIONS = {
 
 window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, SYNCED_COLLECTIONS };
 
-// Anonymous auth: no login screen, no password for Rafael/Rodrigo to manage, but
-// every request to Firestore now carries a real auth token instead of being
-// completely open. This is what allows the Firestore rule to require
-// "request.auth != null" instead of staying wide open to the internet.
-// Sync is only started once sign-in actually succeeds, not before.
+// One account, one password, shared with JerichoTrack and the Diligence Engine.
+// The address is a name for that account, not a mailbox: it is baked in and only
+// a password is ever typed. Anonymous sign-in is gone, because the Firestore
+// rules now name this account's uid -- a visitor who finds the URL is refused by
+// the database itself, not merely by this page.
+const JERICHO_ACCOUNT = 'rafael@jerichotrack.app';
+
+window._fbAuth = { auth, signInWithEmailAndPassword, signOut, JERICHO_ACCOUNT };
+
+// Stay signed in on this device until Lock is pressed.
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+
 onAuthStateChanged(auth, (user) => {
-  if (user) {
+  if (user && !user.isAnonymous) {
     window._fbReady = true;
     window.dispatchEvent(new Event('firebase-ready'));
+    window.dispatchEvent(new Event('jericho-unlocked'));
+  } else {
+    window._fbReady = false;
+    window.dispatchEvent(new Event('jericho-locked'));
   }
-});
-signInAnonymously(auth).catch((err) => {
-  console.error('Anonymous sign-in failed:', err);
-  window.dispatchEvent(new Event('firebase-auth-failed'));
 });
 </script>
 
 <script>
+// ---- Password gate -------------------------------------------------------
+// The gate is a curtain; the lock is the Firestore rule naming this account.
+function lockUI(locked){
+  const scr=document.getElementById('lockScreen');
+  if(scr) scr.classList.toggle('hidden',!locked);
+  if(locked){ const i=document.getElementById('lockPass'); if(i){ i.value=''; setTimeout(()=>i.focus(),50); } }
+}
+async function doUnlock(){
+  const inp=document.getElementById('lockPass'), btn=document.getElementById('lockBtn'), err=document.getElementById('lockErr');
+  const pass=(inp.value||'').trim();
+  if(!pass){ err.textContent='Enter your password.'; return; }
+  if(!window._fbAuth){ err.textContent='Still connecting \u2014 try again in a moment.'; return; }
+  btn.disabled=true; btn.textContent='Checking\u2026'; err.textContent='';
+  try{
+    const {auth,signInWithEmailAndPassword,JERICHO_ACCOUNT}=window._fbAuth;
+    await signInWithEmailAndPassword(auth,JERICHO_ACCOUNT,pass);
+  }catch(e){
+    const c=(e&&e.code)||'';
+    err.textContent = /wrong-password|invalid-credential|invalid-login/.test(c) ? 'Wrong password.'
+      : /too-many-requests/.test(c) ? 'Too many attempts \u2014 wait a minute.'
+      : /network/.test(c) ? 'No connection.' : 'Could not sign in.';
+    inp.value=''; inp.focus();
+  }finally{ btn.disabled=false; btn.textContent='Unlock'; }
+}
+async function doLock(){
+  try{ const {auth,signOut}=window._fbAuth; await signOut(auth); }catch(e){}
+  lockUI(true);
+}
+window.addEventListener('jericho-unlocked',()=>lockUI(false));
+window.addEventListener('jericho-locked',()=>lockUI(true));
+
 // ============================================================
 // COUNTRY / TIMEZONE DATA — expanded to genuinely global coverage
 // Most countries = one default timezone.
