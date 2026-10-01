@@ -19,6 +19,14 @@
   --c-on-primary: #ffffff;
   --c-on-accent:  #ffffff;
   --c-bg: var(--c-bg);        /* page background */
+  /* Status colours. These say what a thing IS, not what the app looks like, so they
+     are separate from the theme above and default to the colours people already read
+     without thinking. Settings can retint them or hand them to the theme. */
+  --c-over:  #e74c3c;     /* overdue */
+  --c-today: #e8a020;     /* due today */
+  --c-none:  #bbbbbb;     /* no date set */
+  --c-good:  #27ae60;     /* done, online, won */
+  --c-surface: #ffffff;   /* cards sit on this; Bento and Glass change it */
   --app-max: 680px;       /* widest the content ever gets - phones are narrower */
   --ui-gap: 16px;         /* space between cards */
   --ui-card-pad: 12px 14px;
@@ -84,9 +92,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 
 /* Follow-up items */
 .item-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid var(--c-primary); }
-.item-card.overdue { border-left-color: #e74c3c; }
-.item-card.today { border-left-color: #e8a020; }
-.item-card.nodate { border-left-color: #bbb; }
+.item-card.overdue { border-left-color: var(--c-over); }
+.item-card.today { border-left-color: var(--c-today); }
+.item-card.nodate { border-left-color: var(--c-none); }
 .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .item-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--c-on-accent); background: var(--c-accent); padding: 2px 7px; border-radius: 8px; letter-spacing: 0.3px; }
 .item-title { font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--c-primary); }
@@ -94,7 +102,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-s
 .item-note { font-size: 12px; color: #555; margin-top: 5px; line-height: 1.4; }
 .item-due { font-size: 11px; color: #999; margin-top: 5px; }
 .item-actions { display: flex; gap: 8px; margin-top: 10px; }
-.btn-done { background: #27ae60; color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+.btn-done { background: var(--c-good); color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
 .btn-del { background: #f0f0f0; color: #999; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; }
 
 /* Pipeline quick view */
@@ -229,6 +237,143 @@ html[data-layout="wide"] { --app-max: 1060px; }
 .lock-box button:disabled { opacity: .55; }
 .lock-err { min-height: 18px; margin-top: 12px; font-size: 13px; color: #f5a89f; }
 .lock-note { margin-top: 18px; font-size: 11px; color: #5d7691; }
+
+/* ============================================================
+   HOME STYLES - Classic, Bento, Glass
+   ============================================================
+   These are SKINS, not rewrites. Every id, class and onclick in the markup
+   stays exactly where it was, so the robot drives all three the same way and
+   nothing here can change what a button does. data-style on <html> picks one.
+
+   Classic needs no rules at all: it is the markup as it has always been.
+   ============================================================ */
+
+/* ---------- BENTO: the home screen becomes a grid of tiles ---------- */
+html[data-style="bento"] .upcoming-card {
+  background: var(--c-accent); color: var(--c-on-accent);
+  border-radius: 18px; box-shadow: none; padding: 16px;
+}
+html[data-style="bento"] .upcoming-card h2 { color: inherit; opacity: 0.8; }
+html[data-style="bento"] .upcoming-row { border-bottom-color: rgba(255,255,255,0.18); }
+html[data-style="bento"] .upcoming-time {
+  background: rgba(255,255,255,0.22); color: inherit;
+}
+html[data-style="bento"] .upcoming-info .u-title { color: inherit; }
+html[data-style="bento"] .upcoming-info .u-sub { color: inherit; opacity: 0.78; }
+html[data-style="bento"] .upcoming-card .empty-note { color: inherit; opacity: 0.72; }
+
+html[data-style="bento"] .bento-counts {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px; margin-bottom: 14px;
+}
+html[data-style="bento"] .bento-count {
+  border-radius: 16px; padding: 13px 14px; min-height: 84px; color: #fff;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.bento-counts { display: none; }   /* Bento turns this on; Classic and Glass never show it */
+.bento-count .bc-n { font-size: 27px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.bento-count .bc-l { font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; }
+
+html[data-style="bento"] .tile-grid { gap: 8px; }
+html[data-style="bento"] .tile {
+  border-radius: 16px; box-shadow: none; background: var(--c-surface);
+  min-height: 84px; justify-content: center;
+}
+html[data-style="bento"] .sec-h { margin: 14px 0 8px 0; }
+html[data-style="bento"] .item-card,
+html[data-style="bento"] .pipe-row {
+  border-radius: 16px; box-shadow: none; background: var(--c-surface);
+  border-left: none; padding: 14px;
+}
+/* The left stripe carried the status colour, so put it back as a dot. */
+html[data-style="bento"] .item-card { position: relative; padding-left: 30px; }
+html[data-style="bento"] .item-card::before {
+  content: ""; position: absolute; left: 14px; top: 18px;
+  width: 9px; height: 9px; border-radius: 9999px; background: var(--c-primary);
+}
+html[data-style="bento"] .item-card.overdue::before { background: var(--c-over); }
+html[data-style="bento"] .item-card.today::before  { background: var(--c-today); }
+html[data-style="bento"] .item-card.nodate::before { background: var(--c-none); }
+html[data-style="bento"] .bottom-nav { border-top: none; background: var(--c-surface); }
+
+/* ---------- GLASS: frosted panels over a coloured ground ---------- */
+html[data-style="glass"] body {
+  background: var(--g-grad); background-attachment: fixed; color: var(--g-ink);
+}
+html[data-style="glass"] .header { background: transparent; color: var(--g-ink); }
+html[data-style="glass"] .app-version { color: var(--g-ink-mute); }
+html[data-style="glass"] .head-gear { color: var(--g-ink); }
+
+html[data-style="glass"] .upcoming-card,
+html[data-style="glass"] .item-card,
+html[data-style="glass"] .pipe-row,
+html[data-style="glass"] .tile {
+  background: var(--g-panel); border: 1px solid var(--g-border);
+  border-radius: 18px; box-shadow: 0 8px 26px rgba(0,0,0,0.16);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  color: var(--g-ink);
+}
+html[data-style="glass"] .tile { border-radius: 16px; }
+html[data-style="glass"] .tile .tile-label,
+html[data-style="glass"] .upcoming-info .u-title,
+html[data-style="glass"] .item-title,
+html[data-style="glass"] .pipe-title,
+html[data-style="glass"] .sec-h { color: var(--g-ink); }
+html[data-style="glass"] .upcoming-card h2,
+html[data-style="glass"] .upcoming-info .u-sub,
+html[data-style="glass"] .item-sub,
+html[data-style="glass"] .item-due,
+html[data-style="glass"] .item-note,
+html[data-style="glass"] .pipe-stage,
+html[data-style="glass"] .empty-note { color: var(--g-ink-mute); }
+html[data-style="glass"] .upcoming-row { border-bottom-color: var(--g-hair); }
+html[data-style="glass"] .upcoming-time { background: var(--g-cta-bg); color: var(--g-cta-ink); }
+html[data-style="glass"] .tile.primary { background: var(--g-cta-bg); }
+html[data-style="glass"] .tile.primary .tile-label { color: var(--g-cta-ink); }
+
+/* The status stripe stays, but needs to read against glass rather than white. */
+html[data-style="glass"] .item-card { border-left: 4px solid var(--c-primary); }
+html[data-style="glass"] .item-card.overdue { border-left-color: var(--c-over); }
+html[data-style="glass"] .item-card.today  { border-left-color: var(--c-today); }
+html[data-style="glass"] .item-card.nodate { border-left-color: var(--c-none); }
+
+/* A floating bar, inset from the edges, rather than one welded to the bottom. */
+html[data-style="glass"] .bottom-nav {
+  left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 4px; border-top: none; border-radius: 9999px;
+  background: var(--g-panel); border: 1px solid var(--g-border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  max-width: var(--app-max); margin: 0 auto;
+}
+html[data-style="glass"] .bottom-nav button { color: var(--g-ink-mute); }
+html[data-style="glass"] .bottom-nav button.active { color: var(--g-ink); }
+
+/* Sheets keep a solid ground: a frosted sheet over a frosted page is unreadable. */
+html[data-style="glass"] .sheet { background: var(--c-bg); color: #12202e; }
+html[data-style="glass"] .sheet h3, html[data-style="glass"] .sheet .sec-h { color: var(--c-primary); }
+
+/* ---------- controls added to Settings ---------- */
+.look-styles { display: flex; gap: 8px; }
+.look-style {
+  flex: 1 1 0; min-width: 0; text-align: left; background: white;
+  border: 1.5px solid #ddd; border-radius: 10px; padding: 10px 11px; cursor: pointer;
+}
+.look-style.on { border-color: var(--c-primary); border-width: 2px; padding: 9px 10px; }
+.look-style b { display: block; font-size: 13px; color: var(--c-primary); }
+.look-style em { display: block; font-size: 11px; font-style: normal; color: #888; line-height: 1.35; margin-top: 2px; }
+.look-modes { display: flex; gap: 6px; flex-wrap: wrap; }
+.look-mode {
+  flex: 1 1 auto; min-height: 40px; padding: 0 11px; background: white;
+  border: 1.5px solid #ddd; border-radius: 9px; font-size: 12px; font-weight: 600;
+  color: var(--c-primary); cursor: pointer;
+}
+.look-mode.on { border-color: var(--c-primary); border-width: 2px; }
+.look-hint { font-size: 11px; color: #888; line-height: 1.45; margin-top: 6px; }
+.status-chip {
+  display: inline-block; width: 12px; height: 12px; border-radius: 9999px;
+  vertical-align: middle; margin-right: 6px;
+}
 </style>
 
 </head>
@@ -283,6 +428,9 @@ window.addEventListener('unhandledrejection', function (e) {
     <h2>📅 Upcoming Calls</h2>
     <div id="upcomingList"><div class="empty-note">No calls scheduled.</div></div>
   </div>
+
+  <!-- Bento only: the counts the tile grid cannot show. Hidden in Classic and Glass. -->
+  <div class="bento-counts" id="bentoCounts"></div>
 
   <div class="tile-grid">
     <button class="tile primary" onclick="openActionSheet()">
@@ -347,6 +495,14 @@ window.addEventListener('unhandledrejection', function (e) {
   <h3>Settings</h3>
   <div class="sec-h" style="margin-top:0;">Appearance</div>
   <div class="field">
+    <label>Style</label>
+    <div class="look-styles" id="lookStyles">
+      <button type="button" class="look-style" data-s="classic"><b>Classic</b><em>The cards you already know.</em></button>
+      <button type="button" class="look-style" data-s="bento"><b>Bento</b><em>Tiles, with counts up front.</em></button>
+      <button type="button" class="look-style" data-s="glass"><b>Glass</b><em>Frosted panels, floating bar.</em></button>
+    </div>
+  </div>
+  <div class="field">
     <label>Start from</label>
     <div class="look-swatches" id="lookPresets"></div>
   </div>
@@ -371,6 +527,29 @@ window.addEventListener('unhandledrejection', function (e) {
     <input class="look-slider" type="range" id="lkBg" min="0" max="18">
   </div>
   <div class="field">
+    <label>Status colours</label>
+    <div class="look-modes" id="lookModes">
+      <button type="button" class="look-mode" data-m="standard">Standard</button>
+      <button type="button" class="look-mode" data-m="follow">Follow theme</button>
+      <button type="button" class="look-mode" data-m="custom">Choose each</button>
+    </div>
+    <div class="look-hint" id="lookModeHint"></div>
+  </div>
+  <div class="field" id="statusFields" hidden>
+    <div class="look-row"><label for="lkOver"><span class="status-chip" id="chipOver"></span>Overdue</label><span id="lkOverV"></span></div>
+    <input class="look-slider" type="range" id="lkOver" min="0" max="360">
+    <div class="look-row"><label for="lkToday"><span class="status-chip" id="chipToday"></span>Due today</label><span id="lkTodayV"></span></div>
+    <input class="look-slider" type="range" id="lkToday" min="0" max="360">
+    <div class="look-row"><label for="lkGood"><span class="status-chip" id="chipGood"></span>Done, online, won</label><span id="lkGoodV"></span></div>
+    <input class="look-slider" type="range" id="lkGood" min="0" max="360">
+    <div class="look-row"><label for="lkNone"><span class="status-chip" id="chipNone"></span>No date</label><span id="lkNoneV"></span></div>
+    <input class="look-slider" type="range" id="lkNone" min="0" max="360">
+    <div class="look-row"><label for="lkNoneS">No date &mdash; how grey</label><span id="lkNoneSV"></span></div>
+    <input class="look-slider" type="range" id="lkNoneS" min="0" max="60">
+    <div class="look-hint">You pick the colour; how dark it is stays fixed, so a status never
+      becomes unreadable against white text.</div>
+  </div>
+  <div class="field">
     <label>Layout</label>
     <div class="look-layouts" id="lookLayouts">
       <button type="button" class="look-layout" data-l="compact"><b>Compact</b><em>Dense, made for one thumb on a phone.</em></button>
@@ -392,7 +571,7 @@ window.addEventListener('unhandledrejection', function (e) {
     </div>
   </div>
   <div class="sheet-actions">
-    <button class="btn-sheet-cancel" onclick="resetLook()">Reset colours</button>
+    <button class="btn-sheet-cancel" onclick="resetLook()">Reset look</button>
     <button class="btn-sheet-save" onclick="closeLookSheet()">Done</button>
   </div>
 </div>
@@ -864,7 +1043,13 @@ function checkVersionLabel(){
 showVersion();
 
 const LOOK_KEY='jericho_look';
-const LOOK_DEFAULT={h:213,s:48,l:20,a:213,b:4,layout:'compact'};
+const LOOK_DEFAULT={h:213,s:48,l:20,a:213,b:4,layout:'compact',
+  style:'classic',mode:'standard',
+  /* Status hues. Only the hue is yours - lightness is fixed in statusColours()
+     so white text on a status never stops being readable. */
+  cOver:2,cToday:32,cGood:145,cNone:215,cNoneS:10};
+const LOOK_STYLES=['classic','bento','glass'];
+const LOOK_MODES=['standard','follow','custom'];
 const LOOK_PRESETS=[
   {n:'Original navy',   h:213,s:48,l:20,a:213,b:4},
   {n:'Bright blue',     h:212,s:88,l:52,a:190,b:4},
@@ -890,6 +1075,27 @@ function saveLook(){
    does not produce white-on-white. */
 const readableOn=l=>l>58?'#12202e':'#ffffff';
 
+/* The four status colours, for whichever mode is chosen. Lightness is decided
+   here rather than by the user: these sit behind white text on a Bento tile, so
+   a pale yellow would be invisible. The hue is entirely the user's. */
+function statusColours(){
+  const accentL=Math.min(look.l+26,62);
+  const accentS=Math.min(look.s+18,92);
+  if(look.mode==='follow')return{
+    over:`hsl(${look.a} ${Math.min(accentS+6,95)}% ${Math.max(accentL-12,24)}%)`,
+    today:`hsl(${look.a} ${accentS}% ${Math.min(accentL+10,62)}%)`,
+    good:`hsl(${look.a} ${Math.max(accentS-14,20)}% ${Math.min(accentL+4,56)}%)`,
+    none:`hsl(${look.h} 10% 72%)`
+  };
+  if(look.mode==='custom')return{
+    over:`hsl(${look.cOver} 62% 38%)`,
+    today:`hsl(${look.cToday} 68% 34%)`,
+    good:`hsl(${look.cGood} 55% 36%)`,
+    none:`hsl(${look.cNone} ${look.cNoneS}% 68%)`
+  };
+  return{over:'#e74c3c',today:'#e8a020',good:'#27ae60',none:'#bbbbbb'};
+}
+
 function applyLook(){
   const r=document.documentElement;
   const accentL=Math.min(look.l+26,62);
@@ -899,9 +1105,47 @@ function applyLook(){
   r.style.setProperty('--c-on-primary',readableOn(look.l));
   r.style.setProperty('--c-on-accent',readableOn(accentL));
   r.style.setProperty('--c-bg',`hsl(${look.h} ${look.b}% 96%)`);
+  r.style.setProperty('--c-surface',`hsl(${look.h} ${Math.min(look.b*2,24)}% 100%)`);
+
+  const st=statusColours();
+  r.style.setProperty('--c-over',st.over);
+  r.style.setProperty('--c-today',st.today);
+  r.style.setProperty('--c-good',st.good);
+  r.style.setProperty('--c-none',st.none);
+
+  /* Glass is translucent white over the ground, so it only reads on a deep one.
+     Past the same 58% readableOn() uses, it flips to light panels with dark text
+     rather than going white-on-white. */
+  const lightGlass=look.l>58;
+  if(lightGlass){
+    r.style.setProperty('--g-grad',`linear-gradient(165deg,hsl(${look.h} ${Math.min(look.s+16,82)}% 90%) 0%,`+
+      `hsl(${look.a} ${Math.min(accentS-6,70)}% 84%) 52%,hsl(${look.h} 26% 95%) 100%)`);
+    r.style.setProperty('--g-panel','rgba(255,255,255,0.58)');
+    r.style.setProperty('--g-border','rgba(255,255,255,0.9)');
+    r.style.setProperty('--g-hair','rgba(18,32,46,0.1)');
+    r.style.setProperty('--g-ink','#12202e');
+    r.style.setProperty('--g-ink-mute',`hsl(${look.h} 20% 34%)`);
+    r.style.setProperty('--g-cta-bg',`hsl(${look.h} ${Math.min(look.s+10,92)}% 26%)`);
+    r.style.setProperty('--g-cta-ink','#ffffff');
+  }else{
+    r.style.setProperty('--g-grad',`linear-gradient(165deg,hsl(${look.h} ${Math.min(look.s+34,92)}% ${Math.max(Math.min(look.l+8,44),18)}%) 0%,`+
+      `hsl(${look.a} ${accentS}% ${Math.max(Math.min(look.l-2,30),12)}%) 52%,hsl(${look.h} 24% 8%) 100%)`);
+    r.style.setProperty('--g-panel','rgba(255,255,255,0.13)');
+    r.style.setProperty('--g-border','rgba(255,255,255,0.27)');
+    r.style.setProperty('--g-hair','rgba(255,255,255,0.13)');
+    r.style.setProperty('--g-ink','#ffffff');
+    r.style.setProperty('--g-ink-mute','rgba(255,255,255,0.74)');
+    r.style.setProperty('--g-cta-bg','#ffffff');
+    r.style.setProperty('--g-cta-ink',`hsl(${look.h} ${Math.min(look.s+20,92)}% ${Math.max(Math.min(look.l,40),20)}%)`);
+  }
+
   r.setAttribute('data-layout',look.layout);
+  r.setAttribute('data-style',LOOK_STYLES.includes(look.style)?look.style:'classic');
   const themeMeta=document.getElementById('themeColorMeta');
-  if(themeMeta)themeMeta.setAttribute('content',`hsl(${look.h} ${look.s}% ${look.l}%)`);
+  if(themeMeta)themeMeta.setAttribute('content',
+    look.style==='glass'?`hsl(${look.h} ${Math.min(look.s+34,92)}% ${Math.max(Math.min(look.l+8,44),18)}%)`
+                         :`hsl(${look.h} ${look.s}% ${look.l}%)`);
+  renderBentoCounts();
 }
 
 function renderLookControls(){
@@ -920,6 +1164,27 @@ function renderLookControls(){
   document.getElementById('lkLitV').textContent=look.l+'%';
   document.getElementById('lkAccV').textContent=look.a+'\u00b0';
   document.getElementById('lkBgV').textContent=look.b===0?'none':look.b+'%';
+  const st=statusColours();
+  [['lkOver','cOver',st.over],['lkToday','cToday',st.today],
+   ['lkGood','cGood',st.good],['lkNone','cNone',st.none]].forEach(([id,key,col])=>{
+    document.getElementById(id).value=look[key];
+    document.getElementById(id+'V').textContent=look[key]+'°';
+  });
+  document.getElementById('lkNoneS').value=look.cNoneS;
+  document.getElementById('lkNoneSV').textContent=look.cNoneS===0?'pure grey':look.cNoneS+'%';
+  [['chipOver',st.over],['chipToday',st.today],['chipGood',st.good],['chipNone',st.none]]
+    .forEach(([id,col])=>{document.getElementById(id).style.background=col;});
+  document.getElementById('statusFields').hidden=look.mode!=='custom';
+  document.getElementById('lookModeHint').textContent=
+    look.mode==='follow'
+      ? 'Overdue, due-today and done all follow your accent colour. They differ by brightness rather than by colour, so they are harder to tell apart at a glance.'
+      : look.mode==='custom'
+        ? 'Pick a colour for each one below.'
+        : 'Overdue red, due-today amber, done green — the colours that read as themselves. Everything else follows your theme.';
+  document.querySelectorAll('#lookStyles .look-style').forEach(b=>
+    b.classList.toggle('on',b.dataset.s===look.style));
+  document.querySelectorAll('#lookModes .look-mode').forEach(b=>
+    b.classList.toggle('on',b.dataset.m===look.mode));
   document.querySelectorAll('#lookLayouts .look-layout').forEach(b=>
     b.classList.toggle('on',b.dataset.l===look.layout));
   document.querySelectorAll('#lookPresets .look-swatch').forEach(b=>{
@@ -979,7 +1244,19 @@ function resetLook(){
   toast('Back to the original look');
 }
 
-['lkHue:h','lkSat:s','lkLit:l','lkAcc:a','lkBg:b'].forEach(pair=>{
+document.getElementById('lookStyles').addEventListener('click',e=>{
+  const b=e.target.closest('.look-style'); if(!b)return;
+  look.style=b.dataset.s;
+  applyLook();saveLook();renderLookControls();
+});
+document.getElementById('lookModes').addEventListener('click',e=>{
+  const b=e.target.closest('.look-mode'); if(!b)return;
+  look.mode=b.dataset.m;
+  applyLook();saveLook();renderLookControls();
+});
+
+['lkHue:h','lkSat:s','lkLit:l','lkAcc:a','lkBg:b',
+ 'lkOver:cOver','lkToday:cToday','lkGood:cGood','lkNone:cNone','lkNoneS:cNoneS'].forEach(pair=>{
   const [id,key]=pair.split(':');
   document.getElementById(id).addEventListener('input',e=>{
     look[key]=+e.target.value;
@@ -1146,6 +1423,32 @@ function taskCardHTML(t){
   const dueLabel=t.due?(t.due<today?'Overdue — was due '+t.due:t.due===today?'Due today':'Due '+t.due):'No date set';
   return `<div class="item-card ${cls}"><div class="item-top"><span class="item-tag">${escapeHtml(t.category||t.actionType||'Follow-up')}</span></div><div class="item-title">${escapeHtml(t.title)}</div>${t.notes?`<div class="item-note">${escapeHtml(t.notes)}</div>`:''}<div class="item-due">${escapeHtml(dueLabel)}</div><div class="item-actions"><button class="btn-done" onclick="completeAction('${t.id}')">✓ Done</button><button class="btn-edit" onclick="editAction('${t.id}')">Edit</button><button class="btn-del" onclick="deleteAction('${t.id}',this)">Delete</button></div></div>`;
 }
+/* Bento's three count tiles. Reads the same arrays the rest of the app renders
+   from, so the numbers cannot disagree with the lists underneath them.
+
+   The try/catch is not defensive padding: applyLook() runs during start-up,
+   before `let tasks` on line ~1269 is initialised, and touching a `let` in its
+   temporal dead zone throws - `typeof` included. An empty strip for the first
+   few milliseconds is correct; a start-up crash is not. */
+function renderBentoCounts(){
+  const el=document.getElementById('bentoCounts');
+  if(!el)return;
+  if(look.style!=='bento'){el.innerHTML='';return;}
+  let over=0,due=0,deals=0;
+  try{
+    const open=tasks.filter(t=>!t.completed&&t.fromCompanion);
+    over=open.filter(t=>t.due&&t.due<today).length;
+    due=open.filter(t=>t.due===today).length;
+    deals=pipeline.filter(d=>d.stage!=='Closed Won'&&d.stage!=='Lost'&&d.stage!=='Closed Not Monetized').length;
+  }catch(e){ el.innerHTML=''; return; }
+  const tile=(n,label,bg)=>
+    `<div class="bento-count" style="background:${bg}"><div class="bc-n">${n}</div><div class="bc-l">${label}</div></div>`;
+  el.innerHTML=
+    tile(over,'Overdue','var(--c-over)')+
+    tile(due,'Due today','var(--c-today)')+
+    tile(deals,'Live deals','var(--c-primary)');
+}
+
 function renderFollowups(){
   const activeCompanionTasks=tasks.filter(t=>!t.completed&&t.fromCompanion);
   const homeList=activeCompanionTasks.filter(t=>!t.due||t.due<=today);
@@ -1153,6 +1456,7 @@ function renderFollowups(){
   homeEl.innerHTML=homeList.length?homeList.map(taskCardHTML).join(''):'<div class="empty-note">Nothing due. ✅</div>';
   const fullEl=document.getElementById('fullFollowups');
   fullEl.innerHTML=activeCompanionTasks.length?activeCompanionTasks.map(taskCardHTML).join(''):'<div class="empty-note">Nothing here yet.</div>';
+  renderBentoCounts();   // the counts must never disagree with the list above them
 }
 /* ============================================================
    v19: deleting takes two taps.
