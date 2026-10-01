@@ -37,7 +37,11 @@ test('@robot Item31_worker_settings_are_remembered', async ({ page }) => {
   await app.openApp(page);
   await configure(page, 'ok');
   await page.reload();
-  await page.waitForFunction(() => window._fbReady === true, null, { timeout: 20000 });
+  /* 60s, like openApp() and dictation.spec.js: a reload signs in again, and under
+     a full run the sandbox can take far longer than a lone page does. These two
+     were left at 20s when the others were raised, and Item31 duly flaked on it.
+     The assertion is unchanged - a page that never signs in still fails. */
+  await page.waitForFunction(() => window._fbReady === true, null, { timeout: 60000 });
   const saved = await page.evaluate(() => ({
     url: localStorage.getItem('jericho_ingest_worker_url'),
     key: localStorage.getItem('jericho_ingest_auth_key')
