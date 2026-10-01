@@ -277,8 +277,11 @@ html[data-style="bento"] .bento-count {
 html[data-style="bento"] .tile-grid { gap: 8px; }
 html[data-style="bento"] .tile {
   border-radius: 16px; box-shadow: none; background: var(--c-surface);
-  min-height: 84px; justify-content: center;
+  min-height: 76px; padding: 14px; justify-content: center;
 }
+/* Without this the rule above also repaints the primary tiles, and their label -
+   which is --c-on-primary, i.e. white - goes white-on-white. */
+html[data-style="bento"] .tile.primary { background: var(--c-primary); }
 html[data-style="bento"] .sec-h { margin: 14px 0 8px 0; }
 html[data-style="bento"] .item-card,
 html[data-style="bento"] .pipe-row {
@@ -299,6 +302,10 @@ html[data-style="bento"] .bottom-nav { border-top: none; background: var(--c-sur
 /* ---------- GLASS: frosted panels over a coloured ground ---------- */
 html[data-style="glass"] body {
   background: var(--g-grad); background-attachment: fixed; color: var(--g-ink);
+  /* The bar floats clear of the bottom instead of sitting on it, so it needs
+     more room beneath the content than the welded one does - otherwise the last
+     follow-up ends up underneath it. */
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
 html[data-style="glass"] .header { background: transparent; color: var(--g-ink); }
 html[data-style="glass"] .app-version { color: var(--g-ink-mute); }
