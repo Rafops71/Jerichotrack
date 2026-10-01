@@ -105,6 +105,25 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .imp-warn { margin-top:10px; font-size:12px; color:#b7791f; }
 .imp-actions { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
 
+.dup-box { display:none; background:#fff; border:2px solid #b7791f; border-radius:8px; padding:18px; margin:14px 0; }
+.dup-box h3 { color:#1a2e4a; margin:0 0 4px; }
+.dup-sub { color:#777; font-size:13px; margin:0 0 14px; }
+.dup-pair { border:1px solid #e4e4e4; border-radius:6px; margin-bottom:12px; overflow:hidden; }
+.dup-why { background:#fff8e6; color:#8a5d00; font-size:12px; padding:7px 10px; border-bottom:1px solid #f0e2bd; }
+.dup-why.dup-weak { background:#eef2f7; color:#4a5a6e; border-bottom-color:#dde3ea; }
+.dup-cols { display:flex; flex-wrap:wrap; }
+.dup-col { flex:1; min-width:230px; padding:10px 12px; font-size:13px; }
+.dup-col + .dup-col { border-left:1px solid #eee; }
+.dup-col .nm { font-weight:bold; color:#1a2e4a; font-size:14px; margin-bottom:5px; }
+.dup-col .fld { color:#666; padding:2px 0; }
+.dup-col .fld span { color:#aaa; display:inline-block; min-width:64px; }
+.dup-keep { background:#eaf7ef; }
+.dup-keep .tag { background:#27ae60; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; margin-left:6px; text-transform:uppercase; }
+.dup-gone .tag { background:#bbb; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; margin-left:6px; text-transform:uppercase; }
+.dup-act { padding:9px 12px; background:#fafafa; border-top:1px solid #eee; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.dup-act .hint { color:#999; font-size:12px; }
+@media (max-width:700px){ .dup-col + .dup-col { border-left:none; border-top:1px solid #eee; } }
+
 .map-switch { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
 .mapbtn { background:#fff; border:1px solid #ddd; color:#555; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:13px; }
 .mapbtn.active { background:#1a2e4a; border-color:#1a2e4a; color:#fff; font-weight:bold; }
@@ -359,6 +378,14 @@ tr:hover td { background: #fafbfc; }
 <div class="section-title">Contacts & Broker Management</div>
 <button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
 <button class="btn-warning" onclick="showImport()">&#8681; Import Contacts</button>
+<button class="btn-warning" onclick="showDupes()">&#9783; Find Duplicates</button>
+
+<div id="dupeBox" class="dup-box">
+  <h3>Possible duplicates</h3>
+  <p class="dup-sub">Nothing is merged until you press Merge on that pair. Merging keeps the fuller record and fills its blanks from the other one &mdash; no detail is thrown away.</p>
+  <div id="dupeList"></div>
+  <div class="imp-actions"><button class="btn-cancel" onclick="hideDupes()">Close</button></div>
+</div>
 
 <div id="importBox" class="imp-box">
   <h3>Import contacts</h3>
@@ -1567,6 +1594,7 @@ const IMP_FIELDS = [
 
 function showImport(){
   document.getElementById('addContactForm').style.display='none';
+  document.getElementById('dupeBox').style.display='none';
   document.getElementById('importBox').style.display='block';
   impReset();
 }
@@ -1716,14 +1744,90 @@ function impRowToContact(r){
   return c;
 }
 
-// Existing contact matched on email, else on name plus company. Email is the
-// reliable one; the name pair is there for contacts that carry no address.
+/* ---------- matching the same person twice ---------- */
+// Names arrive spelled three ways for the same man: accents dropped by one
+// phone, initials by another, a full stop after the initial by a third. These
+// keys strip everything that varies and compare what is left.
+// Some letters carry no accent to strip — Turkish dotless i, Scandinavian o
+// with a stroke, German sharp s — so they are mapped by hand. Without this a
+// Turkish mill is two contacts the moment one export writes Yilmaz.
+const LETTER_MAP={ '\u0131':'i','\u0130':'i','\u00f8':'o','\u00d8':'o','\u0111':'d','\u0110':'d',
+  '\u0142':'l','\u0141':'l','\u00df':'ss','\u00e6':'ae','\u00c6':'ae','\u0153':'oe','\u0152':'oe',
+  '\u00fe':'th','\u00de':'th','\u00f0':'d','\u00d0':'d' };
+function keyName(v){
+  return (v||'').replace(/[\u0131\u0130\u00f8\u00d8\u0111\u0110\u0142\u0141\u00df\u00e6\u00c6\u0153\u0152\u00fe\u00de\u00f0\u00d0]/g,ch=>LETTER_MAP[ch])
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// Do two names describe the same person? Exact after cleaning, or the same
+// surname with one side abbreviated to an initial — "C. Okonkwo" and
+// "Chidi Okonkwo". Anything else is treated as two different people, and a
+// missing name never agrees with a present one.
+function namesAgree(a,b){
+  const x=keyName(a).split(' ').filter(Boolean), y=keyName(b).split(' ').filter(Boolean);
+  if(!x.length||!y.length) return false;
+  if(x.join(' ')===y.join(' ')) return true;
+  if(x[x.length-1]!==y[y.length-1]) return false;
+  const fx=x[0], fy=y[0];
+  return (fx.length===1||fy.length===1) && fx[0]===fy[0];
+}
+// Company names carry a legal suffix that half the exports leave off, so
+// "Lagos Metals Ltd" and "Lagos Metals" have to land on the same key.
+const CO_SUFFIX=/\b(ltd|limited|llc|llp|inc|incorporated|corp|corporation|co|company|plc|gmbh|ag|bv|nv|sa|sarl|srl|spa|as|a\/s|ab|oy|pty|pte|sdn|bhd|kft|zoo|doo|dmcc|fzco|fze|fzc|jsc|ooo|pjsc|llp|group|holdings|trading|international)\b/g;
+// "A.S.", "S.A. de C.V." and "B.V." survive cleaning as loose single letters,
+// so those are glued back together before the suffix is stripped. Otherwise a
+// Turkish A.S. and a Turkish AS read as two different companies.
+function keyCompany(v){
+  return keyName(v).replace(/\b([a-z])(?: ([a-z])\b)+/g,m=>m.replace(/ /g,''))
+    .replace(CO_SUFFIX,'').replace(/\s+/g,' ').trim();
+}
+// A phone written +234 801..., 00234 801... and 0801... is one number. Keeping
+// the last nine digits sidesteps country codes and trunk zeros without needing
+// to know which country the number belongs to. Shorter numbers are not matched
+// on at all, because a six-digit tail collides far too easily.
+function keyPhone(v){
+  const d=(v||'').replace(/\D/g,'');
+  return d.length>=9 ? d.slice(-9) : '';
+}
+function sameEmail(a,b){
+  const x=(a||'').trim().toLowerCase(), y=(b||'').trim().toLowerCase();
+  return !!x && x===y;
+}
+
+// Why one record is judged to be the same person as another, in plain words,
+// so nothing is ever merged on a reason the user cannot read back.
+//
+// A shared phone number is NOT enough on its own. A whole office answers one
+// switchboard, so matching on the number alone swallows a genuinely new
+// colleague into an existing record and the import quietly loses them. The
+// name has to agree as well.
+function matchReason(a,b){
+  if(sameEmail(a.email,b.email)) return 'same email address';
+  const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
+  const ca=keyCompany(a.company), cb=keyCompany(b.company);
+  const nameOK=namesAgree(a.name,b.name);
+  if(pa && pa===pb && nameOK) return 'same phone number and same name';
+  if(pa && pa===pb && !keyName(a.name) && !keyName(b.name) && ca && ca===cb) return 'same phone number and same company, neither has a name';
+  if(nameOK && ca && ca===cb) return 'same name and same company';
+  return '';
+}
+
+// Looser than matchReason, and used only by the Find Duplicates review screen,
+// never by the import. These are shown for a human to judge; they are never
+// acted on automatically.
+function weakReason(a,b){
+  const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
+  if(pa && pa===pb) return 'share a phone number, but the names are different \u2014 worth a look';
+  const ca=keyCompany(a.company), cb=keyCompany(b.company);
+  if(ca && ca===cb && keyName(a.name) && keyName(a.name)===keyName(b.name)) return 'same name at the same company';
+  return '';
+}
+
+// Existing contact matched on email, then phone, then name plus company.
 function impFindExisting(c){
-  const em=(c.email||'').trim().toLowerCase();
-  if(em){ const hit=contacts.find(x=>(x.email||'').trim().toLowerCase()===em); if(hit) return hit; }
-  const key=((c.name||'')+'|'+(c.company||'')).trim().toLowerCase();
-  if(key==='|') return null;
-  return contacts.find(x=>((x.name||'')+'|'+(x.company||'')).trim().toLowerCase()===key)||null;
+  for(const x of contacts){ if(matchReason(c,x)) return x; }
+  return null;
 }
 
 function impRender(){
@@ -1736,7 +1840,8 @@ function impRender(){
     ? '<table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>City</th></tr></thead><tbody>'+
       parsed.slice(0,5).map(c=>{
         const d=impFindExisting(c);
-        return `<tr class="${d?'dupe':''}"><td>${c.name||'—'}${d?' <span style="color:#b7791f;font-size:11px;">already in book</span>':''}</td>`+
+        const why=d?matchReason(c,d):'';
+        return `<tr class="${d?'dupe':''}"><td>${c.name||'—'}${d?` <span style="color:#b7791f;font-size:11px;">already in book as ${d.name||d.company} — ${why}</span>`:''}</td>`+
           `<td>${c.company||'—'}</td><td>${c.email||'—'}</td><td>${c.phone||'—'}</td><td>${c.city||'—'}</td></tr>`;
       }).join('')+'</tbody></table>'+
       (parsed.length>5?`<div style="font-size:12px;color:#999;padding:6px 0;">…and ${parsed.length-5} more</div>`:'')
@@ -1797,6 +1902,125 @@ async function impCommit(){
     persist('contacts',contacts);
     toast('Map locations updated','success');
   }
+}
+
+// ============================================================
+// FIND DUPLICATES — for pairs already sitting in the book, whether an
+// import let them through or they were typed in twice by hand. It only
+// ever proposes; the merge happens when the user presses the button.
+// ============================================================
+let DUP = { pairs: [], dismissed: JSON.parse(localStorage.getItem('jericho_dupe_ok') || '[]') };
+
+function dupPairKey(a,b){ return [a.id,b.id].sort().join('~'); }
+
+function showDupes(){
+  document.getElementById('addContactForm').style.display='none';
+  document.getElementById('importBox').style.display='none';
+  document.getElementById('dupeBox').style.display='block';
+  dupScan();
+}
+function hideDupes(){ document.getElementById('dupeBox').style.display='none'; }
+
+// How much a record actually carries. The fuller of a pair is the one kept,
+// so a merge never trades a complete record for a thin one.
+const DUP_FIELDS=['name','company','type','city','country','phone','email','commodity','introBy','linkedin','notes','followup'];
+function dupWeight(c){
+  let n=DUP_FIELDS.reduce((t,f)=>t+((c[f]||'').toString().trim()?1:0),0);
+  // A record with a person's name always outranks a nameless one, however many
+  // other boxes the nameless one happens to have filled.
+  if((c.name||'').trim()) n+=3;
+  if(c.trust && c.trust!=='Unknown') n++;
+  if(c.kyc && c.kyc!=='No KYC') n++;
+  if(c.lat!==undefined) n++;
+  return n;
+}
+
+function dupScan(){
+  DUP.pairs=[];
+  for(let i=0;i<contacts.length;i++){
+    for(let j=i+1;j<contacts.length;j++){
+      const a=contacts[i], b=contacts[j];
+      const strong=matchReason(a,b);
+      const why=strong||weakReason(a,b);
+      if(!why) continue;
+      if(DUP.dismissed.includes(dupPairKey(a,b))) continue;
+      // The fuller record survives; a tie keeps the older one, so the entry
+      // your deals and call logs were written against stays put.
+      const wa=dupWeight(a), wb=dupWeight(b);
+      const keep = wa>wb ? a : wb>wa ? b : (a.id<=b.id ? a : b);
+      DUP.pairs.push({ keep, drop: keep===a?b:a, why, weak: !strong });
+    }
+  }
+  DUP.pairs.sort((x,y)=>(x.weak?1:0)-(y.weak?1:0));
+  dupRender();
+}
+
+function dupCell(c,keep){
+  const row=(lab,v)=>v?`<div class="fld"><span>${lab}</span>${v}</div>`:'';
+  return `<div class="dup-col ${keep?'dup-keep':'dup-gone'}">`+
+    `<div class="nm">${c.name||'(no name)'}<span class="tag">${keep?'kept':'removed'}</span></div>`+
+    row('Company',c.company)+row('Role',c.type)+row('Email',c.email)+row('Phone',c.phone)+
+    row('City',[c.city,c.country].filter(Boolean).join(', '))+row('Commodity',c.commodity)+
+    row('Trust',c.trust&&c.trust!=='Unknown'?c.trust:'')+row('KYC',c.kyc&&c.kyc!=='No KYC'?c.kyc:'')+
+    row('Notes',(c.notes||'').slice(0,90))+row('Added',c.date)+'</div>';
+}
+
+function dupRender(){
+  const el=document.getElementById('dupeList');
+  if(!DUP.pairs.length){
+    el.innerHTML='<div style="padding:14px;color:#27ae60;font-size:14px;">No duplicates found. Your contact book is clean.</div>';
+    return;
+  }
+  el.innerHTML=DUP.pairs.map((p,i)=>
+    `<div class="dup-pair">`+
+      `<div class="dup-why${p.weak?' dup-weak':''}">${p.weak?'Might be the same person':'Looks like the same person'} &mdash; ${p.why}</div>`+
+      `<div class="dup-cols">${dupCell(p.keep,true)}${dupCell(p.drop,false)}</div>`+
+      `<div class="dup-act">`+
+        `<button class="btn-success" onclick="dupMerge(${i})">Merge into one</button>`+
+        `<button class="btn-cancel" onclick="dupNotSame(${i})">Not the same person</button>`+
+        `<span class="hint">${DUP.pairs.length} pair${DUP.pairs.length===1?'':'s'} to review</span>`+
+      `</div>`+
+    `</div>`).join('');
+}
+
+// Merging fills the kept record's blanks from the other one and then removes
+// the other. A value already in the kept record is never overwritten, and the
+// discarded spelling of the name is written into the notes so a search for it
+// still finds the person.
+async function dupMerge(i){
+  const p=DUP.pairs[i]; if(!p) return;
+  const keep=contacts.find(c=>c.id===p.keep.id), drop=contacts.find(c=>c.id===p.drop.id);
+  if(!keep||!drop){ dupScan(); return; }
+
+  DUP_FIELDS.forEach(f=>{ if(!(keep[f]||'').toString().trim() && (drop[f]||'').toString().trim()) keep[f]=drop[f]; });
+  if((!keep.trust||keep.trust==='Unknown') && drop.trust && drop.trust!=='Unknown') keep.trust=drop.trust;
+  if((!keep.kyc||keep.kyc==='No KYC') && drop.kyc && drop.kyc!=='No KYC') keep.kyc=drop.kyc;
+  if(keep.lat===undefined && drop.lat!==undefined){ keep.lat=drop.lat; keep.lon=drop.lon; }
+
+  // Anything that would otherwise be lost is kept as a line in the notes.
+  const extra=[];
+  if(keyName(drop.name) && keyName(drop.name)!==keyName(keep.name)) extra.push('also known as '+drop.name);
+  if(drop.email && !sameEmail(drop.email,keep.email)) extra.push('other email '+drop.email);
+  if(drop.phone && keyPhone(drop.phone)!==keyPhone(keep.phone)) extra.push('other phone '+drop.phone);
+  if(drop.company && keyCompany(drop.company)!==keyCompany(keep.company)) extra.push('also listed at '+drop.company);
+  if(drop.notes && drop.notes!==keep.notes) extra.push(drop.notes);
+  if(extra.length) keep.notes=[keep.notes,'(merged: '+extra.join('; ')+')'].filter(Boolean).join(' ');
+
+  contacts=contacts.filter(c=>c.id!==drop.id);
+  persist('contacts',contacts);
+  renderContacts(); updateDashboard();
+  await saveItemToCloud('contacts',keep);
+  await deleteItemFromCloud('contacts',drop.id);
+  toast('Merged into one contact','success');
+  dupScan();
+}
+
+// "Not the same person" is remembered, so the pair stops being offered.
+function dupNotSame(i){
+  const p=DUP.pairs[i]; if(!p) return;
+  DUP.dismissed.push(dupPairKey(p.keep,p.drop));
+  localStorage.setItem('jericho_dupe_ok',JSON.stringify(DUP.dismissed));
+  dupScan();
 }
 
 // Drag and drop onto the panel.
