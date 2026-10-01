@@ -77,6 +77,53 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f
 .form-group textarea { height: 75px; resize: vertical; }
 .email-row { display: flex; gap: 6px; }
 .email-row input { flex: 1; }
+
+/* Bulk contact import. Additive: it adds to the book and never replaces it,
+   unlike the Backup tab's restore, which is a full wipe and reload. */
+.imp-box { display:none; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.08); margin-bottom:20px; }
+.imp-box h3 { margin:0 0 4px; font-size:16px; color:#1a2e4a; }
+.imp-box .imp-sub { font-size:13px; color:#777; margin:0 0 16px; }
+.imp-drop { border:2px dashed #ccd4de; border-radius:8px; padding:26px 16px; text-align:center; cursor:pointer; background:#fafbfc; }
+.imp-drop:hover, .imp-drop.over { border-color:#e8a020; background:#fdf8ef; }
+.imp-drop strong { display:block; color:#1a2e4a; font-size:14px; margin-bottom:4px; }
+.imp-drop span { font-size:12px; color:#888; }
+.imp-map { margin-top:16px; }
+.imp-map table { width:100%; border-collapse:collapse; font-size:13px; }
+.imp-map td { padding:5px 6px; border-bottom:1px solid #f0f0f0; }
+.imp-map td.col { color:#555; width:45%; }
+.imp-map select { width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:13px; }
+.imp-prev { margin-top:16px; overflow-x:auto; }
+.imp-prev table { width:100%; border-collapse:collapse; font-size:12px; min-width:520px; }
+.imp-prev th { background:#1a2e4a; color:#fff; padding:6px 8px; text-align:left; font-size:11px; text-transform:uppercase; }
+.imp-prev td { padding:6px 8px; border-bottom:1px solid #eee; }
+.imp-prev tr.dupe td { background:#fff8e6; }
+.imp-sum { margin-top:14px; font-size:13px; color:#1a2e4a; }
+.imp-sum b { font-size:15px; }
+.imp-dupe { margin-top:12px; font-size:13px; }
+.imp-dupe label { display:inline-flex; align-items:center; gap:5px; margin-right:16px; color:#555; }
+.imp-dupe input { width:auto; }
+.imp-warn { margin-top:10px; font-size:12px; color:#b7791f; }
+.imp-actions { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; }
+
+.dup-box { display:none; background:#fff; border:2px solid #b7791f; border-radius:8px; padding:18px; margin:14px 0; }
+.dup-box h3 { color:#1a2e4a; margin:0 0 4px; }
+.dup-sub { color:#777; font-size:13px; margin:0 0 14px; }
+.dup-pair { border:1px solid #e4e4e4; border-radius:6px; margin-bottom:12px; overflow:hidden; }
+.dup-why { background:#fff8e6; color:#8a5d00; font-size:12px; padding:7px 10px; border-bottom:1px solid #f0e2bd; }
+.dup-why.dup-weak { background:#eef2f7; color:#4a5a6e; border-bottom-color:#dde3ea; }
+.dup-cols { display:flex; flex-wrap:wrap; }
+.dup-col { flex:1; min-width:230px; padding:10px 12px; font-size:13px; }
+.dup-col + .dup-col { border-left:1px solid #eee; }
+.dup-col .nm { font-weight:bold; color:#1a2e4a; font-size:14px; margin-bottom:5px; }
+.dup-col .fld { color:#666; padding:2px 0; }
+.dup-col .fld span { color:#aaa; display:inline-block; min-width:64px; }
+.dup-keep { background:#eaf7ef; }
+.dup-keep .tag { background:#27ae60; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; margin-left:6px; text-transform:uppercase; }
+.dup-gone .tag { background:#bbb; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; margin-left:6px; text-transform:uppercase; }
+.dup-act { padding:9px 12px; background:#fafafa; border-top:1px solid #eee; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.dup-act .hint { color:#999; font-size:12px; }
+@media (max-width:700px){ .dup-col + .dup-col { border-left:none; border-top:1px solid #eee; } }
+
 .map-switch { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
 .mapbtn { background:#fff; border:1px solid #ddd; color:#555; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:13px; }
 .mapbtn.active { background:#1a2e4a; border-color:#1a2e4a; color:#fff; font-weight:bold; }
@@ -330,6 +377,43 @@ tr:hover td { background: #fafbfc; }
 <div id="contacts-section" style="display:none;" class="content">
 <div class="section-title">Contacts & Broker Management</div>
 <button class="btn-primary" onclick="showAddContact()">+ Add New Contact</button>
+<button class="btn-warning" onclick="showImport()">&#8681; Import Contacts</button>
+<button class="btn-warning" onclick="showDupes()">&#9783; Find Duplicates</button>
+
+<div id="dupeBox" class="dup-box">
+  <h3>Possible duplicates</h3>
+  <p class="dup-sub">Nothing is merged until you press Merge on that pair. Merging keeps the fuller record and fills its blanks from the other one &mdash; no detail is thrown away.</p>
+  <div id="dupeList"></div>
+  <div class="imp-actions"><button class="btn-cancel" onclick="hideDupes()">Close</button></div>
+</div>
+
+<div id="importBox" class="imp-box">
+  <h3>Import contacts</h3>
+  <p class="imp-sub">Adds to your contacts. Nothing is replaced and nothing is saved until you press Import.</p>
+
+  <div class="imp-drop" id="impDrop" onclick="document.getElementById('impFile').click()">
+    <strong>Choose a file, or drop one here</strong>
+    <span>.vcf from your phone, or .csv from a spreadsheet</span>
+  </div>
+  <input type="file" id="impFile" accept=".vcf,.csv,text/vcard,text/csv" style="display:none" onchange="impPick(this.files[0])">
+
+  <div id="impMap" class="imp-map"></div>
+  <div id="impPrev" class="imp-prev"></div>
+  <div id="impSum" class="imp-sum"></div>
+
+  <div id="impDupeBox" class="imp-dupe" style="display:none;">
+    <div style="margin-bottom:6px;color:#555;font-weight:bold;">Contacts already in your book:</div>
+    <label><input type="radio" name="impDupe" value="skip" checked onchange="impRender()"> Skip them</label>
+    <label><input type="radio" name="impDupe" value="update" onchange="impRender()"> Update with the new details</label>
+    <label><input type="radio" name="impDupe" value="add" onchange="impRender()"> Add anyway</label>
+  </div>
+
+  <div class="imp-actions">
+    <button class="btn-success" id="impGo" onclick="impCommit()" style="display:none;">Import</button>
+    <button class="btn-cancel" onclick="hideImport()">Cancel</button>
+  </div>
+</div>
+
 <div id="addContactForm" class="form-box">
 <h3 style="color:#1a2e4a;margin-top:0;">New Contact</h3>
 <div class="form-grid">
@@ -1492,6 +1576,461 @@ function updateDashboard(){
   document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
+
+// ============================================================
+// BULK CONTACT IMPORT — .vcf from a phone, .csv from anywhere.
+// Additive by design: it only ever adds or updates, never wipes.
+// The Backup tab's restore is the destructive one and stays separate.
+// ============================================================
+let IMP = { rows: [], headers: [], map: {}, kind: '' };
+
+const IMP_FIELDS = [
+  ['', '— ignore this column —'],
+  ['name', 'Full name'], ['company', 'Company'], ['type', 'Role / Type'],
+  ['city', 'City'], ['country', 'Country'], ['phone', 'Phone'], ['email', 'Email'],
+  ['commodity', 'Commodity focus'], ['introBy', 'Introduced by'],
+  ['linkedin', 'LinkedIn'], ['notes', 'Notes']
+];
+
+function showImport(){
+  document.getElementById('addContactForm').style.display='none';
+  document.getElementById('dupeBox').style.display='none';
+  document.getElementById('importBox').style.display='block';
+  impReset();
+}
+function hideImport(){ document.getElementById('importBox').style.display='none'; impReset(); }
+function impReset(){
+  IMP={rows:[],headers:[],map:{},kind:''};
+  ['impMap','impPrev','impSum'].forEach(id=>document.getElementById(id).innerHTML='');
+  document.getElementById('impDupeBox').style.display='none';
+  document.getElementById('impGo').style.display='none';
+  const f=document.getElementById('impFile'); if(f) f.value='';
+}
+
+/* ---------- vCard ---------- */
+// Handles 2.1, 3.0 and 4.0: folded lines, quoted-printable, and the TYPE
+// parameters phones and emails carry. A contact with no name at all is dropped
+// rather than imported as a blank row.
+function parseVCard(text){
+  const unfolded = text.replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'');
+  const out=[];
+  unfolded.split(/BEGIN:VCARD/i).slice(1).forEach(block=>{
+    const c={name:'',company:'',type:'',phone:'',email:'',city:'',country:'',notes:'',linkedin:''};
+    block.split('\n').forEach(line=>{
+      const i=line.indexOf(':'); if(i<0) return;
+      let key=line.slice(0,i), val=line.slice(i+1).trim();
+      const params=key.toUpperCase();
+      key=params.split(';')[0];
+      if(/QUOTED-PRINTABLE/.test(params)){
+        try{ val=decodeURIComponent(val.replace(/=([0-9A-F]{2})/gi,'%$1')); }catch(e){}
+      }
+      val=val.replace(/\\n/g,' ').replace(/\\,/g,',').replace(/\;/g,';').trim();
+      if(!val) return;
+      if(key==='FN' && !c.name) c.name=val;
+      else if(key==='N' && !c.name){
+        const pp=val.split(';');
+        c.name=[pp[1],pp[0]].filter(Boolean).join(' ').trim();
+      }
+      else if(key==='ORG' && !c.company) c.company=val.split(';')[0].trim();
+      else if(key==='TEL' && !c.phone) c.phone=val;
+      else if(key==='EMAIL' && !c.email) c.email=val;
+      else if(key==='ADR'){
+        const pp=val.split(';');
+        if(!c.city && pp[3]) c.city=pp[3].trim();
+        if(!c.country && pp[6]) c.country=pp[6].trim();
+      }
+      else if(key==='NOTE' && !c.notes) c.notes=val;
+      else if(key==='URL' && /linkedin/i.test(val) && !c.linkedin) c.linkedin=val;
+      // TITLE is a job title, so it belongs in Role — the same place the CSV
+      // importer puts a "Job Title" column. It used to land in Notes, where it
+      // beat the real NOTE to the field and that note was lost.
+      else if(key==='TITLE' && !c.type) c.type=val;
+    });
+    if(c.name||c.company||c.email) out.push(c);
+  });
+  return out;
+}
+
+/* ---------- CSV ---------- */
+// A hand-rolled reader rather than a split(','), because names and addresses
+// routinely contain commas inside quotes, and a naive split silently shifts
+// every column after them.
+function parseCSV(text){
+  const rows=[]; let row=[], field='', q=false;
+  const t=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){
+      if(ch==='"'){ if(t[i+1]==='"'){ field+='"'; i++; } else q=false; }
+      else field+=ch;
+    } else if(ch==='"') q=true;
+    else if(ch===','){ row.push(field); field=''; }
+    else if(ch==='\n'){ row.push(field); field=''; if(row.some(x=>x.trim())) rows.push(row); row=[]; }
+    else field+=ch;
+  }
+  row.push(field); if(row.some(x=>x.trim())) rows.push(row);
+  if(!rows.length) return {headers:[],rows:[]};
+  return { headers: rows[0].map(h=>h.trim()), rows: rows.slice(1) };
+}
+
+// Best guess at which column is which, so the common exports need no fiddling.
+function impGuess(header){
+  const h=header.toLowerCase().replace(/[^a-z]/g,'');
+  if(/^(fullname|name|displayname|contactname)$/.test(h)) return 'name';
+  if(/^(firstname|givenname)$/.test(h)) return '__first';
+  if(/^(lastname|surname|familyname)$/.test(h)) return '__last';
+  if(/(company|organi[sz]ation|employer|business)/.test(h)) return 'company';
+  if(/(jobtitle|title|role|position)/.test(h)) return 'type';
+  if(/^(city|town|locality)$/.test(h)) return 'city';
+  if(/^(country|nation)$/.test(h)) return 'country';
+  if(/(mobile|phone|tel|cell|whatsapp)/.test(h)) return 'phone';
+  if(/(email|mail)/.test(h)) return 'email';
+  if(/(commodity|material|product)/.test(h)) return 'commodity';
+  if(/(introduc|referr|source)/.test(h)) return 'introBy';
+  if(/linkedin/.test(h)) return 'linkedin';
+  if(/(note|comment|remark|description)/.test(h)) return 'notes';
+  return '';
+}
+
+async function impPick(file){
+  if(!file) return;
+  const text=await file.text();
+  const isVcf = /\.vcf$/i.test(file.name) || /BEGIN:VCARD/i.test(text.slice(0,400));
+  if(isVcf){
+    IMP.kind='vcf';
+    IMP.rows=parseVCard(text);
+    document.getElementById('impMap').innerHTML='';
+    if(!IMP.rows.length){ document.getElementById('impSum').innerHTML='<span style="color:#e74c3c;">No contacts found in that file.</span>'; return; }
+  } else {
+    IMP.kind='csv';
+    const {headers,rows}=parseCSV(text);
+    if(!headers.length){ document.getElementById('impSum').innerHTML='<span style="color:#e74c3c;">That file looks empty.</span>'; return; }
+    IMP.headers=headers; IMP.rows=rows; IMP.map={};
+    headers.forEach((h,i)=>{ IMP.map[i]=impGuess(h); });
+    impDrawMap();
+  }
+  impRender();
+}
+
+function impDrawMap(){
+  const opts=IMP_FIELDS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  const extra='<option value="__first">First name</option><option value="__last">Last name</option>';
+  document.getElementById('impMap').innerHTML=
+    '<div style="font-weight:bold;color:#1a2e4a;margin-bottom:8px;font-size:13px;">Match your columns to the app</div><table>'+
+    IMP.headers.map((h,i)=>{
+      const sample=(IMP.rows.find(r=>(r[i]||'').trim())||[])[i]||'';
+      return `<tr><td class="col"><strong>${h||'(no header)'}</strong>`+
+        (sample?`<br><span style="color:#999;font-size:11px;">e.g. ${String(sample).slice(0,32)}</span>`:'')+
+        `</td><td><select onchange="IMP.map[${i}]=this.value;impRender()">${opts}${extra}</select></td></tr>`;
+    }).join('')+'</table>';
+  IMP.headers.forEach((h,i)=>{
+    const sel=document.querySelectorAll('#impMap select')[i];
+    if(sel) sel.value=IMP.map[i]||'';
+  });
+}
+
+// One row of the file turned into a contact-shaped object.
+function impRowToContact(r){
+  if(IMP.kind==='vcf') return r;
+  const c={name:'',company:'',type:'',city:'',country:'',phone:'',email:'',commodity:'',introBy:'',linkedin:'',notes:''};
+  let first='', last='';
+  IMP.headers.forEach((h,i)=>{
+    const f=IMP.map[i], v=(r[i]||'').trim();
+    if(!f||!v) return;
+    if(f==='__first') first=v; else if(f==='__last') last=v;
+    else if(c[f]==='') c[f]=v;
+  });
+  if(!c.name) c.name=[first,last].filter(Boolean).join(' ').trim();
+  return c;
+}
+
+/* ---------- matching the same person twice ---------- */
+// Names arrive spelled three ways for the same man: accents dropped by one
+// phone, initials by another, a full stop after the initial by a third. These
+// keys strip everything that varies and compare what is left.
+// Some letters carry no accent to strip — Turkish dotless i, Scandinavian o
+// with a stroke, German sharp s — so they are mapped by hand. Without this a
+// Turkish mill is two contacts the moment one export writes Yilmaz.
+const LETTER_MAP={ '\u0131':'i','\u0130':'i','\u00f8':'o','\u00d8':'o','\u0111':'d','\u0110':'d',
+  '\u0142':'l','\u0141':'l','\u00df':'ss','\u00e6':'ae','\u00c6':'ae','\u0153':'oe','\u0152':'oe',
+  '\u00fe':'th','\u00de':'th','\u00f0':'d','\u00d0':'d' };
+function keyName(v){
+  return (v||'').replace(/[\u0131\u0130\u00f8\u00d8\u0111\u0110\u0142\u0141\u00df\u00e6\u00c6\u0153\u0152\u00fe\u00de\u00f0\u00d0]/g,ch=>LETTER_MAP[ch])
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// Do two names describe the same person? Exact after cleaning, or the same
+// surname with one side abbreviated to an initial — "C. Okonkwo" and
+// "Chidi Okonkwo". Anything else is treated as two different people, and a
+// missing name never agrees with a present one.
+function namesAgree(a,b){
+  const x=keyName(a).split(' ').filter(Boolean), y=keyName(b).split(' ').filter(Boolean);
+  if(!x.length||!y.length) return false;
+  if(x.join(' ')===y.join(' ')) return true;
+  if(x[x.length-1]!==y[y.length-1]) return false;
+  const fx=x[0], fy=y[0];
+  return (fx.length===1||fy.length===1) && fx[0]===fy[0];
+}
+// Company names carry a legal suffix that half the exports leave off, so
+// "Lagos Metals Ltd" and "Lagos Metals" have to land on the same key.
+const CO_SUFFIX=/\b(ltd|limited|llc|llp|inc|incorporated|corp|corporation|co|company|plc|gmbh|ag|bv|nv|sa|sarl|srl|spa|as|a\/s|ab|oy|pty|pte|sdn|bhd|kft|zoo|doo|dmcc|fzco|fze|fzc|jsc|ooo|pjsc|llp|group|holdings|trading|international)\b/g;
+// "A.S.", "S.A. de C.V." and "B.V." survive cleaning as loose single letters,
+// so those are glued back together before the suffix is stripped. Otherwise a
+// Turkish A.S. and a Turkish AS read as two different companies.
+function keyCompany(v){
+  return keyName(v).replace(/\b([a-z])(?: ([a-z])\b)+/g,m=>m.replace(/ /g,''))
+    .replace(CO_SUFFIX,'').replace(/\s+/g,' ').trim();
+}
+// A phone written +234 801..., 00234 801... and 0801... is one number. Keeping
+// the last nine digits sidesteps country codes and trunk zeros without needing
+// to know which country the number belongs to. Shorter numbers are not matched
+// on at all, because a six-digit tail collides far too easily.
+function keyPhone(v){
+  const d=(v||'').replace(/\D/g,'');
+  return d.length>=9 ? d.slice(-9) : '';
+}
+function sameEmail(a,b){
+  const x=(a||'').trim().toLowerCase(), y=(b||'').trim().toLowerCase();
+  return !!x && x===y;
+}
+
+// Why one record is judged to be the same person as another, in plain words,
+// so nothing is ever merged on a reason the user cannot read back.
+//
+// A shared phone number is NOT enough on its own. A whole office answers one
+// switchboard, so matching on the number alone swallows a genuinely new
+// colleague into an existing record and the import quietly loses them. The
+// name has to agree as well.
+function matchReason(a,b){
+  if(sameEmail(a.email,b.email)) return 'same email address';
+  const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
+  const ca=keyCompany(a.company), cb=keyCompany(b.company);
+  const nameOK=namesAgree(a.name,b.name);
+  if(pa && pa===pb && nameOK) return 'same phone number and same name';
+  if(pa && pa===pb && !keyName(a.name) && !keyName(b.name) && ca && ca===cb) return 'same phone number and same company, neither has a name';
+  if(nameOK && ca && ca===cb) return 'same name and same company';
+  return '';
+}
+
+// Looser than matchReason, and used only by the Find Duplicates review screen,
+// never by the import. These are shown for a human to judge; they are never
+// acted on automatically.
+function weakReason(a,b){
+  const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
+  if(pa && pa===pb) return 'share a phone number, but the names are different \u2014 worth a look';
+  const ca=keyCompany(a.company), cb=keyCompany(b.company);
+  if(ca && ca===cb && keyName(a.name) && keyName(a.name)===keyName(b.name)) return 'same name at the same company';
+  return '';
+}
+
+// Existing contact matched on email, then phone, then name plus company.
+function impFindExisting(c){
+  for(const x of contacts){ if(matchReason(c,x)) return x; }
+  return null;
+}
+
+function impRender(){
+  const parsed=IMP.rows.map(impRowToContact).filter(c=>c.name||c.company||c.email);
+  const dupes=parsed.filter(c=>impFindExisting(c));
+  const fresh=parsed.length-dupes.length;
+  const mode=(document.querySelector('input[name="impDupe"]:checked')||{}).value||'skip';
+
+  document.getElementById('impPrev').innerHTML = parsed.length
+    ? '<table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>City</th></tr></thead><tbody>'+
+      parsed.slice(0,5).map(c=>{
+        const d=impFindExisting(c);
+        const why=d?matchReason(c,d):'';
+        return `<tr class="${d?'dupe':''}"><td>${c.name||'—'}${d?` <span style="color:#b7791f;font-size:11px;">already in book as ${d.name||d.company} — ${why}</span>`:''}</td>`+
+          `<td>${c.company||'—'}</td><td>${c.email||'—'}</td><td>${c.phone||'—'}</td><td>${c.city||'—'}</td></tr>`;
+      }).join('')+'</tbody></table>'+
+      (parsed.length>5?`<div style="font-size:12px;color:#999;padding:6px 0;">…and ${parsed.length-5} more</div>`:'')
+    : '';
+
+  let willAdd=fresh, willUpdate=0, willSkip=0;
+  if(dupes.length){ if(mode==='skip') willSkip=dupes.length; else if(mode==='update') willUpdate=dupes.length; else willAdd+=dupes.length; }
+
+  document.getElementById('impSum').innerHTML = parsed.length
+    ? `<b>${parsed.length}</b> contact${parsed.length===1?'':'s'} in this file — `+
+      `<b>${willAdd}</b> to add`+(willUpdate?`, <b>${willUpdate}</b> to update`:'')+(willSkip?`, <b>${willSkip}</b> to skip`:'')+
+      `<div class="imp-warn">Role, commodity, trust and KYC are not in ${IMP.kind==='vcf'?'a phone export':'most spreadsheets'} and will be left blank for you to fill in.</div>`
+    : '<span style="color:#e74c3c;">Nothing usable found — check the column matching above.</span>';
+
+  document.getElementById('impDupeBox').style.display = dupes.length ? 'block' : 'none';
+  document.getElementById('impGo').style.display = parsed.length ? 'inline-block' : 'none';
+  const go=document.getElementById('impGo');
+  if(go) go.textContent = willUpdate ? `Import ${willAdd} and update ${willUpdate}` : `Import ${willAdd} contact${willAdd===1?'':'s'}`;
+}
+
+async function impCommit(){
+  const parsed=IMP.rows.map(impRowToContact).filter(c=>c.name||c.company||c.email);
+  const mode=(document.querySelector('input[name="impDupe"]:checked')||{}).value||'skip';
+  const btn=document.getElementById('impGo'); btn.disabled=true;
+  let added=0, updated=0, skipped=0;
+  const touched=[];
+  for(const c of parsed){
+    const ex=impFindExisting(c);
+    if(ex && mode==='skip'){ skipped++; continue; }
+    if(ex && mode==='update'){
+      // Only fill what the import actually carries; never blank an existing value.
+      Object.keys(c).forEach(k=>{ if(c[k]) ex[k]=c[k]; });
+      updated++; touched.push(ex); continue;
+    }
+    const item={ id:Date.now()+Math.floor(Math.random()*100000),
+      name:c.name||'', company:c.company||'', type:c.type||'', city:c.city||'', country:c.country||'',
+      phone:c.phone||'', email:c.email||'', commodity:c.commodity||'', introBy:c.introBy||'',
+      trust:'Unknown', kyc:'No KYC', followup:'', linkedin:c.linkedin||'', notes:c.notes||'',
+      createdAt:new Date().toISOString(), date:new Date().toLocaleDateString('en-GB') };
+    contacts.push(item); added++; touched.push(item);
+  }
+  persist('contacts',contacts);
+  renderContacts(); updateDashboard();
+  for(const item of touched){ await saveItemToCloud('contacts',item); }
+  btn.disabled=false;
+  toast(`${added} added${updated?', '+updated+' updated':''}${skipped?', '+skipped+' skipped':''}`,'success',6000);
+  hideImport();
+  // Cities are geocoded afterwards so the import itself is instant; the map
+  // fills in as they resolve, and contacts are usable immediately either way.
+  const needCity=touched.filter(c=>c.city&&c.lat===undefined);
+  if(needCity.length){
+    toast(`Placing ${needCity.length} contact${needCity.length===1?'':'s'} on the map…`,'info',5000);
+    for(const c of needCity){
+      const g=await geocode(c.city,c.country);
+      if(g){ c.lon=g.lon; c.lat=g.lat; saveItemToCloud('contacts',c); }
+      await new Promise(r=>setTimeout(r,220));
+    }
+    persist('contacts',contacts);
+    toast('Map locations updated','success');
+  }
+}
+
+// ============================================================
+// FIND DUPLICATES — for pairs already sitting in the book, whether an
+// import let them through or they were typed in twice by hand. It only
+// ever proposes; the merge happens when the user presses the button.
+// ============================================================
+let DUP = { pairs: [], dismissed: JSON.parse(localStorage.getItem('jericho_dupe_ok') || '[]') };
+
+function dupPairKey(a,b){ return [a.id,b.id].sort().join('~'); }
+
+function showDupes(){
+  document.getElementById('addContactForm').style.display='none';
+  document.getElementById('importBox').style.display='none';
+  document.getElementById('dupeBox').style.display='block';
+  dupScan();
+}
+function hideDupes(){ document.getElementById('dupeBox').style.display='none'; }
+
+// How much a record actually carries. The fuller of a pair is the one kept,
+// so a merge never trades a complete record for a thin one.
+const DUP_FIELDS=['name','company','type','city','country','phone','email','commodity','introBy','linkedin','notes','followup'];
+function dupWeight(c){
+  let n=DUP_FIELDS.reduce((t,f)=>t+((c[f]||'').toString().trim()?1:0),0);
+  // A record with a person's name always outranks a nameless one, however many
+  // other boxes the nameless one happens to have filled.
+  if((c.name||'').trim()) n+=3;
+  if(c.trust && c.trust!=='Unknown') n++;
+  if(c.kyc && c.kyc!=='No KYC') n++;
+  if(c.lat!==undefined) n++;
+  return n;
+}
+
+function dupScan(){
+  DUP.pairs=[];
+  for(let i=0;i<contacts.length;i++){
+    for(let j=i+1;j<contacts.length;j++){
+      const a=contacts[i], b=contacts[j];
+      const strong=matchReason(a,b);
+      const why=strong||weakReason(a,b);
+      if(!why) continue;
+      if(DUP.dismissed.includes(dupPairKey(a,b))) continue;
+      // The fuller record survives; a tie keeps the older one, so the entry
+      // your deals and call logs were written against stays put.
+      const wa=dupWeight(a), wb=dupWeight(b);
+      const keep = wa>wb ? a : wb>wa ? b : (a.id<=b.id ? a : b);
+      DUP.pairs.push({ keep, drop: keep===a?b:a, why, weak: !strong });
+    }
+  }
+  DUP.pairs.sort((x,y)=>(x.weak?1:0)-(y.weak?1:0));
+  dupRender();
+}
+
+function dupCell(c,keep){
+  const row=(lab,v)=>v?`<div class="fld"><span>${lab}</span>${v}</div>`:'';
+  return `<div class="dup-col ${keep?'dup-keep':'dup-gone'}">`+
+    `<div class="nm">${c.name||'(no name)'}<span class="tag">${keep?'kept':'removed'}</span></div>`+
+    row('Company',c.company)+row('Role',c.type)+row('Email',c.email)+row('Phone',c.phone)+
+    row('City',[c.city,c.country].filter(Boolean).join(', '))+row('Commodity',c.commodity)+
+    row('Trust',c.trust&&c.trust!=='Unknown'?c.trust:'')+row('KYC',c.kyc&&c.kyc!=='No KYC'?c.kyc:'')+
+    row('Notes',(c.notes||'').slice(0,90))+row('Added',c.date)+'</div>';
+}
+
+function dupRender(){
+  const el=document.getElementById('dupeList');
+  if(!DUP.pairs.length){
+    el.innerHTML='<div style="padding:14px;color:#27ae60;font-size:14px;">No duplicates found. Your contact book is clean.</div>';
+    return;
+  }
+  el.innerHTML=DUP.pairs.map((p,i)=>
+    `<div class="dup-pair">`+
+      `<div class="dup-why${p.weak?' dup-weak':''}">${p.weak?'Might be the same person':'Looks like the same person'} &mdash; ${p.why}</div>`+
+      `<div class="dup-cols">${dupCell(p.keep,true)}${dupCell(p.drop,false)}</div>`+
+      `<div class="dup-act">`+
+        `<button class="btn-success" onclick="dupMerge(${i})">Merge into one</button>`+
+        `<button class="btn-cancel" onclick="dupNotSame(${i})">Not the same person</button>`+
+        `<span class="hint">${DUP.pairs.length} pair${DUP.pairs.length===1?'':'s'} to review</span>`+
+      `</div>`+
+    `</div>`).join('');
+}
+
+// Merging fills the kept record's blanks from the other one and then removes
+// the other. A value already in the kept record is never overwritten, and the
+// discarded spelling of the name is written into the notes so a search for it
+// still finds the person.
+async function dupMerge(i){
+  const p=DUP.pairs[i]; if(!p) return;
+  const keep=contacts.find(c=>c.id===p.keep.id), drop=contacts.find(c=>c.id===p.drop.id);
+  if(!keep||!drop){ dupScan(); return; }
+
+  DUP_FIELDS.forEach(f=>{ if(!(keep[f]||'').toString().trim() && (drop[f]||'').toString().trim()) keep[f]=drop[f]; });
+  if((!keep.trust||keep.trust==='Unknown') && drop.trust && drop.trust!=='Unknown') keep.trust=drop.trust;
+  if((!keep.kyc||keep.kyc==='No KYC') && drop.kyc && drop.kyc!=='No KYC') keep.kyc=drop.kyc;
+  if(keep.lat===undefined && drop.lat!==undefined){ keep.lat=drop.lat; keep.lon=drop.lon; }
+
+  // Anything that would otherwise be lost is kept as a line in the notes.
+  const extra=[];
+  if(keyName(drop.name) && keyName(drop.name)!==keyName(keep.name)) extra.push('also known as '+drop.name);
+  if(drop.email && !sameEmail(drop.email,keep.email)) extra.push('other email '+drop.email);
+  if(drop.phone && keyPhone(drop.phone)!==keyPhone(keep.phone)) extra.push('other phone '+drop.phone);
+  if(drop.company && keyCompany(drop.company)!==keyCompany(keep.company)) extra.push('also listed at '+drop.company);
+  if(drop.notes && drop.notes!==keep.notes) extra.push(drop.notes);
+  if(extra.length) keep.notes=[keep.notes,'(merged: '+extra.join('; ')+')'].filter(Boolean).join(' ');
+
+  contacts=contacts.filter(c=>c.id!==drop.id);
+  persist('contacts',contacts);
+  renderContacts(); updateDashboard();
+  await saveItemToCloud('contacts',keep);
+  await deleteItemFromCloud('contacts',drop.id);
+  toast('Merged into one contact','success');
+  dupScan();
+}
+
+// "Not the same person" is remembered, so the pair stops being offered.
+function dupNotSame(i){
+  const p=DUP.pairs[i]; if(!p) return;
+  DUP.dismissed.push(dupPairKey(p.keep,p.drop));
+  localStorage.setItem('jericho_dupe_ok',JSON.stringify(DUP.dismissed));
+  dupScan();
+}
+
+// Drag and drop onto the panel.
+(function(){
+  const d=document.getElementById('impDrop');
+  if(!d) return;
+  ['dragenter','dragover'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add('over');}));
+  ['dragleave','drop'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.remove('over');}));
+  d.addEventListener('drop',ev=>{ const f=ev.dataTransfer.files[0]; if(f) impPick(f); });
+})();
 
 // ------------------------------------------------------------
 // Turning a typed city into a map position. Open-Meteo needs no

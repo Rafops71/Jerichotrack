@@ -10,29 +10,38 @@ rules_version = '2';
 // requiring a signed-in caller changes nothing for Rafael and blocks anyone who
 // merely knows the project name.
 //
-// Note on strength: anonymous sign-in is open to anyone, so this is a door
-// rather than a deadbolt. It stops drive-by access. A real lock means a real
-// login, which is a separate decision.
+// Anonymous sign-in is gone. Every collection below now names one account, so
+// the site being public no longer means the data is: a visitor who opens either
+// app, or who skips the page and calls Firestore directly with the config from
+// the page source, is refused here rather than merely at the password box.
+//
+// To let someone else in, add their uid to isJericho() -- adding a second person
+// is one line, and revoking them is deleting it.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isJericho() {
+      return request.auth != null
+          && request.auth.uid == 'JObgQiPwaOfwKIhr14pR83Taom32';  // rafael@jerichotrack.app
+    }
+
     // The collections the apps actually use.
-    match /jericho_leads/{doc}          { allow read, write: if request.auth != null; }
-    match /jericho_tasks/{doc}          { allow read, write: if request.auth != null; }
-    match /jericho_pipeline/{doc}       { allow read, write: if request.auth != null; }
-    match /jericho_meetings/{doc}       { allow read, write: if request.auth != null; }
-    match /jericho_companion_notes/{doc}{ allow read, write: if request.auth != null; }
-    match /jericho_commslog/{doc}       { allow read, write: if request.auth != null; }
-    match /jericho_broker_quotes/{doc}  { allow read, write: if request.auth != null; }
+    match /jericho_leads/{doc}          { allow read, write: if isJericho(); }
+    match /jericho_tasks/{doc}          { allow read, write: if isJericho(); }
+    match /jericho_pipeline/{doc}       { allow read, write: if isJericho(); }
+    match /jericho_meetings/{doc}       { allow read, write: if isJericho(); }
+    match /jericho_companion_notes/{doc}{ allow read, write: if isJericho(); }
+    match /jericho_commslog/{doc}       { allow read, write: if isJericho(); }
+    match /jericho_broker_quotes/{doc}  { allow read, write: if isJericho(); }
 
     // The four the desktop app added later. They were never listed here, so the
     // catch-all below refused them and anything entered on the desktop stayed on
     // that one device. Same condition as the seven above; nothing wider.
-    match /jericho_contacts/{doc}       { allow read, write: if request.auth != null; }
-    match /jericho_commissions/{doc}    { allow read, write: if request.auth != null; }
-    match /jericho_documents/{doc}      { allow read, write: if request.auth != null; }
-    match /jericho_relationships/{doc}  { allow read, write: if request.auth != null; }
+    match /jericho_contacts/{doc}       { allow read, write: if isJericho(); }
+    match /jericho_commissions/{doc}    { allow read, write: if isJericho(); }
+    match /jericho_documents/{doc}      { allow read, write: if isJericho(); }
+    match /jericho_relationships/{doc}  { allow read, write: if isJericho(); }
 
     // Anything else is refused outright, signed in or not. A new collection has
     // to be added here deliberately rather than inheriting access by accident.
