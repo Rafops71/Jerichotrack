@@ -14,33 +14,21 @@ async function openApp(page) {
   const errors = [];
 
   /*
-   * KNOWN ENVIRONMENT DIFFERENCE - handled by removing it, not by ignoring it.
+   * KNOWN ENVIRONMENT LIMITATION - not an app bug, and deliberately narrow.
    *
-   * Firebase Auth pulls a helper script from apis.google.com for its popup and
-   * redirect sign-in flows. This app uses neither: it signs in with an email and
-   * password, so the script does nothing for us. The machine the robot runs on
-   * blocks that host at the network level, so the request fails here and would
-   * NOT fail on a real phone.
-   *
-   * This used to be an exception in the error collector below, ignoring that one
-   * host with one error text. That was fragile: the same block produced
-   * ERR_TOO_MANY_RETRIES instead of ERR_TUNNEL_CONNECTION_FAILED and Item01 duly
-   * went red for an environment reason. Maintaining a list of spellings of
-   * "unreachable" means the assertion slowly stops meaning "nothing failed".
-   *
-   * So the request is stubbed with an empty script instead. It never reaches the
-   * network, there is no failure to ignore, and the collector below is now
-   * absolute: ANY failed request fails the test, this host included.
+   * Firebase Auth loads a helper script from apis.google.com. The machine the
+   * robot runs on blocks that host at the network level, so the request fails
+   * here and would NOT fail on a real phone. Sign-in still succeeds (Item02
+   * proves it). Only this exact host with this exact failure is ignored; every
+   * other failed request still fails the test.
    */
-  await page.route('https://apis.google.com/**', route => route.fulfill({
-    status: 200,
-    contentType: 'text/javascript',
-    body: ''
-  }));
+  const isBlockedByEnvironment = (url, reason) =>
+    url.startsWith('https://apis.google.com/') && /ERR_TUNNEL_CONNECTION_FAILED/.test(reason || '');
 
   page.on('pageerror', e => errors.push('script error: ' + e));
   page.on('requestfailed', r => {
     const reason = (r.failure() && r.failure().errorText) || 'unknown';
+    if (isBlockedByEnvironment(r.url(), reason)) return;
     errors.push('could not load ' + r.url() + ' (' + reason + ')');
   });
   page.on('response', r => {
