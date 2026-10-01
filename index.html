@@ -262,7 +262,6 @@ tr:hover td { background: #fafbfc; }
   <button onclick="showSection('pipeline',this)">Pipeline</button>
   <button onclick="showSection('contacts',this)">Contacts</button>
   <button onclick="showSection('tasks',this)">Tasks</button>
-  <button onclick="showSection('commissions',this)">Commissions</button>
   <button onclick="showSection('commslog',this)">Comms Log</button>
   <button onclick="showSection('documents',this)">Documents</button>
   <button onclick="showSection('prices',this)">Prices</button>
@@ -276,29 +275,6 @@ tr:hover td { background: #fafbfc; }
 <!-- DASHBOARD -->
 
 <div class="content" id="mainContent">
-<div class="section-title">Today's Overview</div>
-<div class="dashboard-grid">
-  <div class="card urgent"><h3>Overdue Tasks</h3><div class="number" id="overdueCount">0</div><div class="label">Immediate attention</div></div>
-  <div class="card warning"><h3>Due Today</h3><div class="number" id="tasksTodayCount">0</div><div class="label">On today's agenda</div></div>
-  <div class="card"><h3>Active Deals</h3><div class="number" id="proposalCount">0</div><div class="label">In pipeline</div></div>
-  <div class="card good"><h3>Active Leads</h3><div class="number" id="leadCount">0</div><div class="label">Being tracked</div></div>
-</div>
-<div class="section-title">Commission Overview</div>
-<div class="dashboard-grid">
-  <div class="card good"><h3>Total Expected</h3><div class="number small" id="totalExpected">$0</div></div>
-  <div class="card good"><h3>Jericho Expected</h3><div class="number small" id="jerichoExpected">$0</div></div>
-  <div class="card warning"><h3>Received</h3><div class="number small" id="totalReceived">$0</div></div>
-  <div class="card urgent"><h3>Outstanding</h3><div class="number small" id="totalOutstanding">$0</div></div>
-</div>
-<div class="section-title">System Summary</div>
-<div class="stats-grid">
-  <div class="stat-item"><div class="stat-num" id="statLeads">0</div><div class="stat-label">Leads</div></div>
-  <div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
-  <div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
-  <div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
-  <div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Comm Records</div></div>
-  <div class="stat-item"><div class="stat-num" id="statDocs">0</div><div class="stat-label">Documents</div></div>
-</div>
 <div class="section-title">⚠️ Overdue Tasks</div>
 <div class="table-box"><table>
   <thead><tr><th>Task</th><th>Priority</th><th>Due Date</th><th>Linked To</th><th>Action</th></tr></thead>
@@ -309,6 +285,22 @@ tr:hover td { background: #fafbfc; }
   <thead><tr><th>Task</th><th>Priority</th><th>Linked To</th><th>Action</th></tr></thead>
   <tbody id="dashTodayBody"><tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr></tbody>
 </table></div>
+<div class="section-title">Today's Overview</div>
+<div class="dashboard-grid">
+  <div class="card urgent"><h3>Overdue Tasks</h3><div class="number" id="overdueCount">0</div><div class="label">Immediate attention</div></div>
+  <div class="card warning"><h3>Due Today</h3><div class="number" id="tasksTodayCount">0</div><div class="label">On today's agenda</div></div>
+  <div class="card"><h3>Active Deals</h3><div class="number" id="proposalCount">0</div><div class="label">In pipeline</div></div>
+  <div class="card good"><h3>Active Leads</h3><div class="number" id="leadCount">0</div><div class="label">Being tracked</div></div>
+</div>
+<div class="section-title">System Summary</div>
+<div class="stats-grid">
+  <div class="stat-item"><div class="stat-num" id="statLeads">0</div><div class="stat-label">Leads</div></div>
+  <div class="stat-item"><div class="stat-num" id="statDeals">0</div><div class="stat-label">Deals</div></div>
+  <div class="stat-item"><div class="stat-num" id="statContacts">0</div><div class="stat-label">Contacts</div></div>
+  <div class="stat-item"><div class="stat-num" id="statTasks">0</div><div class="stat-label">Open Tasks</div></div>
+  <div class="stat-item"><div class="stat-num" id="statComms">0</div><div class="stat-label">Comm Records</div></div>
+  <div class="stat-item"><div class="stat-num" id="statDocs">0</div><div class="stat-label">Documents</div></div>
+</div>
 </div>
 
 <!-- LEADS -->
@@ -486,45 +478,6 @@ tr:hover td { background: #fafbfc; }
 <div id="completedTasksBox" style="display:none;margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#999;margin-bottom:8px;">✅ Completed</div><div id="completedTasksList"></div></div>
 </div>
 
-<!-- COMMISSIONS -->
-
-<div id="commissions-section" style="display:none;" class="content">
-<div class="section-title">Commission Tracking</div>
-<button class="btn-primary" onclick="showAddCommission()">+ Add Commission Record</button>
-<div id="addCommissionForm" class="form-box">
-<h3 style="color:#1a2e4a;margin-top:0;">New Commission Record</h3>
-<div class="form-grid">
-  <div class="form-group"><label>Deal / Commodity *</label><input id="commDeal" type="text" placeholder="e.g. Chrome Ore - Agrisa"></div>
-  <div class="form-group"><label>Currency</label><select id="commCurrency"><option>USD</option><option>EUR</option><option>ZAR</option><option>GBP</option></select></div>
-  <div class="form-group"><label>Total Commission Expected</label><input id="commTotal" type="number" placeholder="0.00"></div>
-  <div class="form-group"><label>Jericho Share (%)</label><input id="commJerichoPercent" type="number" placeholder="e.g. 40"></div>
-  <div class="form-group"><label>Jericho Amount</label><input id="commJerichoAmount" type="number" placeholder="0.00"></div>
-  <div class="form-group"><label>Broker / Partner</label><input id="commBroker" type="text" placeholder="Broker or partner name"></div>
-  <div class="form-group"><label>Broker Share (%)</label><input id="commBrokerPercent" type="number" placeholder="e.g. 40"></div>
-  <div class="form-group"><label>Broker Amount</label><input id="commBrokerAmount" type="number" placeholder="0.00"></div>
-  <div class="form-group"><label>Payment Status</label><select id="commStatus"><option>Pending</option><option>Partial</option><option>Received</option></select></div>
-  <div class="form-group"><label>Amount Received</label><input id="commReceived" type="number" placeholder="0.00"></div>
-  <div class="form-group"><label>Expected Payment Date</label><input id="commExpectedDate" type="date"></div>
-  <div class="form-group"><label>Actual Payment Date</label><input id="commActualDate" type="date"></div>
-</div>
-<div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="commNotes" placeholder="Payment terms, conditions..."></textarea></div>
-<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-  <button class="btn-success" onclick="saveCommission()">Save Record</button>
-  <button class="btn-cancel" onclick="hideAddCommission()">Cancel</button>
-</div>
-</div>
-<div class="dashboard-grid" style="margin-bottom:20px;">
-  <div class="card good"><h3>Total Expected</h3><div class="number small" id="commTotalExpected">$0</div></div>
-  <div class="card good"><h3>Jericho Expected</h3><div class="number small" id="commJerichoTotal">$0</div></div>
-  <div class="card warning"><h3>Total Received</h3><div class="number small" id="commTotalReceived">$0</div></div>
-  <div class="card urgent"><h3>Outstanding</h3><div class="number small" id="commTotalOutstanding">$0</div></div>
-</div>
-<div class="table-box"><table>
-  <thead><tr><th>Deal</th><th>Currency</th><th>Total</th><th>Jericho</th><th>Broker</th><th>Broker Share</th><th>Status</th><th>Received</th><th>Exp. Date</th><th>Action</th></tr></thead>
-  <tbody id="commissionsBody"><tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr></tbody>
-</table></div>
-</div>
-
 <!-- COMMS LOG -->
 
 <div id="commslog-section" style="display:none;" class="content">
@@ -652,7 +605,6 @@ tr:hover td { background: #fafbfc; }
   <div class="form-group"><label>Connected To *</label><input id="relTo" type="text" placeholder="e.g. Agrisa, Chrome Deal"></div>
   <div class="form-group"><label>Strength</label><select id="relStrength"><option>Strong</option><option>Medium</option><option>Weak</option><option>Unknown</option></select></div>
   <div class="form-group"><label>Date Established</label><input id="relDate" type="date"></div>
-  <div class="form-group"><label>Commission Entitled</label><select id="relCommission"><option>Yes</option><option>No</option><option>TBD</option></select></div>
 </div>
 <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="relNotes" placeholder="Context about this relationship..."></textarea></div>
 <div style="margin-top:12px;display:flex;gap:10px;">
@@ -718,7 +670,6 @@ tr:hover td { background: #fafbfc; }
     <div class="stat-item"><div class="stat-num" id="bkDeals">0</div><div class="stat-label">Deals</div></div>
     <div class="stat-item"><div class="stat-num" id="bkContacts">0</div><div class="stat-label">Contacts</div></div>
     <div class="stat-item"><div class="stat-num" id="bkTasks">0</div><div class="stat-label">Tasks</div></div>
-    <div class="stat-item"><div class="stat-num" id="bkComms">0</div><div class="stat-label">Comm Records</div></div>
     <div class="stat-item"><div class="stat-num" id="bkDocs">0</div><div class="stat-label">Documents</div></div>
     <div class="stat-item"><div class="stat-num" id="bkRels">0</div><div class="stat-label">Relationships</div></div>
     <div class="stat-item"><div class="stat-num" id="bkQuotes">0</div><div class="stat-label">Broker Quotes</div></div>
@@ -737,7 +688,7 @@ tr:hover td { background: #fafbfc; }
 // ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot,
+  getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot,
   enableIndexedDbPersistence, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
@@ -770,14 +721,13 @@ const SYNCED_COLLECTIONS = {
   pipeline: 'jericho_pipeline',
   contacts: 'jericho_contacts',
   tasks: 'jericho_tasks',
-  commissions: 'jericho_commissions',
   commsLog: 'jericho_commslog',
   documents: 'jericho_documents',
   brokerQuotes: 'jericho_broker_quotes',
   relationships: 'jericho_relationships'
 };
 
-window._fb = { db, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, SYNCED_COLLECTIONS };
+window._fb = { db, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, serverTimestamp, SYNCED_COLLECTIONS };
 
 // One account, one password. The address below is a name for that account, not
 // a mailbox -- Rafael never types it, only the password. Anonymous sign-in is
@@ -865,14 +815,13 @@ window.addEventListener('offline',()=>setSyncStatus('offline'));
 // ============================================================
 // DATA LAYER — Firestore is the source of truth, localStorage is fallback/cache
 // ============================================================
-let leads=[],pipeline=[],contacts=[],tasks=[],commissions=[],commsLog=[],documents=[],brokerQuotes=[],relationships=[];
+let leads=[],pipeline=[],contacts=[],tasks=[],commsLog=[],documents=[],brokerQuotes=[],relationships=[];
 
 const DATA_MAP={
   leads:{get:()=>leads,set:(v)=>leads=v,render:()=>renderLeads(),lsKey:'jericho_leads'},
   pipeline:{get:()=>pipeline,set:(v)=>pipeline=v,render:()=>renderPipeline(),lsKey:'jericho_pipeline'},
   contacts:{get:()=>contacts,set:(v)=>contacts=v,render:()=>renderContacts(),lsKey:'jericho_contacts'},
   tasks:{get:()=>tasks,set:(v)=>tasks=v,render:()=>renderTasks(),lsKey:'jericho_tasks'},
-  commissions:{get:()=>commissions,set:(v)=>commissions=v,render:()=>renderCommissions(),lsKey:'jericho_commissions'},
   commsLog:{get:()=>commsLog,set:(v)=>commsLog=v,render:()=>renderComms(),lsKey:'jericho_commslog'},
   documents:{get:()=>documents,set:(v)=>documents=v,render:()=>renderDocs(),lsKey:'jericho_documents'},
   brokerQuotes:{get:()=>brokerQuotes,set:(v)=>brokerQuotes=v,render:()=>renderQuotes(),lsKey:'jericho_broker_quotes'},
@@ -923,7 +872,6 @@ function loadAllFromLocalStorage(){
   pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
   contacts=JSON.parse(localStorage.getItem('jericho_contacts'))||[];
   tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
-  commissions=JSON.parse(localStorage.getItem('jericho_commissions'))||[];
   commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
   documents=JSON.parse(localStorage.getItem('jericho_documents'))||[];
   brokerQuotes=JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
@@ -1225,15 +1173,18 @@ function verifyEmail(){
 function showSection(s,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commissions-section','commslog-section','documents-section','prices-section','relationships-section','map-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
-  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commissions:'commissions-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',map:'map-section',backup:'backup-section'};
-  document.getElementById(map[s]).style.display='block';
+  ['mainContent','leads-section','pipeline-section','contacts-section','tasks-section','commslog-section','documents-section','prices-section','relationships-section','map-section','backup-section'].forEach(id=>document.getElementById(id).style.display='none');
+  const map={dashboard:'mainContent',leads:'leads-section',pipeline:'pipeline-section',contacts:'contacts-section',tasks:'tasks-section',commslog:'commslog-section',documents:'documents-section',prices:'prices-section',relationships:'relationships-section',map:'map-section',backup:'backup-section'};
+  // A name with no section left -- an old bookmark, or a link to the removed
+  // Commissions tab -- falls back to the dashboard rather than blanking the app.
+  const target=document.getElementById(map[s]||'');
+  if(!target){ document.getElementById('mainContent').style.display='block'; updateDashboard(); return; }
+  target.style.display='block';
   if(s==='dashboard')updateDashboard();
   else if(s==='leads')renderLeads();
   else if(s==='pipeline')renderPipeline();
   else if(s==='contacts')renderContacts();
   else if(s==='tasks')renderTasks();
-  else if(s==='commissions')renderCommissions();
   else if(s==='commslog')renderComms();
   else if(s==='documents')renderDocs();
   else if(s==='prices'){renderPriceGrids();renderQuotes();fetchAllPrices(false);}
@@ -1391,30 +1342,6 @@ function checkReminders(){
 }
 setInterval(checkReminders,3600000);checkReminders();
 
-// COMMISSIONS
-function showAddCommission(){document.getElementById('addCommissionForm').style.display='block';}
-function hideAddCommission(){document.getElementById('addCommissionForm').style.display='none';}
-function saveCommission(){
-  const deal=document.getElementById('commDeal').value;if(!deal){toast('Please enter a deal name','error');return;}
-  const item={id:Date.now(),deal,currency:document.getElementById('commCurrency').value,total:parseFloat(document.getElementById('commTotal').value)||0,jerichoPercent:parseFloat(document.getElementById('commJerichoPercent').value)||0,jerichoAmount:parseFloat(document.getElementById('commJerichoAmount').value)||0,broker:document.getElementById('commBroker').value,brokerPercent:parseFloat(document.getElementById('commBrokerPercent').value)||0,brokerAmount:parseFloat(document.getElementById('commBrokerAmount').value)||0,status:document.getElementById('commStatus').value,received:parseFloat(document.getElementById('commReceived').value)||0,expectedDate:document.getElementById('commExpectedDate').value,actualDate:document.getElementById('commActualDate').value,notes:document.getElementById('commNotes').value,createdAt:new Date().toISOString(),date:new Date().toLocaleDateString('en-GB')};
-  commissions.push(item);persist('commissions',commissions);renderCommissions();hideAddCommission();
-  saveItemToCloud('commissions',item);
-  document.getElementById('commDeal').value='';document.getElementById('commNotes').value='';
-  toast('Commission record saved','success');
-}
-function deleteCommission(id){if(confirm('Delete this record?')){commissions=commissions.filter(c=>c.id!==id);persist('commissions',commissions);renderCommissions();updateDashboard();deleteItemFromCloud('commissions',id);toast('Record deleted','info');}}
-function renderCommissions(){
-  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
-  document.getElementById('commTotalExpected').textContent='$'+tE.toLocaleString();
-  document.getElementById('commJerichoTotal').textContent='$'+jE.toLocaleString();
-  document.getElementById('commTotalReceived').textContent='$'+tR.toLocaleString();
-  document.getElementById('commTotalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
-  const tb=document.getElementById('commissionsBody');
-  if(!commissions.length){tb.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No commission records yet.</td></tr>';return;}
-  const sC={'Received':'pay-received','Partial':'pay-partial','Pending':'pay-pending'};
-  tb.innerHTML=commissions.map(c=>`<tr><td><strong>${c.deal}</strong></td><td>${c.currency}</td><td>${c.currency} ${c.total.toLocaleString()}</td><td>${c.currency} ${c.jerichoAmount.toLocaleString()} (${c.jerichoPercent}%)</td><td>${c.broker||'-'}</td><td>${c.brokerAmount?c.currency+' '+c.brokerAmount.toLocaleString()+' ('+c.brokerPercent+'%)':'-'}</td><td><span class="badge ${sC[c.status]||'pay-pending'}">${c.status}</span></td><td>${c.currency} ${c.received.toLocaleString()}</td><td>${c.expectedDate||'-'}</td><td><button class="btn-danger" onclick="deleteCommission(${c.id})">Delete</button></td></tr>`).join('');
-}
-
 // COMMS LOG
 function showAddComm(){document.getElementById('addCommForm').style.display='block';}
 function hideAddComm(){document.getElementById('addCommForm').style.display='none';}
@@ -1483,7 +1410,7 @@ function hideAddRel(){document.getElementById('addRelForm').style.display='none'
 function saveRel(){
   const from=document.getElementById('relFrom').value,to=document.getElementById('relTo').value;
   if(!from||!to){toast('Please fill in both parties','error');return;}
-  const item={id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,commission:document.getElementById('relCommission').value,notes:document.getElementById('relNotes').value,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')};
+  const item={id:Date.now(),from,type:document.getElementById('relType').value,to,strength:document.getElementById('relStrength').value,date:document.getElementById('relDate').value,notes:document.getElementById('relNotes').value,createdAt:new Date().toISOString(),logged:new Date().toLocaleDateString('en-GB')};
   relationships.push(item);persist('relationships',relationships);renderRelationships();hideAddRel();
   saveItemToCloud('relationships',item);
   ['relFrom','relTo','relNotes'].forEach(id=>document.getElementById(id).value='');
@@ -1495,12 +1422,12 @@ function renderRelationships(q=''){
   let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
   if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No relationships mapped yet.</div>';return;}
   const sc={'Strong':'#27ae60','Medium':'#e8a020','Weak':'#999','Unknown':'#ccc'};
-  container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.commission!=='No'?`<span class="badge" style="background:#9b59b6;">Commission: ${r.commission}</span>`:''} ${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
+  container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
 }
 
 // BACKUP
 function exportData(){
-  const data={version:'5.0-firebase',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commissions,commsLog,documents,brokerQuotes,relationships};
+  const data={version:'5.0-firebase',exportDate:new Date().toISOString(),leads,pipeline,contacts,tasks,commsLog,documents,brokerQuotes,relationships};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='jericho-backup-'+today+'.json';a.click();URL.revokeObjectURL(url);
@@ -1514,7 +1441,7 @@ function importData(){
   reader.onload=async function(e){
     try{
       const d=JSON.parse(e.target.result);
-      const restoreMap={leads:'leads',pipeline:'pipeline',contacts:'contacts',tasks:'tasks',commissions:'commissions',commsLog:'commsLog',documents:'documents',brokerQuotes:'brokerQuotes',relationships:'relationships'};
+      const restoreMap={leads:'leads',pipeline:'pipeline',contacts:'contacts',tasks:'tasks',commsLog:'commsLog',documents:'documents',brokerQuotes:'brokerQuotes',relationships:'relationships'};
       for(const key of Object.keys(restoreMap)){
         if(d[key]){
           const arr=d[key];
@@ -1531,7 +1458,7 @@ function importData(){
 function clearAllData(){
   if(!confirm('DELETE ALL DATA for everyone (Rafael and Rodrigo)? This cannot be undone!'))return;
   if(!confirm('Are you absolutely sure?'))return;
-  const keys=['leads','pipeline','contacts','tasks','commissions','commsLog','documents','brokerQuotes','relationships'];
+  const keys=['leads','pipeline','contacts','tasks','commsLog','documents','brokerQuotes','relationships'];
   keys.forEach(async(key)=>{
     const arr=DATA_MAP[key].get();
     const ids=arr.map(i=>i.id);
@@ -1542,12 +1469,34 @@ function clearAllData(){
   toast('All data cleared','warning');
   setTimeout(()=>{updateBackupStats();updateDashboard();},500);
 }
+// ============================================================
+// ONE-TIME PURGE -- commission records.
+// Commission tracking was removed from this app: it is an operations tool and
+// what Jericho earns is not an operational fact. Removing the screens left the
+// old rows behind in Firestore, so this empties them properly, once, and then
+// never runs again. Delete this block once it has run on every device.
+// ============================================================
+async function purgeCommissions(){
+  try{ localStorage.removeItem('jericho_commissions'); }catch(e){}
+  if(localStorage.getItem('jericho_comm_purged')==='1') return;
+  if(!window._fbReady || !window._fb) return;           // try again next load
+  try{
+    const {db,collection,doc,getDocs,deleteDoc}=window._fb;
+    const col=collection(db,'jericho_commissions');
+    const snap=await getDocs(col);
+    let n=0;
+    for(const d of snap.docs){ await deleteDoc(doc(col,d.id)); n++; }
+    localStorage.setItem('jericho_comm_purged','1');
+    if(n) toast(n+' commission record'+(n===1?'':'s')+' permanently deleted','info',6000);
+  }catch(e){ /* left for the next load; the flag is only set on success */ }
+}
+window.addEventListener('firebase-ready',purgeCommissions);
+
 function updateBackupStats(){
   document.getElementById('bkLeads').textContent=leads.length;
   document.getElementById('bkDeals').textContent=pipeline.length;
   document.getElementById('bkContacts').textContent=contacts.length;
   document.getElementById('bkTasks').textContent=tasks.length;
-  document.getElementById('bkComms').textContent=commissions.length;
   document.getElementById('bkDocs').textContent=documents.length;
   document.getElementById('bkRels').textContent=relationships.length;
   document.getElementById('bkQuotes').textContent=brokerQuotes.length;
@@ -1567,11 +1516,6 @@ function updateDashboard(){
   const dt=tasks.filter(t=>!t.completed&&t.due===today);
   document.getElementById('overdueCount').textContent=ov.length;
   document.getElementById('tasksTodayCount').textContent=dt.length;
-  const tE=commissions.reduce((s,c)=>s+c.total,0),jE=commissions.reduce((s,c)=>s+c.jerichoAmount,0),tR=commissions.reduce((s,c)=>s+c.received,0);
-  document.getElementById('totalExpected').textContent='$'+tE.toLocaleString();
-  document.getElementById('jerichoExpected').textContent='$'+jE.toLocaleString();
-  document.getElementById('totalReceived').textContent='$'+tR.toLocaleString();
-  document.getElementById('totalOutstanding').textContent='$'+(jE-tR>0?jE-tR:0).toLocaleString();
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
   document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
   document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
