@@ -1798,18 +1798,41 @@ function sameEmail(a,b){
 // Why one record is judged to be the same person as another, in plain words,
 // so nothing is ever merged on a reason the user cannot read back.
 //
-// A shared phone number is NOT enough on its own. A whole office answers one
-// switchboard, so matching on the number alone swallows a genuinely new
-// colleague into an existing record and the import quietly loses them. The
-// name has to agree as well.
+// Two traps, both of which cost real contacts in testing:
+//
+// A shared phone number alone is not a match. A whole office answers one
+// switchboard, so matching on the number by itself swallowed a genuinely new
+// colleague into an existing record.
+//
+// A shared email address alone is not a match either. Small firms put
+// info@ or ops@ on every business card, so two different colleagues arrive
+// carrying the same address.
+//
+// And an initialled name is not enough on its own at a shared employer:
+// "A. Yilmaz" and "Ayse Yilmaz" are two people at the family firm, each with
+// their own mobile. An initial only counts when the phone number agrees too.
+function nameVerdict(a,b){
+  const na=keyName(a), nb=keyName(b);
+  if(!na||!nb) return 'unknown';           // one side has no name at all
+  if(na===nb) return 'exact';
+  if(namesAgree(a,b)) return 'initial';    // "C. Okonkwo" vs "Chidi Okonkwo"
+  return 'clash';                          // plainly two different people
+}
+
 function matchReason(a,b){
-  if(sameEmail(a.email,b.email)) return 'same email address';
   const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
+  const phoneSame = !!pa && pa===pb;
   const ca=keyCompany(a.company), cb=keyCompany(b.company);
-  const nameOK=namesAgree(a.name,b.name);
-  if(pa && pa===pb && nameOK) return 'same phone number and same name';
-  if(pa && pa===pb && !keyName(a.name) && !keyName(b.name) && ca && ca===cb) return 'same phone number and same company, neither has a name';
-  if(nameOK && ca && ca===cb) return 'same name and same company';
+  const coSame = !!ca && ca===cb;
+  const v = nameVerdict(a.name,b.name);
+
+  // A clashing name vetoes everything, the email included.
+  if(v==='clash') return '';
+  if(sameEmail(a.email,b.email)) return 'same email address';
+  if(phoneSame && (v==='exact'||v==='initial')) return 'same phone number and same name';
+  if(phoneSame && v==='unknown' && !keyName(a.name) && !keyName(b.name) && coSame)
+    return 'same phone number and same company, neither has a name';
+  if(v==='exact' && coSame) return 'same name and same company';
   return '';
 }
 
@@ -1817,10 +1840,19 @@ function matchReason(a,b){
 // never by the import. These are shown for a human to judge; they are never
 // acted on automatically.
 function weakReason(a,b){
+  const v = nameVerdict(a.name,b.name);
   const pa=keyPhone(a.phone), pb=keyPhone(b.phone);
-  if(pa && pa===pb) return 'share a phone number, but the names are different \u2014 worth a look';
+  const phoneSame = !!pa && pa===pb;
   const ca=keyCompany(a.company), cb=keyCompany(b.company);
-  if(ca && ca===cb && keyName(a.name) && keyName(a.name)===keyName(b.name)) return 'same name at the same company';
+  const coSame = !!ca && ca===cb;
+  if(v==='initial' && coSame && !phoneSame)
+    return 'one name is the other shortened to an initial, at the same company, but the phone numbers differ';
+  if(sameEmail(a.email,b.email) && v==='clash')
+    return 'share an email address, but the names are different — could be a shared company inbox';
+  if(phoneSame && v==='clash')
+    return 'share a phone number, but the names are different — could be one office line';
+  if(phoneSame && v==='unknown')
+    return 'share a phone number, and one of them has no name';
   return '';
 }
 
