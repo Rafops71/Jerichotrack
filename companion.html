@@ -401,6 +401,9 @@ html[data-style="glass"] .sheet h3, html[data-style="glass"] .sheet .sec-h { col
 /* Drawn icons must fill the slot the emoji used to occupy. */
 .tile-icon svg { width: 24px; height: 24px; display: block; }
 .nav-icon svg { width: 20px; height: 20px; display: block; }
+.head-icon { display: inline-flex; vertical-align: -2px; }
+.head-icon svg { width: 15px; height: 15px; }
+.sync-pill svg { width: 12px; height: 12px; vertical-align: -1px; display: inline-block; }
 .status-chip {
   display: inline-block; width: 12px; height: 12px; border-radius: 9999px;
   vertical-align: middle; margin-right: 6px;
@@ -456,7 +459,7 @@ window.addEventListener('unhandledrejection', function (e) {
 
 <div class="screen active" id="screen-home">
   <div class="upcoming-card">
-    <h2>📅 Upcoming Calls</h2>
+    <h2><span class="head-icon" data-icon="headCalls"></span> Upcoming Calls</h2>
     <div id="upcomingList"><div class="empty-note">No calls scheduled.</div></div>
   </div>
 
@@ -768,7 +771,7 @@ window.addEventListener('unhandledrejection', function (e) {
 <div class="sheet-overlay" id="ingestOverlay" onclick="closeIngestSheet()"></div>
 <div class="sheet" id="ingestSheet">
   <div class="sheet-handle"></div>
-  <h3>🤖 Intake</h3>
+  <h3><span class="head-icon" data-icon="headIntake"></span> Intake</h3>
   <div class="field" id="ingestSetupField" style="display:none;">
     <div class="ingest-setup-note">One-time setup: paste your Intake Worker URL and the auth key you set in Cloudflare. Both are remembered on this device — you won't need to do this again.</div>
     <label>Intake Worker URL</label>
@@ -1114,12 +1117,21 @@ const ICON_SLOTS=[
   {k:'navHome',      n:'Home tab'},
   {k:'navFollowups', n:'Follow-ups tab'},
   {k:'navPipeline',  n:'Pipeline tab'},
-  {k:'navNotes',     n:'Notes tab'}
+  {k:'navNotes',     n:'Notes tab'},
+  {k:'headCalls',    n:'Upcoming Calls heading'},
+  {k:'headIntake',   n:'Intake heading'},
+  {k:'statusOnline', n:'Synced badge'},
+  {k:'statusOffline',n:'Offline badge'},
+  {k:'statusSyncing',n:'Connecting badge'}
 ];
 const ICONS_EMOJI={action:'➕',call:'🕒',lead:'👤',note:'📝',
-  intake:'🤖',navHome:'🏠',navFollowups:'✅',navPipeline:'📊',navNotes:'📝'};
+  intake:'🤖',navHome:'🏠',navFollowups:'✅',navPipeline:'📊',navNotes:'📝',
+  headCalls:'📅',headIntake:'🤖',
+  statusOnline:'✅',statusOffline:'⚠️',statusSyncing:'🔄'};
 const ICONS_LINE={action:'svg:plus',call:'svg:clock',lead:'svg:user',note:'svg:pencil',
-  intake:'svg:spark',navHome:'svg:home',navFollowups:'svg:check',navPipeline:'svg:chart',navNotes:'svg:file'};
+  intake:'svg:spark',navHome:'svg:home',navFollowups:'svg:check',navPipeline:'svg:chart',navNotes:'svg:file',
+  headCalls:'svg:calendar',headIntake:'svg:spark',
+  statusOnline:'svg:tick',statusOffline:'svg:warn',statusSyncing:'svg:refresh'};
 
 /* Drawn with the current text colour, so they follow the theme instead of
    staying whatever colour a vendor painted their emoji. */
@@ -1137,9 +1149,13 @@ const SVG_PATHS={
   phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.1 9.9a16 16 0 0 0 6 6l1.26-1.26a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
   star:'<path d="M12 3l2.9 6.3 6.6.7-5 4.5 1.4 6.5L12 17.8 6.1 21l1.4-6.5-5-4.5 6.6-.7z"/>',
   flag:'<path d="M4 22V4h12l-1.5 4L16 12H4"/>',
-  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  tick:'<path d="m4 12 5 5L20 6"/>',
+  warn:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.5v.01"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>'
 };
-const SVG_CHOICES=['plus','clock','user','pencil','spark','home','check','chart','file','calendar','phone','star','flag','bolt'];
+const SVG_CHOICES=['plus','clock','user','pencil','spark','home','check','chart','file','calendar',
+  'phone','star','flag','bolt','tick','warn','refresh'];
 const EMOJI_CHOICES=['➕','🕒','👤','📝','🤖','🏠','✅','📊',
   '📅','📞','⭐','🚩','⚡','💼','🤝','💰'];
 
@@ -1162,6 +1178,15 @@ function renderIcons(){
   document.querySelectorAll('[data-icon]').forEach(el=>{
     el.innerHTML=iconHTML(iconFor(el.dataset.icon));
   });
+  /* The sync badge is written by setSyncPill(), not by markup, so it would keep
+     the old icon until the connection next changed. Repaint it from the state
+     it is already showing. */
+  const pill=document.getElementById('syncPill');
+  if(pill&&typeof setSyncPill==='function'){
+    const state=pill.classList.contains('online')?'online'
+               :pill.classList.contains('offline')?'offline':'syncing';
+    setSyncPill(state);
+  }
 }
 const LOOK_PRESETS=[
   {n:'Original navy',   h:213,s:48,l:20,a:213,b:4},
@@ -1471,9 +1496,12 @@ function toast(msg,type='success',duration=2500){
 function setSyncPill(state){
   const el=document.getElementById('syncPill');
   el.classList.remove('online','offline','syncing');
-  if(state==='online'){el.classList.add('online');el.textContent='✅ Synced';}
-  else if(state==='offline'){el.classList.add('offline');el.textContent='⚠️ Offline';}
-  else{el.classList.add('syncing');el.textContent='🔄 Connecting...';}
+    /* innerHTML, not textContent, so the icon can be a drawn one. Both halves are
+     built here - iconHTML() escapes a typed value and the label is our own. */
+  const pill=(slot,label)=>iconHTML(iconFor(slot))+' '+label;
+  if(state==='online'){el.classList.add('online');el.innerHTML=pill('statusOnline','Synced');}
+  else if(state==='offline'){el.classList.add('offline');el.innerHTML=pill('statusOffline','Offline');}
+  else{el.classList.add('syncing');el.innerHTML=pill('statusSyncing','Connecting...');}
 }
 window.addEventListener('online',()=>setSyncPill('online'));
 window.addEventListener('offline',()=>setSyncPill('offline'));

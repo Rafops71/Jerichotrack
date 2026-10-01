@@ -9,7 +9,13 @@
  */
 module.exports = [
   { n: 1,  group: 'Starting up',  text: 'The app opens without a blank screen or an error' },
-  { n: 2,  group: 'Starting up',  text: 'It connects to the database automatically, without me logging in' },
+  /* Reworded 01/10. It used to read "connects automatically, without me logging
+     in", which the password gate deliberately made untrue in September: the site
+     is public, so without a gate anyone finding the URL was a signed-in caller
+     as far as Firestore was concerned. The item now describes the gate and asks
+     for more than the old one did - that nothing is connected until the password
+     is given, and that it is given once per device rather than every visit. */
+  { n: 2,  group: 'Starting up',  text: 'It asks for my password once per device, then connects and stays connected' },
   { n: 3,  group: 'Starting up',  text: 'The status pill honestly says online, offline or syncing' },
   { n: 4,  group: 'Starting up',  text: 'Something I save on my iPhone shows up on my iPad' },
   { n: 5,  group: 'Starting up',  text: 'With no signal it still lets me save, and catches up later' },

@@ -10,10 +10,25 @@ test('@robot Item01_app_opens_without_error', async ({ page }) => {
   expect(errors, 'the app logged errors while starting:\n' + errors.join('\n')).toEqual([]);
 });
 
-test('@robot Item02_connects_to_database_without_login', async ({ page }) => {
+test('@robot Item02_password_gate_opens_once_then_stays', async ({ page }) => {
+  /* The gate is the point: the site is public, so until the password is given
+     nothing may be connected. Checking the gate is merely VISIBLE would pass
+     even if the app had already signed in behind it, so check _fbReady too. */
+  await page.goto('/.robot/companion.test.html');
+  await expect(page.locator('#lockScreen')).toBeVisible();
+  expect(await page.evaluate(() => window._fbReady === true),
+    'the app must not be connected while the gate is still up').toBe(false);
+
+  // The right password opens it, and sync starts.
   await app.openApp(page);
   expect(await page.evaluate(() => window._fbReady === true)).toBe(true);
-  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  await expect(page.locator('#lockScreen')).toBeHidden();
+
+  // Once per device, not every visit: a reload must not ask again.
+  await page.reload();
+  await page.waitForFunction(() => window._fbReady === true, null, { timeout: 60000 });
+  await expect(page.locator('#lockScreen'),
+    'the password was typed once already; a reload must not ask for it again').toBeHidden();
 });
 
 test('@robot Item03_status_pill_says_online_when_connected', async ({ page }) => {
