@@ -7,7 +7,9 @@
  * the independent verifier's job.
  */
 
-/** Open the app and wait until it has signed in to the sandbox. */
+const sandboxAccount = require('./sandbox-account');
+
+/** Open the app, get through the password gate, and wait until it has signed in. */
 async function openApp(page) {
   const errors = [];
 
@@ -16,9 +18,9 @@ async function openApp(page) {
    *
    * Firebase Auth loads a helper script from apis.google.com. The machine the
    * robot runs on blocks that host at the network level, so the request fails
-   * here and would NOT fail on a real phone. Anonymous sign-in still succeeds
-   * (Item02 proves it). Only this exact host with this exact failure is
-   * ignored; every other failed request still fails the test.
+   * here and would NOT fail on a real phone. Sign-in still succeeds (Item02
+   * proves it). Only this exact host with this exact failure is ignored; every
+   * other failed request still fails the test.
    */
   const isBlockedByEnvironment = (url, reason) =>
     url.startsWith('https://apis.google.com/') && /ERR_TUNNEL_CONNECTION_FAILED/.test(reason || '');
@@ -45,10 +47,47 @@ async function openApp(page) {
   if (!isTestBuild) throw new Error('SAFETY STOP: not the sandbox build - refusing to continue.');
 
   /*
+   * Get through the password gate the same way a person does: type the password
+   * and press Unlock. Nothing here reaches into the app to sign in behind the
+   * gate's back, so the gate itself is now exercised on every single test.
+   *
+   * The gate is shown until Firebase reports a signed-in account, so on a fresh
+   * browser context it is always up. If a future change signs the robot in
+   * some other way, this skips rather than failing.
+   */
+  const lockScreen = page.locator('#lockScreen');
+  if (await lockScreen.isVisible()) {
+    await page.fill('#lockPass', sandboxAccount.password);
+    await page.click('#lockBtn');
+
+    /*
+     * A wrong password leaves the gate up with a message, which would otherwise
+     * surface 60s later as an unexplained sign-in timeout. Say what happened.
+     */
+    await Promise.race([
+      page.waitForFunction(() => window._fbReady === true, null, { timeout: 60000 }),
+      page.waitForFunction(
+        () => {
+          const e = document.getElementById('lockErr');
+          return !!(e && e.textContent.trim());
+        },
+        null,
+        { timeout: 60000 }
+      ).then(async () => {
+        const msg = await page.locator('#lockErr').textContent();
+        throw new Error(
+          'the password gate refused the sandbox account: "' + (msg || '').trim() + '". ' +
+          'The Auth emulator user is seeded by scripts/run-robot.js - check that step ran.'
+        );
+      })
+    ]);
+  }
+
+  /*
    * A single page signs in to the local sandbox in about 200ms. Under a full
    * suite run - dozens of fresh browser contexts, each fetching the Firebase
-   * bundle and creating its own anonymous user - it can occasionally take far
-   * longer, and a 20s limit made random tests fail with no app fault.
+   * bundle and signing in again - it can occasionally take far longer, and a
+   * 20s limit made random tests fail with no app fault.
    *
    * This is the harness waiting longer, not the check being softened: the
    * assertion is still "the app signs in", and a page that never signs in
