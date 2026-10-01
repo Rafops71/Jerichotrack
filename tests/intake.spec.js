@@ -109,7 +109,12 @@ test('@robot Item36_closing_without_confirming_saves_nothing', async ({ page }) 
   await configure(page, 'ok');
   await process(page, NOTES);
   await expect(page.locator('#ingestReviewList .review-card').first()).toBeVisible({ timeout: 15000 });
-  await app.tap(page, 'closeIngestReviewSheet()');
+  /* Press Cancel, which is what the item describes. app.tap() matches on the
+     onclick alone, and closeIngestReviewSheet() is on BOTH the Cancel button and
+     the overlay behind the sheet - so it picked the overlay, whose clickability
+     depends on the sheet's slide animation, and Item36 flaked on it. Scoped to
+     the sheet, there is only the button. */
+  await page.locator('#ingestReviewSheet [onclick="closeIngestReviewSheet()"]').click();
   await verify.stayedEmpty('jericho_leads', 3000);
 });
 
