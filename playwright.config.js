@@ -20,9 +20,6 @@ module.exports = defineConfig({
   reporter: [['list'], ['json', { outputFile: '.robot/results.json' }]],
   use: {
     baseURL: 'http://127.0.0.1:5055',
-    // Phone-shaped, because that is how Companion is really used.
-    // NOTE: this is Chromium, not Safari. Safari-only bugs will not be caught here.
-    ...devices['iPhone 13'],
     browserName: 'chromium',
     defaultBrowserType: 'chromium',
     // Use the Chromium already installed in this environment rather than
@@ -38,6 +35,28 @@ module.exports = defineConfig({
     ignoreHTTPSErrors: true,
     actionTimeout: 10000
   },
+  /*
+   * Two apps, two shapes. Companion is a phone app and is tested phone-shaped;
+   * index.html is the desktop CRM and is tested on a desktop window, because a
+   * table that works at 390px wide and a table that works at 1440px are not the
+   * same test. The desktop specs are named desktop-*.spec.js and nothing else
+   * picks them up.
+   *
+   * NOTE for both: this is Chromium, not Safari. Safari-only bugs are not caught
+   * here, on either app.
+   */
+  projects: [
+    {
+      name: 'companion',
+      testIgnore: /desktop-.*\.spec\.js/,
+      use: { ...devices['iPhone 13'], browserName: 'chromium', defaultBrowserType: 'chromium' }
+    },
+    {
+      name: 'desktop',
+      testMatch: /desktop-.*\.spec\.js/,
+      use: { viewport: { width: 1440, height: 1000 }, browserName: 'chromium', defaultBrowserType: 'chromium' }
+    }
+  ],
   webServer: [
     {
       command: 'node scripts/serve.js',

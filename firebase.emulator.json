@@ -1,0 +1,22 @@
+{
+  "_comment": [
+    "EMULATOR ONLY. The robot starts the emulator with --config firebase.emulator.json",
+    "so the sandbox loads firestore.emulator.rules instead of the production rules.",
+    "",
+    "Why this file exists: firestore.rules names Rafael's real account id, so inside",
+    "the emulator - where the sandbox account has a different id - every write is",
+    "refused and the apps appear broken for a reason that has nothing to do with",
+    "them. Pointing firebase.json at the emulator rules instead would be worse:",
+    "anyone deploying the repo would publish a wildcard and reopen every collection.",
+    "So production config stays in firebase.json and the robot overrides it here."
+  ],
+  "firestore": {
+    "rules": "firestore.emulator.rules"
+  },
+  "emulators": {
+    "auth":      { "host": "127.0.0.1", "port": 9099 },
+    "firestore": { "host": "127.0.0.1", "port": 8080 },
+    "ui":        { "enabled": false },
+    "singleProjectMode": true
+  }
+}

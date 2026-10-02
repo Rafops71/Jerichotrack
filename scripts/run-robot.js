@@ -69,15 +69,37 @@ async function seedSandboxAccount() {
 }
 
 (async () => {
-  console.log('\n[1/5] Building the sandbox copy of the app...');
-  if (run('node', ['scripts/build-test-page.js']).status !== 0) process.exit(1);
+  /*
+   * Which app to test. Both are tested by default, because a change to one has
+   * caught a break in the other before now. Narrow it when iterating:
+   *   node scripts/run-robot.js companion
+   *   node scripts/run-robot.js desktop
+   */
+  const only = (process.argv[2] || '').toLowerCase();
+  if (only && only !== 'companion' && only !== 'desktop') {
+    console.error('Unknown app "' + only + '". Use companion, desktop, or nothing for both.');
+    process.exit(1);
+  }
+  const doCompanion = only !== 'desktop';
+  const doDesktop = only !== 'companion';
+
+  console.log('\n[1/5] Building the sandbox copies of the apps...');
+  if (doCompanion && run('node', ['scripts/build-test-page.js', 'companion.html']).status !== 0) process.exit(1);
+  if (doDesktop && run('node', ['scripts/build-test-page.js', 'index.html']).status !== 0) process.exit(1);
 
   console.log('\n[2/5] Checking the local sandbox database...');
   let up = await emulatorIsUp();
   let emulator = null;
   if (!up) {
     console.log('      not running - starting it');
+    /*
+     * --config firebase.emulator.json, NOT the default firebase.json. The
+     * production rules name Rafael's real account id, so inside the emulator -
+     * where the sandbox account has a different id - every write is refused and
+     * both apps look broken for a reason that is not their fault.
+     */
     emulator = spawn('npx', ['firebase', 'emulators:start', '--project', 'jericho-test',
+                             '--config', 'firebase.emulator.json',
                              '--only', 'firestore,auth'],
                      { cwd: ROOT, stdio: 'ignore', detached: false });
     for (let i = 0; i < 60 && !up; i++) {
@@ -111,10 +133,13 @@ async function seedSandboxAccount() {
   console.log('      ' + sandboxAccount.email + ' ready in the sandbox');
 
   console.log('\n[4/5] Running the robot user...');
-  run('npx', ['playwright', 'test']);
+  const projects = [];
+  if (doCompanion) projects.push('--project=companion');
+  if (doDesktop) projects.push('--project=desktop');
+  run('npx', ['playwright', 'test'].concat(projects));
 
   console.log('\n[5/5] Report');
-  const report = run('node', ['scripts/report.js']);
+  const report = run('node', ['scripts/report.js'].concat(only ? [only] : []));
 
   if (emulator) emulator.kill();
   process.exit(report.status === 0 ? 0 : 1);
