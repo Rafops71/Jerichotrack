@@ -81,9 +81,30 @@ test('@robot DeskItem40_the_map_opens_and_draws_the_world', async ({ page }) => 
   await app.openApp(page);
   await app.goToTab(page, 'map');
 
-  /* The country paths come from the world atlas, so a drawn map means both d3
-     and the atlas arrived and the projection ran. */
-  await expect(page.locator('#mapStage svg')).toBeVisible({ timeout: 45000 });
+  /*
+   * The country paths come from the world atlas, so a drawn map means both d3
+   * and the atlas arrived and the projection ran.
+   *
+   * The app has its own message for a map that cannot load, so wait for EITHER
+   * outcome and report what it said. A bare timeout on the svg tells you nothing
+   * about why, which cost an hour the first time this failed.
+   */
+  await page.waitForFunction(
+    () => {
+      if (document.querySelector('#mapStage svg')) return true;
+      const l = document.getElementById('mapLoading');
+      return !!(l && /could not load/i.test(l.textContent || ''));
+    },
+    null,
+    { timeout: 60000 }
+  ).catch(() => {});
+
+  const said = (await page.locator('#mapLoading').innerText().catch(() => '')).trim();
+  const libs = await page.evaluate(() => ({ d3: typeof window.d3, topo: typeof window.topojson }));
+  expect(await page.locator('#mapStage svg').count(),
+    'the map did not draw. The app said: "' + said + '". ' +
+    'd3=' + libs.d3 + ', topojson=' + libs.topo).toBeGreaterThan(0);
+
   const paths = await page.locator('#mapStage svg path').count();
   expect(paths, 'the world should be drawn as country shapes').toBeGreaterThan(50);
 });
