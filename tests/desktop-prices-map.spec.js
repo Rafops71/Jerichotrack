@@ -19,8 +19,13 @@ test('@robot DeskItem37_iron_ore_and_the_pgms_show_a_live_price', async ({ page 
   await app.openApp(page);
   await app.goToTab(page, 'prices');
 
-  // The feeds are fetched on demand, so give them a moment rather than a guess.
-  await expect(page.locator('#gridMetals')).toContainText(/Iron Ore/i, { timeout: 30000 });
+  /*
+   * The commodity NAMES are placeholders that exist before any data arrives, so
+   * waiting for a name proves nothing - an earlier version of this test passed
+   * against a grid reading "GOLD (XAU) - Loading...". Wait for the loading state
+   * to clear instead.
+   */
+  await expect(page.locator('#gridMetals')).not.toContainText(/Loading/i, { timeout: 45000 });
   const metals = await page.locator('#gridMetals').innerText();
 
   for (const name of ['Iron Ore', 'Platinum', 'Palladium']) {
@@ -28,13 +33,14 @@ test('@robot DeskItem37_iron_ore_and_the_pgms_show_a_live_price', async ({ page 
   }
   /* A name with no number beside it is not a price. */
   expect(metals, 'the metals grid should carry actual figures')
-    .toMatch(/\d[\d,]*\.?\d*/);
+    .toMatch(/\d[\d,]*\.?\d/);
 });
 
 test('@robot DeskItem38_platinum_and_palladium_are_priced_per_kilogram', async ({ page }) => {
   await app.openApp(page);
   await app.goToTab(page, 'prices');
-  await expect(page.locator('#gridMetals')).toContainText(/Platinum/i, { timeout: 30000 });
+  // Again: wait for the figures, not the placeholder names.
+  await expect(page.locator('#gridMetals')).not.toContainText(/Loading/i, { timeout: 45000 });
 
   const metals = await page.locator('#gridMetals').innerText();
   expect(metals, 'the PGMs must be quoted per kilogram').toMatch(/kg/i);

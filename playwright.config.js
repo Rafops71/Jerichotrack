@@ -33,6 +33,16 @@ module.exports = defineConfig({
       return custom ? { executablePath: custom } : {};
     })(),
     ignoreHTTPSErrors: true,
+    /*
+     * This container reaches the internet through an agent proxy. curl picks it
+     * up from the environment but Chromium does not, so without this the test
+     * browser silently has no internet: d3 and the world atlas never arrive and
+     * the map tests time out after 45s, and the price worker never answers so the
+     * live grid sits on "Loading..." forever. Both looked like app bugs.
+     *
+     * Left unset when there is no proxy, so CI is unaffected.
+     */
+    proxy: process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined,
     actionTimeout: 10000
   },
   /*
