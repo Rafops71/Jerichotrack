@@ -42,7 +42,20 @@ module.exports = defineConfig({
      *
      * Left unset when there is no proxy, so CI is unaffected.
      */
-    proxy: process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined,
+    proxy: process.env.HTTPS_PROXY
+      ? {
+          server: process.env.HTTPS_PROXY,
+          /*
+           * The local test server and the Firebase emulator must NOT go through
+           * the proxy. Without this bypass the proxy answered for
+           * 127.0.0.1:5055 too, the page that came back was not the sandbox
+           * build, and openApp's safety check correctly refused to run - all 46
+           * tests stopped at "SAFETY STOP: not the sandbox build". That guard is
+           * what stopped the robot testing something unknown, so leave it be.
+           */
+          bypass: '127.0.0.1,localhost,::1'
+        }
+      : undefined,
     actionTimeout: 10000
   },
   /*
