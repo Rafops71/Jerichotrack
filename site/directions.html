@@ -1,0 +1,490 @@
+<title>Jericho Direction Board</title>
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;400;600&family=Public+Sans:wght@300;400;600&family=Spline+Sans+Mono:wght@400;600&family=Petrona:ital,wght@0,400;0,700;1,400&family=Archivo+Black&family=Oswald:wght@300;500;700&display=swap">
+
+<style>
+:root{
+  --page:#FFFFFF; --page-fg:#101113; --page-dim:#5E6064; --page-line:#E4E5E7;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --page:#0C0D0E; --page-fg:#F0F0EE; --page-dim:#8B8D91; --page-line:#232528;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0C0D0E; --page-fg:#F0F0EE; --page-dim:#8B8D91; --page-line:#232528;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--page); color:var(--page-fg);
+  font-family:"Public Sans",system-ui,sans-serif; font-size:16px; line-height:1.6;
+  overflow-x:hidden;
+}
+.shell{max-width:1240px; margin:0 auto; padding-inline:clamp(16px,4vw,48px)}
+.top{padding-block:clamp(30px,5vw,58px); border-bottom:1px solid var(--page-line)}
+.kick{font-family:"Spline Sans Mono",monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--page-dim)}
+h1{font-family:"Readex Pro",sans-serif; font-weight:200; font-size:clamp(1.8rem,4.2vw,3rem); margin:14px 0 0; letter-spacing:-.02em}
+.top p{margin-top:16px; max-width:62ch; color:var(--page-dim)}
+
+.card{padding-block:clamp(34px,5vw,64px); border-bottom:1px solid var(--page-line)}
+.cardhead{display:flex; flex-wrap:wrap; gap:10px 20px; align-items:baseline; margin-bottom:20px}
+.tag{
+  font-family:"Spline Sans Mono",monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  border:1px solid var(--page-line); padding:4px 9px; border-radius:2px; color:var(--page-dim);
+}
+.tag.roll{color:#0E6B5C; border-color:#0E6B5C}
+.tag.pick{color:#8C1C13; border-color:#8C1C13}
+.tag.dec{opacity:.55}
+.cardhead h2{font-family:"Readex Pro",sans-serif; font-weight:400; font-size:clamp(1.25rem,2.4vw,1.75rem); margin:0}
+.note{color:var(--page-dim); font-size:.94rem; max-width:70ch; margin-top:14px}
+.note b{color:var(--page-fg); font-weight:600}
+
+/* the rendered panel */
+.panel{
+  position:relative; width:100%; aspect-ratio:16/10; min-height:300px;
+  overflow:hidden; border:1px solid var(--page-line); container-type:inline-size;
+}
+/* everything inside a panel scales with the panel width, so each reads as a real page */
+.panel *{box-sizing:border-box}
+
+/* ============ A — MASHRABIYA SCREEN ============ */
+.p-mash{background:#FFFFFF}
+.p-mash .lat{position:absolute; inset:0}
+.p-mash .warm{
+  position:absolute; inset:0;
+  background:radial-gradient(60cqw 50cqw at 72% 18%, rgba(255,241,205,.95), rgba(255,236,190,0) 70%);
+  mix-blend-mode:multiply; opacity:.0;
+}
+.p-mash .wm{
+  position:absolute; left:5cqw; top:26cqw;
+  font-family:"Readex Pro",sans-serif; font-weight:200; font-size:11cqw; line-height:.9;
+  letter-spacing:.02em; color:#1B2420; margin:0;
+}
+.p-mash .wm em{font-style:normal; color:#0E6B5C; font-weight:600}
+.p-mash .sub{
+  position:absolute; left:5cqw; top:39cqw; max-width:34cqw;
+  font-family:"Public Sans",sans-serif; font-size:1.9cqw; line-height:1.55; color:#39423B; margin:0;
+}
+.p-mash .loc{
+  position:absolute; left:5cqw; top:21cqw;
+  font-family:"Spline Sans Mono",monospace; font-size:1.5cqw; letter-spacing:.3em;
+  text-transform:uppercase; color:#0E6B5C;
+}
+.p-mash .readout{
+  position:absolute; right:4cqw; top:4cqw; text-align:right;
+  font-family:"Spline Sans Mono",monospace; font-size:1.35cqw; letter-spacing:.1em; color:#55605A;
+}
+.p-mash .groups{position:absolute; left:0; right:0; bottom:0; height:21cqw; display:flex}
+.p-mash .ap{
+  flex:1; position:relative; border-left:1px solid rgba(27,36,32,.22);
+  padding:2.6cqw 2cqw; overflow:hidden;
+}
+.p-mash .ap:first-child{border-left:none}
+.p-mash .ap .n{font-family:"Spline Sans Mono",monospace; font-size:1.15cqw; letter-spacing:.18em; color:#0E6B5C}
+.p-mash .ap .t{font-family:"Readex Pro",sans-serif; font-weight:400; font-size:2.1cqw; color:#1B2420; margin-top:1cqw; line-height:1.15}
+.p-mash .ap .glow{position:absolute; inset:0; background:rgba(255,243,214,.55); opacity:0; transition:opacity .4s}
+.p-mash .ap:hover .glow{opacity:1}
+
+/* ============ B — SHIPPING REGISTER ============ */
+.p-reg{background:#FFFFFF; color:#141311}
+.p-reg .rule{position:absolute; left:0; right:0; height:1px; background:rgba(26,24,20,.26)}
+.p-reg .mast{
+  position:absolute; left:4cqw; right:4cqw; top:4cqw;
+  display:flex; justify-content:space-between; align-items:flex-end;
+  border-bottom:2px solid #1A1814; padding-bottom:1.4cqw;
+}
+.p-reg .mast .nm{font-family:"Petrona",serif; font-weight:700; font-size:3.4cqw; letter-spacing:.02em}
+.p-reg .mast .no{font-family:"Spline Sans Mono",monospace; font-size:1.3cqw; letter-spacing:.14em; color:#8C1C13}
+.p-reg .entry{position:absolute; left:4cqw; top:13cqw; width:56cqw}
+.p-reg .entry h3{font-family:"Petrona",serif; font-weight:700; font-size:7.6cqw; line-height:.94; margin:0; letter-spacing:-.01em}
+.p-reg .entry .it{font-family:"Petrona",serif; font-style:italic; font-size:2.2cqw; color:#4A4639; margin-top:1.4cqw; max-width:44cqw; line-height:1.45}
+.p-reg .cols{position:absolute; left:4cqw; right:34cqw; bottom:5cqw; display:flex; gap:3cqw}
+.p-reg .col{flex:1; border-top:1px solid rgba(26,24,20,.4); padding-top:1.2cqw}
+.p-reg .col dt{font-family:"Spline Sans Mono",monospace; font-size:1.1cqw; letter-spacing:.16em; text-transform:uppercase; color:#8C1C13}
+.p-reg .col dd{margin:.7cqw 0 0; font-family:"Petrona",serif; font-size:1.8cqw; line-height:1.4}
+.p-reg .margin{
+  position:absolute; right:4cqw; top:13cqw; width:26cqw;
+  border-left:1px solid rgba(26,24,20,.3); padding-left:2cqw;
+  font-family:"Petrona",serif; font-size:1.55cqw; line-height:1.6; color:#4A4639;
+}
+.p-reg .margin b{font-family:"Spline Sans Mono",monospace; font-size:1.15cqw; letter-spacing:.12em; display:block; color:#1A1814; margin-bottom:.8cqw}
+
+/* ============ C — POWER HAMMER ============ */
+.p-forge{background:#141210; color:#F2E6C2}
+.p-forge .heat{
+  position:absolute; left:-10cqw; top:30cqw; width:70cqw; height:16cqw;
+  background:linear-gradient(90deg,#141210,#6B2406 30%,#D2541B 58%,#FFD9A0 78%,#FFF8EC 90%,#141210);
+  filter:blur(.4cqw);
+}
+.p-forge .scale{position:absolute; inset:0}
+.p-forge h3{
+  position:absolute; left:4cqw; top:7cqw; margin:0;
+  font-family:"Archivo Black",sans-serif; font-size:9cqw; line-height:.86;
+  letter-spacing:-.02em; text-transform:uppercase; color:#F2E6C2;
+}
+.p-forge .row{
+  position:absolute; left:4cqw; right:4cqw; display:flex; justify-content:space-between;
+  border-top:1px solid rgba(242,230,194,.22); padding-top:1cqw;
+  font-family:"Spline Sans Mono",monospace; font-size:1.4cqw; letter-spacing:.1em; color:#8A8F93;
+}
+.p-forge .row b{color:#D2541B; font-weight:600}
+.p-forge .r1{bottom:13cqw} .p-forge .r2{bottom:8cqw} .p-forge .r3{bottom:3cqw}
+
+/* ============ D — DEPLOYABLE SHEET ============ */
+.p-miura{background:#FFFFFF; color:#141517}
+.p-miura svg{position:absolute; inset:0; width:100%; height:100%}
+.p-miura h3{
+  position:absolute; left:5cqw; top:8cqw; margin:0;
+  font-family:"Spline Sans Mono",monospace; font-weight:600; font-size:4.4cqw;
+  letter-spacing:.3em; text-transform:uppercase; color:#20211F;
+}
+.p-miura .spec{
+  position:absolute; left:5cqw; top:16cqw; width:30cqw;
+  font-family:"Spline Sans Mono",monospace; font-size:1.3cqw; line-height:1.9; color:#6D6F6A;
+}
+.p-miura .spec span{color:#B8923C}
+.p-miura .pull{
+  position:absolute; right:5cqw; bottom:6cqw;
+  font-family:"Spline Sans Mono",monospace; font-size:1.3cqw; letter-spacing:.2em;
+  text-transform:uppercase; color:#20211F; border:1px solid #B8923C; padding:1cqw 2cqw;
+}
+
+/* ============ E — CONCOURSE BOARD ============ */
+.p-flap{background:#0E0E0E; color:#F4F4F2; padding:3.5cqw}
+.p-flap .frame{
+  position:absolute; inset:2.6cqw; border:.5cqw solid #3A3C3E;
+  background:#0A0A0A; padding:2cqw 2.4cqw; overflow:hidden;
+}
+.p-flap .brow{
+  display:flex; gap:.5cqw; align-items:center; margin-bottom:1.5cqw;
+  font-family:"Oswald",sans-serif; font-weight:500; font-size:1.5cqw;
+  letter-spacing:.2em; text-transform:uppercase; color:#8C8C86;
+}
+.p-flap .fr{display:flex; gap:.4cqw; margin-bottom:.7cqw; align-items:center}
+.p-flap .cell{
+  background:#1A1A1A; color:#F4F4F2; font-family:"Oswald",sans-serif; font-weight:500;
+  font-size:2.5cqw; width:2.2cqw; height:3.2cqw; display:grid; place-items:center;
+  border-top:1px solid #2E2E2E; border-bottom:1px solid #000;
+}
+.p-flap .cell.g{background:#161616; color:#C8961E}
+.p-flap .lab{
+  font-family:"Oswald",sans-serif; font-weight:300; font-size:1.5cqw; letter-spacing:.18em;
+  text-transform:uppercase; color:#8C8C86; margin-left:1.2cqw;
+}
+.p-flap .lamp{width:1cqw; height:1cqw; border-radius:50%; background:#C8961E; margin-left:auto}
+
+/* ============ F — CANON ============ */
+.p-canon{background:#0B1E3A; color:#fff}
+.p-canon .photo{
+  position:absolute; inset:0 0 38% 0;
+  background:
+    linear-gradient(180deg,rgba(11,30,58,.25),rgba(11,30,58,.85)),
+    linear-gradient(160deg,#2C4A6E,#15293F 60%,#0B1E3A);
+}
+.p-canon .photo::after{
+  content:""; position:absolute; left:8%; bottom:14%; width:62%; height:14%;
+  background:#0A1526; box-shadow:0 -1.6cqw 0 -.6cqw #0F2135;
+}
+.p-canon h3{
+  position:absolute; left:6cqw; top:14cqw; margin:0; width:52cqw;
+  font-family:"Public Sans",sans-serif; font-weight:600; font-size:4.6cqw; line-height:1.1;
+}
+.p-canon .gold{position:absolute; left:6cqw; top:11cqw; width:7cqw; height:.4cqw; background:#C9A227}
+.p-canon .props{position:absolute; left:0; right:0; bottom:0; height:34%; display:flex; background:#fff; color:#0B1E3A}
+.p-canon .prop{flex:1; padding:3cqw; border-left:1px solid #E3E6EA}
+.p-canon .prop:first-child{border-left:none}
+.p-canon .prop h4{margin:0; font-family:"Public Sans",sans-serif; font-weight:600; font-size:1.9cqw}
+.p-canon .prop p{margin:1cqw 0 0; font-size:1.4cqw; line-height:1.5; color:#5A6472}
+
+.foot{padding-block:40px; color:var(--page-dim); font-family:"Spline Sans Mono",monospace; font-size:11.5px; letter-spacing:.08em}
+.themebtn{
+  position:fixed; right:14px; top:14px; z-index:20;
+  font-family:"Spline Sans Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--page); border:1px solid var(--page-line); color:var(--page-dim);
+  padding:7px 10px; border-radius:2px; cursor:pointer;
+}
+@media(max-width:620px){
+  .panel{aspect-ratio:4/5}
+  .p-mash .groups{height:34cqw; flex-wrap:wrap}
+  .p-mash .ap{flex:1 1 50%; border-top:1px solid rgba(27,36,32,.22)}
+  .p-canon .props{flex-wrap:wrap; height:40%}
+}
+</style>
+
+<button class="themebtn" id="themeBtn">Light</button>
+
+<div class="shell top">
+  <p class="kick">Jericho · visual direction board</p>
+  <h1>Six worlds, rendered rather than described.</h1>
+  <p>Each panel below is real code, not a mock-up of a mock-up — the actual type, colour and geometry each
+     direction would use, at the scale it would use them. Scroll, look, and tell me the letter. Hover the
+     apertures in A and the panels in E to see the interaction.</p>
+</div>
+
+<!-- A -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag roll">A · The roll</span>
+    <h2>The Mashrabiya Screen</h2>
+  </div>
+  <div class="panel p-mash">
+    <svg class="lat" aria-hidden="true"><defs>
+      <pattern id="mash" width="72" height="72" patternUnits="userSpaceOnUse">
+        <rect width="72" height="72" fill="#FFFFFF"/>
+        <g fill="none" stroke="#1B2420" stroke-width="7" stroke-linejoin="miter">
+          <path d="M36 -6 L78 36 L36 78 L-6 36 Z"/>
+          <path d="M0 0 L72 72 M72 0 L0 72"/>
+          <path d="M36 14 L58 36 L36 58 L14 36 Z"/>
+        </g>
+        <g fill="#6E5B3E" opacity=".5">
+          <circle cx="36" cy="36" r="4.5"/><circle cx="0" cy="0" r="3"/><circle cx="72" cy="0" r="3"/>
+          <circle cx="0" cy="72" r="3"/><circle cx="72" cy="72" r="3"/>
+        </g>
+      </pattern>
+      <radialGradient id="sun" cx="74%" cy="16%" r="62%">
+        <stop offset="0" stop-color="#FFF6DC" stop-opacity=".95"/>
+        <stop offset="1" stop-color="#FFF6DC" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+      <rect width="100%" height="100%" fill="url(#mash)"/>
+      <rect width="100%" height="100%" fill="url(#sun)" style="mix-blend-mode:screen"/>
+    </svg>
+    <div class="readout">LIGHT 74° · 16°<br>SCREEN OPEN 0.38</div>
+    <p class="loc">Dubai</p>
+    <h3 class="wm">JERICHO</h3>
+    <p class="sub">Energy, ferrous, non-ferrous and critical materials, and the logistics that move them.</p>
+    <div class="groups">
+      <div class="ap"><span class="glow"></span><div class="n">01</div><div class="t">Energy</div></div>
+      <div class="ap"><span class="glow"></span><div class="n">02</div><div class="t">Ferrous</div></div>
+      <div class="ap"><span class="glow"></span><div class="n">03</div><div class="t">Non-ferrous</div></div>
+      <div class="ap"><span class="glow"></span><div class="n">04</div><div class="t">Critical<br>materials</div></div>
+    </div>
+  </div>
+  <p class="note"><b>The idea:</b> a screen you look through, not at. The lattice is the vetting, and the
+     material groups are openings in it. <b>Signature move:</b> your pointer moves the sun behind the screen,
+     so the cast light shifts across the whole page in real time, with a readout. <b>Risk:</b> a lattice
+     becomes wallpaper the moment the geometry stops being structural.</p>
+</section>
+
+<!-- B -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag pick">B · My pick</span>
+    <h2>The Shipping Register</h2>
+  </div>
+  <div class="panel p-reg">
+    <div class="mast"><span class="nm">The Register</span><span class="no">VOL. CCXL · DUBAI</span></div>
+    <div class="entry">
+      <h3>Jericho</h3>
+      <p class="it">Intermediary. Energy, ferrous, non-ferrous and critical materials, with the services that
+         carry them.</p>
+    </div>
+    <div class="margin">
+      <b>MARGINALIA</b>
+      Dry bulk moved 5.7 billion tonnes last year — close to half of everything carried by sea.
+    </div>
+    <div class="cols">
+      <div class="col"><dt>Groups</dt><dd>Energy · Ferrous · Non-ferrous · Critical materials</dd></div>
+      <div class="col"><dt>Services</dt><dd>Freight · Forwarding · Inspection · Finance</dd></div>
+    </div>
+  </div>
+  <p class="note"><b>The idea:</b> the firm as an entry in the trade's own register, where being listed is the
+     whole claim. The figures live as marginalia, never as a headline. <b>Risk, stated honestly:</b> this is
+     also where most careful designers land. A peer may have seen ruled-ledger editorial five times this year.</p>
+</section>
+
+<!-- C -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag">C · Alternate</span>
+    <h2>The Power Hammer</h2>
+  </div>
+  <div class="panel p-forge">
+    <div class="heat"></div>
+    <canvas class="scale" aria-hidden="true"></canvas>
+    <h3>Jericho<br>Dubai</h3>
+    <div class="row r1"><span>ENERGY</span><b>CRUDE · FUELS · COAL</b></div>
+    <div class="row r2"><span>FERROUS</span><b>ORE · PIG IRON · BILLET · SCRAP</b></div>
+    <div class="row r3"><span>NON-FERROUS</span><b>COPPER · PGM · GOLD · SILVER</b></div>
+  </div>
+  <p class="note"><b>The idea:</b> material under force, each group a full-width ruled row with tabular
+     figures, stencilled caps on forge-dark. <b>Why it nearly won:</b> strongest audience identification of
+     the hand — it is literally the ferrous trade. <b>Why I did not pick it:</b> you forge nothing. It
+     describes a manufacturer, and you are an intermediary.</p>
+</section>
+
+<!-- D -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag">D · Alternate</span>
+    <h2>The Deployable Sheet</h2>
+  </div>
+  <div class="panel p-miura">
+    <svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g stroke="#9FB6CC" stroke-width=".35" fill="none" opacity=".9">
+        <path d="M60 10 l14 6 l-14 6 l-14 -6 Z M74 16 l14 6 l-14 6 l-14 -6 Z M88 22 l14 6 l-14 6 l-14 -6 Z
+                 M102 28 l14 6 l-14 6 l-14 -6 Z M116 34 l14 6 l-14 6 l-14 -6 Z
+                 M46 16 l14 6 l-14 6 l-14 -6 Z M60 22 l14 6 l-14 6 l-14 -6 Z M74 28 l14 6 l-14 6 l-14 -6 Z
+                 M88 34 l14 6 l-14 6 l-14 -6 Z M102 40 l14 6 l-14 6 l-14 -6 Z M116 46 l14 6 l-14 6 l-14 -6 Z
+                 M32 22 l14 6 l-14 6 l-14 -6 Z M46 28 l14 6 l-14 6 l-14 -6 Z M60 34 l14 6 l-14 6 l-14 -6 Z
+                 M74 40 l14 6 l-14 6 l-14 -6 Z M88 46 l14 6 l-14 6 l-14 -6 Z M102 52 l14 6 l-14 6 l-14 -6 Z
+                 M116 58 l14 6 l-14 6 l-14 -6 Z
+                 M46 40 l14 6 l-14 6 l-14 -6 Z M60 46 l14 6 l-14 6 l-14 -6 Z M74 52 l14 6 l-14 6 l-14 -6 Z
+                 M88 58 l14 6 l-14 6 l-14 -6 Z M102 64 l14 6 l-14 6 l-14 -6 Z"/>
+      </g>
+      <g stroke="#8A8F86" stroke-width=".22" fill="none" opacity=".55">
+        <path d="M18 28 l14 6 l-14 6 l-14 -6 Z M32 34 l14 6 l-14 6 l-14 -6 Z M46 52 l14 6 l-14 6 l-14 -6 Z
+                 M60 58 l14 6 l-14 6 l-14 -6 Z M74 64 l14 6 l-14 6 l-14 -6 Z"/>
+      </g>
+      <rect x="6" y="62" width="22" height="16" fill="#B8923C" opacity=".92"/>
+      <rect x="6" y="62" width="22" height="16" fill="none" stroke="#8A6F24" stroke-width=".3"/>
+    </svg>
+    <h3>Jericho</h3>
+    <div class="spec">
+      CELL 01 <span>ENERGY</span><br>
+      CELL 02 <span>FERROUS</span><br>
+      CELL 03 <span>NON-FERROUS</span><br>
+      CELL 04 <span>CRITICAL MATERIALS</span><br>
+      CELL 05 <span>SERVICES</span>
+    </div>
+    <div class="pull">Pull to deploy</div>
+  </div>
+  <p class="note"><b>The idea:</b> a packet the size of a hand that opens in one pull into a field spanning
+     continents. <b>Why it nearly won:</b> best product clarity in the hand — two people, one pull, global
+     reach, one control propagating across a linked field. <b>Why I did not pick it:</b> no grounding in
+     commodities; a peer might read it as an aerospace studio.</p>
+</section>
+
+<!-- E -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag">E · Alternate</span>
+    <h2>The Concourse Board</h2>
+  </div>
+  <div class="panel p-flap">
+    <div class="frame">
+      <div class="brow">Jericho · Dubai<span class="lamp"></span></div>
+      <div class="fr">
+        <span class="cell">E</span><span class="cell">N</span><span class="cell">E</span><span class="cell">R</span><span class="cell">G</span><span class="cell">Y</span>
+        <span class="lab">Crude · Fuels · Coal</span>
+      </div>
+      <div class="fr">
+        <span class="cell">F</span><span class="cell">E</span><span class="cell">R</span><span class="cell">R</span><span class="cell">O</span><span class="cell">U</span><span class="cell">S</span>
+        <span class="lab">Ore · Pig iron · Billet · Scrap</span>
+      </div>
+      <div class="fr">
+        <span class="cell g">N</span><span class="cell g">O</span><span class="cell g">N</span><span class="cell">-</span><span class="cell">F</span><span class="cell">E</span>
+        <span class="lab">Copper · PGM · Gold · Silver</span>
+      </div>
+      <div class="fr">
+        <span class="cell">C</span><span class="cell">R</span><span class="cell">I</span><span class="cell">T</span><span class="cell">.</span>
+        <span class="lab">Chrome · Manganese · Antimony · Lithium</span>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>The idea:</b> the book as a departure board — rows are live entities, columns never move,
+     flaps cascade character by character. <b>Why I did not pick it:</b> it promises live data, and you ruled
+     out market feeds. Flaps cascading over nothing is a costume of a live board.</p>
+</section>
+
+<!-- F -->
+<section class="shell card">
+  <div class="cardhead">
+    <span class="tag dec">F · The standing exit</span>
+    <h2>The category standard</h2>
+  </div>
+  <div class="panel p-canon">
+    <div class="photo"></div>
+    <div class="gold"></div>
+    <h3>Connecting global commodity markets with trusted partners</h3>
+    <div class="props">
+      <div class="prop"><h4>Global reach</h4><p>Sourcing and placement across every major market.</p></div>
+      <div class="prop"><h4>Trusted network</h4><p>Relationships built over years with vetted counterparties.</p></div>
+      <div class="prop"><h4>Full service</h4><p>From origin to end user, including logistics and finance.</p></div>
+    </div>
+  </div>
+  <p class="note"><b>What this is:</b> what every commodities brokerage ships, executed properly — navy, a
+     vessel photograph, a gold rule, three value propositions. It is here as your door, not my recommendation.
+     <b>Risk:</b> indistinguishable from every competitor by design, and the copy makes claims you told me not
+     to make.</p>
+</section>
+
+<div class="shell foot">
+  Reply with a letter. Or say "re-roll" for a fresh set — safer, or bolder.
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById("themeBtn"), root = document.documentElement;
+  function dark(){
+    var a = root.getAttribute("data-theme");
+    if (a) return a === "dark";
+    return !window.matchMedia("(prefers-color-scheme: light)").matches;
+  }
+  function label(){ btn.textContent = dark() ? "Light" : "Dark"; }
+  try { var s = localStorage.getItem("jericho_dirtheme"); if (s) root.setAttribute("data-theme", s); } catch(e){}
+  label();
+  btn.addEventListener("click", function(){
+    var n = dark() ? "light" : "dark";
+    root.setAttribute("data-theme", n);
+    try { localStorage.setItem("jericho_dirtheme", n); } catch(e){}
+    label();
+  });
+})();
+
+/* A: the sun behind the screen follows the pointer — the signature move, live */
+(function(){
+  var p = document.querySelector(".p-mash");
+  if (!p) return;
+  var g = p.querySelector("#sun"), ro = p.querySelector(".readout");
+  if (!g) return;
+  p.addEventListener("pointermove", function(ev){
+    var r = p.getBoundingClientRect();
+    var x = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    var y = Math.max(0, Math.min(1, (ev.clientY - r.top) / r.height));
+    g.setAttribute("cx", (x * 100).toFixed(1) + "%");
+    g.setAttribute("cy", (y * 100).toFixed(1) + "%");
+    if (ro) ro.innerHTML = "LIGHT " + Math.round(x * 180) + "° · " + Math.round(y * 90) +
+      "°<br>SCREEN OPEN " + (0.2 + y * 0.6).toFixed(2);
+  });
+})();
+
+/* C: black scale shedding off the hot bar */
+(function(){
+  var c = document.querySelector(".p-forge .scale");
+  if (!c) return;
+  var ctx = c.getContext("2d"), W = 0, H = 0, ps = [], raf = 0;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){
+    var r = c.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    c.width = W * dpr; c.height = H * dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    ps = [];
+    for (var i = 0; i < 90; i++)
+      ps.push({ x: Math.random()*W*.6, y: H*.38 + Math.random()*H*.14,
+                vx: .3 + Math.random()*1.6, vy: -.6 + Math.random()*1.2,
+                r: .5 + Math.random()*1.8, a: .25 + Math.random()*.6 });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for (var i=0;i<ps.length;i++){
+      var p = ps[i];
+      ctx.globalAlpha = p.a; ctx.fillStyle = "#0A0908";
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+      if (!reduce){
+        p.x += p.vx; p.y += p.vy; p.vy += .012;
+        if (p.x > W || p.y > H){ p.x = Math.random()*W*.25; p.y = H*.38+Math.random()*H*.14; p.vy = -.6+Math.random()*1.2; }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function loop(){ draw(); raf = requestAnimationFrame(loop); }
+  size(); draw(); if (!reduce) loop();
+  window.addEventListener("resize", function(){ size(); draw(); });
+})();
+</script>
