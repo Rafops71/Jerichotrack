@@ -1,0 +1,1225 @@
+<title>Jericho</title>
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+
+<style>
+/* ============================================================================
+   JERICHO — public site.  Single file, four views, no build step.
+   Layout: cold dawn on a working quay. Hairline rules, generous air, wide
+   geometric display type. Brass is the only bright hue; the cool dawn tone is
+   what keeps it from going gold-and-marble.
+   Dark-first: the dark palette is on bare :root, light is the override.
+   ========================================================================= */
+:root{
+  --ink:#0F0D0B;         /* ground — warm near-black */
+  --surface:#15120E;     /* raised */
+  --surface-2:#1D1812;   /* inset */
+  --line:#2C251D;        /* hairline */
+  --line-soft:#201A14;
+  --fg:#F4EEE4;          /* warm bone */
+  --fg-dim:#A89A88;
+  --fg-faint:#6E6356;
+  --brass:#E0A94A;       /* the accent */
+  --copper:#BE6A3C;
+  --dawn:#7E93A8;        /* the cold in cold dawn */
+  --flag:#2E2213;
+  --flag-fg:#E8BE76;
+
+  --display:"Outfit","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --gutter:clamp(16px,5vw,76px);
+  --rule:1px solid var(--line);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --ink:#EDE7DC; --surface:#F6F1E8; --surface-2:#E2D9C9;
+    --line:#CFC2AC; --line-soft:#DED4C2;
+    --fg:#15110C; --fg-dim:#564B3D; --fg-faint:#857866;
+    --brass:#8A5E0C; --copper:#9E4D27; --dawn:#44606F;
+    --flag:#F3E1BC; --flag-fg:#6A4506;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --ink:#EDE7DC; --surface:#F6F1E8; --surface-2:#E2D9C9;
+  --line:#CFC2AC; --line-soft:#DED4C2;
+  --fg:#15110C; --fg-dim:#564B3D; --fg-faint:#857866;
+  --brass:#8A5E0C; --copper:#9E4D27; --dawn:#44606F;
+  --flag:#F3E1BC; --flag-fg:#6A4506;
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ink); color:var(--fg);
+  font-family:var(--body); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--display); margin:0; line-height:1.04; text-wrap:balance; font-weight:500}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:1200px; margin:0 auto; padding-inline:var(--gutter)}
+.mono{font-family:var(--data); font-variant-numeric:tabular-nums}
+.eyebrow{
+  font-family:var(--data); font-size:11px; font-weight:500;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--brass);
+}
+:focus-visible{outline:2px solid var(--brass); outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- notice ---------- */
+.notice{
+  background:var(--flag); color:var(--flag-fg);
+  font-family:var(--data); font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase;
+  padding:9px var(--gutter); text-align:center; border-bottom:var(--rule);
+}
+
+/* ---------- masthead ---------- */
+.mast{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:60;
+  background:var(--ink); border-bottom:var(--rule);
+}
+.mast-in{display:flex; align-items:center; gap:clamp(14px,2.4vw,34px); min-height:68px}
+.brand{
+  font-family:var(--display); font-weight:700; font-size:20px;
+  letter-spacing:.3em; text-decoration:none; margin-right:auto;
+  background:none; border:none; color:var(--fg); cursor:pointer; padding:0;
+}
+.brand span{display:block; font-family:var(--data); font-size:8.5px; letter-spacing:.26em;
+  color:var(--fg-faint); text-transform:uppercase; margin-top:3px; font-weight:400}
+.mast nav{display:flex; gap:clamp(12px,2vw,26px)}
+.navlink{
+  font-family:var(--data); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--fg-dim); background:none; border:none; border-bottom:1px solid transparent;
+  padding:5px 0; cursor:pointer; white-space:nowrap;
+}
+.navlink:hover{color:var(--fg)}
+.navlink[aria-current="true"]{color:var(--fg); border-bottom-color:var(--brass)}
+.tools{display:flex; gap:7px; align-items:center}
+.chip{
+  font-family:var(--data); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  background:none; border:var(--rule); color:var(--fg-dim);
+  padding:6px 9px; border-radius:2px; cursor:pointer;
+}
+.chip:hover{color:var(--fg); border-color:var(--brass)}
+.chip[aria-pressed="true"]{color:var(--brass); border-color:var(--brass)}
+@media(max-width:900px){
+  .mast-in{flex-wrap:wrap; padding-block:12px; gap:10px 16px}
+  .brand{margin-right:auto}
+  .mast nav{order:3; width:100%; overflow-x:auto; padding-bottom:2px}
+}
+
+/* ---------- views ---------- */
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- hero ---------- */
+.hero{position:relative; border-bottom:var(--rule); overflow:hidden}
+.hero canvas{position:absolute; inset:0; width:100%; height:100%; opacity:.62}
+.hero-in{position:relative; padding-block:clamp(54px,9vw,120px) clamp(44px,7vw,92px)}
+.hero h1{
+  font-size:clamp(2.1rem,6.4vw,4.9rem); font-weight:200; letter-spacing:-.02em;
+  max-width:19ch;
+}
+.hero h1 b{font-weight:500; color:var(--brass)}
+.lede{margin-top:clamp(22px,3vw,34px); max-width:56ch; font-size:clamp(1rem,1.4vw,1.16rem); color:var(--fg-dim)}
+.meta{display:flex; flex-wrap:wrap; gap:1px; margin-top:clamp(34px,4.4vw,56px); background:var(--line)}
+.meta div{background:var(--ink); padding:16px 22px 16px 0; min-width:0; flex:1 1 180px; border-top:2px solid var(--brass)}
+.meta div:nth-child(2){border-top-color:var(--dawn)}
+.meta div:nth-child(3){border-top-color:var(--copper)}
+.meta dt{font-family:var(--data); font-size:10px; letter-spacing:.17em; text-transform:uppercase; color:var(--fg-faint)}
+.meta dd{margin:7px 0 0; font-family:var(--display); font-weight:500; font-size:1.02rem}
+
+/* ---------- section furniture ---------- */
+.band{padding-block:clamp(54px,7vw,104px); border-bottom:var(--rule)}
+.head{max-width:62ch}
+.head h2{font-size:clamp(1.6rem,3.3vw,2.5rem); font-weight:300; margin-top:15px}
+.head p{margin-top:18px; color:var(--fg-dim)}
+
+/* ---------- facts ---------- */
+.facts-note{
+  font-size:.92rem; color:var(--fg-dim); max-width:66ch;
+  border-left:2px solid var(--brass); padding-left:18px; margin-top:28px;
+}
+.fact{
+  padding-block:clamp(52px,9vh,104px);
+  display:flex; flex-direction:column;
+  border-bottom:1px solid var(--line-soft);
+}
+.fact.r{align-items:flex-end; text-align:right}
+.fact-in{max-width:40ch; min-width:0; opacity:0; transform:translateX(-34px); transition:opacity .62s ease-out, transform .62s ease-out}
+.fact.r .fact-in{transform:translateX(34px)}
+.fact.in .fact-in{opacity:1; transform:none}
+.fig{
+  font-family:var(--display); font-weight:200; letter-spacing:-.03em;
+  font-size:clamp(2.7rem,9.2vw,6.2rem); line-height:.96;
+  font-variant-numeric:tabular-nums; display:block;
+}
+.fig em{font-style:normal; font-weight:500; color:var(--brass)}
+.unit{
+  display:block; margin-top:14px; font-family:var(--data); font-size:11.5px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--brass);
+}
+.fact h3{margin-top:19px; font-size:1.2rem; font-weight:500}
+.fact p{margin-top:11px; color:var(--fg-dim); font-size:.97rem}
+.srcrow{margin-top:18px; display:flex; gap:10px; align-items:center}
+.fact.r .srcrow{justify-content:flex-end}
+.srcbtn{
+  font-family:var(--data); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  background:none; border:var(--rule); color:var(--fg-faint);
+  padding:5px 9px; border-radius:2px; cursor:pointer;
+}
+.srcbtn:hover{color:var(--brass); border-color:var(--brass)}
+.srcbox{
+  margin-top:14px; border-top:1px solid var(--line); padding-top:14px;
+  font-family:var(--data); font-size:11.5px; line-height:1.7; color:var(--fg-dim);
+}
+.srcbox b{color:var(--fg); font-weight:500}
+.srcbox .st{color:var(--brass)}
+.closing{font-size:.86rem; color:var(--fg-faint); max-width:70ch; margin-top:36px; line-height:1.7}
+
+/* ---------- globe / operate ---------- */
+.globe-stage{position:relative; display:grid; grid-template-columns:1.25fr .85fr; gap:clamp(22px,3vw,54px); align-items:start}
+@media(max-width:900px){ .globe-stage{grid-template-columns:1fr} }
+.globe-box{position:relative; aspect-ratio:1/1; max-width:100%; min-width:0}
+.globe-box canvas{position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:pan-y}
+.globe-box canvas:active{cursor:grabbing}
+.cp-list{min-width:0}
+.cp-list h3{font-size:1.06rem; font-weight:500}
+.cp-list ul{list-style:none; margin:20px 0 0; padding:0}
+.cp-list li{
+  display:flex; justify-content:space-between; gap:14px; align-items:baseline;
+  padding:10px 0; border-top:1px solid var(--line-soft);
+  font-family:var(--data); font-size:12px; color:var(--fg-dim); cursor:pointer;
+}
+.cp-list li:hover,.cp-list li.hot{color:var(--fg)}
+.cp-list li.hot b{color:var(--brass)}
+.cp-list li b{font-weight:500; color:var(--fg-dim); white-space:nowrap}
+.cp-foot{margin-top:20px; font-size:.84rem; color:var(--fg-faint); line-height:1.65}
+
+/* ---------- material studies ---------- */
+.study{border-bottom:var(--rule)}
+.study-grid{display:grid; grid-template-columns:1fr 1fr; gap:0; align-items:stretch; min-height:min(84vh,760px)}
+@media(max-width:860px){ .study-grid{grid-template-columns:1fr} }
+.study-vis{position:relative; min-height:300px; overflow:hidden; background:var(--surface)}
+.study-vis canvas{position:absolute; inset:0; width:100%; height:100%}
+.study-vis img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.study-vis::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(105deg,transparent 55%,rgba(0,0,0,.26));
+}
+.study-txt{
+  display:flex; flex-direction:column; justify-content:center;
+  padding:clamp(28px,4.6vw,72px); min-width:0; border-left:var(--rule);
+}
+@media(max-width:860px){ .study-txt{border-left:none; border-top:var(--rule)} }
+.study.alt .study-vis{order:2; border-left:var(--rule)}
+.study.alt .study-txt{order:1; border-left:none; border-right:var(--rule)}
+@media(max-width:860px){ .study.alt .study-vis{order:1} .study.alt .study-txt{order:2; border-right:none} }
+.study-txt .n{font-family:var(--data); font-size:10.5px; letter-spacing:.2em; color:var(--fg-faint); text-transform:uppercase}
+.study-txt h3{margin-top:14px; font-size:clamp(1.5rem,2.8vw,2.1rem); font-weight:300}
+.study-txt p{margin-top:16px; color:var(--fg-dim); max-width:46ch}
+.tags{margin-top:26px; display:flex; flex-wrap:wrap; gap:7px}
+.tag{
+  font-family:var(--data); font-size:11px; letter-spacing:.05em;
+  border:var(--rule); color:var(--fg-dim); padding:6px 10px; border-radius:2px;
+  background:var(--surface);
+}
+
+/* ---------- contact ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:1px; background:var(--line); margin-top:clamp(30px,4vw,52px)}
+.card{background:var(--ink); padding:clamp(24px,3vw,36px); min-width:0}
+.card h3{font-size:1.08rem; font-weight:500}
+.card dl{margin:22px 0 0; display:grid; gap:15px}
+.card dt{font-family:var(--data); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg-faint)}
+.card dd{margin:4px 0 0; font-family:var(--data); font-size:13px}
+.ph{color:var(--brass); border:1px dashed var(--brass); background:var(--surface-2); padding:2px 7px; border-radius:2px; display:inline-block}
+
+footer{padding-block:38px}
+.foot{display:flex; flex-wrap:wrap; gap:12px 28px; align-items:baseline; font-family:var(--data); font-size:11px; letter-spacing:.07em; color:var(--fg-faint)}
+.foot b{font-family:var(--display); font-weight:700; letter-spacing:.26em; font-size:13px; color:var(--fg)}
+.foot .sp{margin-left:auto}
+
+@media (prefers-reduced-motion:reduce){
+  .fact-in{opacity:1!important; transform:none!important; transition:none}
+}
+</style>
+
+<div class="notice" data-i="notice">Placeholders present — do not publish</div>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <button class="brand" data-go="home">JERICHO<span data-i="brandsub">Commodities</span></button>
+    <nav>
+      <button class="navlink" data-go="home" data-i="navHome">Home</button>
+      <button class="navlink" data-go="operate" data-i="navOperate">Where we operate</button>
+      <button class="navlink" data-go="handle" data-i="navHandle">What we handle</button>
+      <button class="navlink" data-go="contact" data-i="navContact">Contact</button>
+    </nav>
+    <div class="tools">
+      <button class="chip" id="langBtn">ES</button>
+      <button class="chip" id="themeBtn">Light</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HOME ===================== -->
+<main class="view on" id="v-home">
+
+  <div class="hero">
+    <canvas id="dawn" aria-hidden="true"></canvas>
+    <div class="wrap hero-in">
+      <p class="eyebrow" data-i="heroEyebrow">Commodities brokerage</p>
+      <h1 data-i="heroTitle">From source to end user, through people we have <b>vetted</b>.</h1>
+      <p class="lede" data-i="heroLede">Jericho sources and places physical commodities across continents — energy, ferrous, non-ferrous and critical materials, with the logistics that move them. Every counterparty is screened before anything moves.</p>
+      <dl class="meta">
+        <div><dt data-i="m1t">Sourcing</dt><dd data-i="m1d">South America &amp; Africa</dd></div>
+        <div><dt data-i="m2t">Placement</dt><dd data-i="m2d">All continents</dd></div>
+        <div><dt data-i="m3t">The desk</dt><dd data-i="m3d">Two principals, reachable</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow" data-i="factsEyebrow">The scale of it</p>
+        <h2 data-i="factsTitle">Nine figures that describe the trade we work in.</h2>
+      </div>
+      <p class="facts-note" data-i="factsFrame">The figures below describe the global commodity trade. They are published statistics from the organisations named against each number, with the year and basis stated. They are not a description of Jericho's own activity.</p>
+    </div>
+
+    <div class="wrap" id="factWrap"></div>
+
+    <div class="wrap">
+      <p class="closing" data-i="factsClose">Every figure on this page carries its source, its reference period, and whether it is a measured statistic, an estimate, or commercial vessel-tracking data. Figures marked as estimates are the source organisation's own estimates and remain subject to their revision. Nothing on this page describes volumes traded, handled or arranged by Jericho. Last reviewed: October 2026.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== WHERE WE OPERATE ===================== -->
+<main class="view" id="v-operate">
+  <section class="band">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow" data-i="opEyebrow">Where we operate</p>
+        <h2 data-i="opTitle">The whole trade passes through a handful of narrow places.</h2>
+        <p data-i="opLede">These are the world's maritime chokepoints and the measured oil volumes that move through them. They are the routes every cargo uses, published by the US Energy Information Administration. Drag the globe to turn it.</p>
+      </div>
+    </div>
+    <div class="wrap" style="margin-top:clamp(30px,4vw,56px)">
+      <div class="globe-stage">
+        <div class="globe-box"><canvas id="globe"></canvas></div>
+        <div class="cp-list">
+          <h3 data-i="cpTitle">Oil flows through the chokepoints</h3>
+          <ul id="cpList"></ul>
+          <p class="cp-foot" data-i="cpFoot">Volumes are crude oil and refined petroleum products, not all cargo. Figures for the Strait of Malacca and the Strait of Hormuz cover the first half of 2025; the remainder cover 2024. Source: US Energy Information Administration.</p>
+          <p class="cp-foot" data-i="cpFoot2">The Cape of Good Hope volume exists because traffic diverted away from Bab el-Mandeb. That is why the average cargo now travels some 400 miles further than it did in 2018.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== WHAT WE HANDLE ===================== -->
+<main class="view" id="v-handle">
+  <section class="band" style="border-bottom:none">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow" data-i="hdEyebrow">What we handle</p>
+        <h2 data-i="hdTitle">Five groups, and the people who move them.</h2>
+        <p data-i="hdLede">We broker the material and the services that carry it. A cargo fails on freight or on inspection as readily as it fails on price, so both sit in the same book.</p>
+      </div>
+    </div>
+  </section>
+  <div id="studyWrap"></div>
+  <section class="band">
+    <div class="wrap">
+      <p class="closing" data-i="hdVet">Every counterparty is screened before anything moves.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== CONTACT ===================== -->
+<main class="view" id="v-contact">
+  <section class="band">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow" data-i="ctEyebrow">Contact</p>
+        <h2 data-i="ctTitle">Two desks. Two principals. No account managers.</h2>
+        <p data-i="ctLede">Send the material, the quantity and the destination. If we cannot do it we will say so in the first reply rather than the third.</p>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <h3 data-i="ct1">Antwerp</h3>
+          <dl>
+            <dt data-i="lEmail">Email</dt><dd><span class="ph">[[ YOUR EMAIL ]]</span></dd>
+            <dt data-i="lPhone">Phone</dt><dd><span class="ph">[[ YOUR PHONE ]]</span></dd>
+            <dt data-i="lOffice">Office</dt><dd><span class="ph">[[ STREET, ANTWERP ]]</span></dd>
+            <dt data-i="lLang">Languages</dt><dd>EN · NL · FR · ES</dd>
+          </dl>
+        </div>
+        <div class="card">
+          <h3 data-i="ct2">Dubai</h3>
+          <dl>
+            <dt data-i="lEmail2">Email</dt><dd><span class="ph">[[ YOUR EMAIL ]]</span></dd>
+            <dt data-i="lPhone2">Phone</dt><dd><span class="ph">[[ YOUR PHONE ]]</span></dd>
+            <dt data-i="lOffice2">Office</dt><dd><span class="ph">[[ DISTRICT, DUBAI ]]</span></dd>
+            <dt data-i="lLang2">Languages</dt><dd>EN · ES · FR</dd>
+          </dl>
+        </div>
+        <div class="card">
+          <h3 data-i="ct3">Company</h3>
+          <dl>
+            <dt data-i="lEntity">Legal entity</dt><dd><span class="ph">[[ ENTITY NAME ]]</span></dd>
+            <dt data-i="lReg">Registration</dt><dd><span class="ph">[[ REG. NUMBER ]]</span></dd>
+            <dt data-i="lVat">VAT</dt><dd><span class="ph">[[ VAT NUMBER ]]</span></dd>
+            <dt data-i="lLic">Trade licence</dt><dd><span class="ph">[[ DUBAI LICENCE ]]</span></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <b>JERICHO</b>
+    <span data-i="footTag">Physical commodities, sourced and placed</span>
+    <span class="sp">© <span id="yr">2026</span></span>
+  </div>
+</footer>
+
+<script>
+/* ===========================================================================
+   1.  COPY  (EN / ES)
+   Spanish uses es-ES number conventions: comma for decimals, point for
+   thousands.  Figures themselves are never re-typed — they are formatted from
+   one numeric source per fact, so the two languages cannot drift apart.
+   ======================================================================== */
+var T = {
+  en:{
+    notice:"Placeholders present — do not publish",
+    brandsub:"Commodities",
+    navHome:"Home", navOperate:"Where we operate", navHandle:"What we handle", navContact:"Contact",
+    heroEyebrow:"Commodities brokerage",
+    heroLede:"Jericho sources and places physical commodities across continents — energy, ferrous, non-ferrous and critical materials, with the logistics that move them. Every counterparty is screened before anything moves.",
+    m1t:"Sourcing", m1d:"South America & Africa",
+    m2t:"Placement", m2d:"All continents",
+    m3t:"The desk", m3d:"Two principals, reachable",
+    factsEyebrow:"The scale of it",
+    factsTitle:"Nine figures that describe the trade we work in.",
+    factsFrame:"The figures below describe the global commodity trade. They are published statistics from the organisations named against each number, with the year and basis stated. They are not a description of Jericho's own activity.",
+    factsClose:"Every figure on this page carries its source, its reference period, and whether it is a measured statistic, an estimate, or commercial vessel-tracking data. Figures marked as estimates are the source organisation's own estimates and remain subject to their revision. Nothing on this page describes volumes traded, handled or arranged by Jericho. Last reviewed: October 2026.",
+    opEyebrow:"Where we operate",
+    opTitle:"The whole trade passes through a handful of narrow places.",
+    opLede:"These are the world's maritime chokepoints and the measured oil volumes that move through them. They are the routes every cargo uses, published by the US Energy Information Administration. Drag the globe to turn it.",
+    cpTitle:"Oil flows through the chokepoints",
+    cpFoot:"Volumes are crude oil and refined petroleum products, not all cargo. Figures for the Strait of Malacca and the Strait of Hormuz cover the first half of 2025; the remainder cover 2024. Source: US Energy Information Administration.",
+    cpFoot2:"The Cape of Good Hope volume exists because traffic diverted away from Bab el-Mandeb. That is why the average cargo now travels some 400 miles further than it did in 2018.",
+    hdEyebrow:"What we handle",
+    hdTitle:"Five groups, and the people who move them.",
+    hdLede:"We broker the material and the services that carry it. A cargo fails on freight or on inspection as readily as it fails on price, so both sit in the same book.",
+    hdVet:"Every counterparty is screened before anything moves.",
+    ctEyebrow:"Contact",
+    ctTitle:"Two desks. Two principals. No account managers.",
+    ctLede:"Send the material, the quantity and the destination. If we cannot do it we will say so in the first reply rather than the third.",
+    ct1:"Antwerp", ct2:"Dubai", ct3:"Company",
+    lEmail:"Email", lPhone:"Phone", lOffice:"Office", lLang:"Languages",
+    lEmail2:"Email", lPhone2:"Phone", lOffice2:"Office", lLang2:"Languages",
+    lEntity:"Legal entity", lReg:"Registration", lVat:"VAT", lLic:"Trade licence",
+    footTag:"Physical commodities, sourced and placed",
+    srcOpen:"Source", srcShut:"Close",
+    stM:"Measured statistic", stE:"Estimate — subject to revision by the source",
+    stMV:"Measured by commercial vessel tracking",
+    lblSource:"Source", lblPeriod:"Period", lblBasis:"Basis", lblStatus:"Status"
+  },
+  es:{
+    notice:"Marcadores de posición presentes — no publicar",
+    brandsub:"Materias primas",
+    navHome:"Inicio", navOperate:"Dónde operamos", navHandle:"Qué negociamos", navContact:"Contacto",
+    heroEyebrow:"Correduría de materias primas",
+    heroLede:"Jericho origina y coloca materias primas físicas entre continentes — energía, ferrosos, no ferrosos y materiales críticos, junto con la logística que los mueve. Cada contraparte se verifica antes de que nada se mueva.",
+    m1t:"Origen", m1d:"Sudamérica y África",
+    m2t:"Colocación", m2d:"Todos los continentes",
+    m3t:"La mesa", m3d:"Dos socios, accesibles",
+    factsEyebrow:"La escala",
+    factsTitle:"Nueve cifras que describen el comercio en el que trabajamos.",
+    factsFrame:"Las cifras siguientes describen el comercio mundial de materias primas. Son estadísticas publicadas por las organizaciones indicadas junto a cada número, con el año y la base de cálculo. No describen la actividad propia de Jericho.",
+    factsClose:"Cada cifra de esta página indica su fuente, su periodo de referencia y si se trata de una estadística medida, una estimación o datos comerciales de seguimiento de buques. Las cifras señaladas como estimaciones son estimaciones propias de la organización fuente y están sujetas a su revisión. Nada en esta página describe volúmenes negociados, gestionados o gestionados por Jericho. Última revisión: octubre de 2026.",
+    opEyebrow:"Dónde operamos",
+    opTitle:"Todo el comercio pasa por un puñado de pasos estrechos.",
+    opLede:"Estos son los pasos marítimos estratégicos del mundo y los volúmenes de petróleo medidos que circulan por ellos. Son las rutas que utiliza todo el mundo, publicadas por la Administración de Información Energética de los EE. UU. Arrastre el globo para girarlo.",
+    cpTitle:"Flujos de petróleo por los pasos estrechos",
+    cpFoot:"Los volúmenes corresponden a petróleo crudo y productos refinados, no a toda la carga. Las cifras del estrecho de Malaca y del estrecho de Ormuz corresponden al primer semestre de 2025; el resto, a 2024. Fuente: Administración de Información Energética de los EE. UU.",
+    cpFoot2:"El volumen del cabo de Buena Esperanza existe porque el tráfico se desvió de Bab el-Mandeb. Por eso la carga media recorre hoy unas 400 millas más que en 2018.",
+    hdEyebrow:"Qué negociamos",
+    hdTitle:"Cinco grupos, y quienes los mueven.",
+    hdLede:"Intermediamos tanto el material como los servicios que lo transportan. Un cargamento fracasa por el flete o por la inspección con la misma facilidad que por el precio, así que ambos están en el mismo libro.",
+    hdVet:"Cada contraparte se verifica antes de que nada se mueva.",
+    ctEyebrow:"Contacto",
+    ctTitle:"Dos mesas. Dos socios. Sin gestores de cuenta.",
+    ctLede:"Envíe el material, la cantidad y el destino. Si no podemos hacerlo, lo diremos en la primera respuesta y no en la tercera.",
+    ct1:"Amberes", ct2:"Dubái", ct3:"Empresa",
+    lEmail:"Correo", lPhone:"Teléfono", lOffice:"Oficina", lLang:"Idiomas",
+    lEmail2:"Correo", lPhone2:"Teléfono", lOffice2:"Oficina", lLang2:"Idiomas",
+    lEntity:"Razón social", lReg:"Registro", lVat:"IVA", lLic:"Licencia comercial",
+    footTag:"Materias primas físicas, originadas y colocadas",
+    srcOpen:"Fuente", srcShut:"Cerrar",
+    stM:"Estadística medida", stE:"Estimación — sujeta a revisión por la fuente",
+    stMV:"Medido por seguimiento comercial de buques",
+    lblSource:"Fuente", lblPeriod:"Periodo", lblBasis:"Base", lblStatus:"Carácter"
+  }
+};
+
+/* ===========================================================================
+   2.  THE NINE FACTS
+   One numeric value per fact, formatted per locale, so EN and ES can never
+   disagree about a number.  status: M measured | E estimate | MV vessel
+   tracking.  Nothing here is Jericho's own figure.
+   ======================================================================== */
+var FACTS = [
+  { v:12.72, d:2, unit:{en:"Billion tonnes",es:"Mil millones de toneladas"},
+    h:{en:"Moved by sea each year",es:"Transportado por mar cada año"},
+    p:{en:"The world shipped 12.72 billion tonnes of goods by sea in 2024.",
+       es:"El mundo transportó 12,72 mil millones de toneladas de mercancías por mar en 2024."},
+    src:"UNCTAD, Review of Maritime Transport 2025", period:"2024", status:"M",
+    basis:{en:"Tonnes loaded",es:"Toneladas cargadas"} },
+
+  { v:66781, d:0, unit:{en:"Billion tonne-miles",es:"Mil millones de tonelada-milla"},
+    h:{en:"Rising faster than tonnage",es:"Crece más rápido que el tonelaje"},
+    p:{en:"Cargo volumes grew 2.2% in 2024. The distance that cargo travelled grew 5.9% — the fastest since 2011. One tonne-mile is one tonne carried one mile. The average voyage now runs 5,245 miles, against 4,831 in 2018.",
+       es:"Los volúmenes de carga crecieron un 2,2 % en 2024. La distancia recorrida por esa carga creció un 5,9 %, el ritmo más rápido desde 2011. Una tonelada-milla es una tonelada transportada una milla. El viaje medio recorre hoy 5.245 millas, frente a 4.831 en 2018."},
+    src:"UNCTAD, Review of Maritime Transport 2025", period:"2024", status:"M",
+    basis:{en:"Distance-adjusted volume",es:"Volumen ajustado por distancia"} },
+
+  { v:112500, d:0, unit:{en:"Vessels",es:"Buques"},
+    h:{en:"The world merchant fleet",es:"La flota mercante mundial"},
+    p:{en:"Seagoing merchant ships of 100 gross tonnes and above, in service at the start of 2025. The count excludes fishing boats, naval vessels, yachts and inland waterway craft.",
+       es:"Buques mercantes de navegación marítima de 100 toneladas de arqueo bruto o más, en servicio a principios de 2025. No incluye pesqueros, buques militares, yates ni embarcaciones de navegación interior."},
+    src:"UNCTAD, Review of Maritime Transport 2025", period:"1 January 2025", status:"M",
+    basis:{en:"Vessels of 100 GT and above",es:"Buques de 100 TRB o más"} },
+
+  { v:2.44, d:2, unit:{en:"Billion deadweight tonnes",es:"Mil millones de toneladas de peso muerto"},
+    h:{en:"What the fleet can carry",es:"Lo que la flota puede transportar"},
+    p:{en:"Deadweight tonnage is simply how much weight a ship can take on — cargo, fuel and stores together. Capacity grew 3.4%, below the 5.1% average of the past two decades.",
+       es:"El peso muerto es simplemente cuánto peso puede cargar un buque: carga, combustible y pertrechos juntos. La capacidad creció un 3,4 %, por debajo de la media del 5,1 % de las dos últimas décadas."},
+    src:"UNCTAD, Review of Maritime Transport 2025", period:"1 January 2025", status:"M",
+    basis:{en:"Total fleet deadweight",es:"Peso muerto total de la flota"} },
+
+  { v:5.7, d:1, unit:{en:"Billion tonnes",es:"Mil millones de toneladas"},
+    h:{en:"Dry bulk moved by sea",es:"Graneles sólidos transportados por mar"},
+    p:{en:"Ore, concentrates, scrap, steel feedstock and grain reached an all-time high in 2025, up 1.7%. Dry bulk alone is close to half of all seaborne trade — and it is the part of the trade we work in.",
+       es:"Minerales, concentrados, chatarra, materia prima siderúrgica y grano alcanzaron un máximo histórico en 2025, un 1,7 % más. Los graneles sólidos representan por sí solos cerca de la mitad del comercio marítimo, y son la parte del comercio en la que trabajamos."},
+    src:"AXSMarine Trade Flows", period:"2025", status:"MV",
+    basis:{en:"Seaborne dry bulk volumes",es:"Volúmenes marítimos de graneles sólidos"} },
+
+  { v:1.71, d:2, unit:{en:"Billion tonnes",es:"Mil millones de toneladas"},
+    h:{en:"Iron ore moved by sea",es:"Mineral de hierro transportado por mar"},
+    p:{en:"Seaborne iron ore trade reached a record in 2025, up 1.4%. Australia alone exported 944.8 million tonnes of it.",
+       es:"El comercio marítimo de mineral de hierro alcanzó un récord en 2025, un 1,4 % más. Australia exportó por sí sola 944,8 millones de toneladas."},
+    src:"AXSMarine Trade Flows", period:"2025", status:"MV",
+    basis:{en:"Seaborne volumes",es:"Volúmenes marítimos"} },
+
+  { v:2.22, d:2, unit:{en:"Billion tonnes",es:"Mil millones de toneladas"},
+    h:{en:"Crude oil moved by sea",es:"Petróleo crudo transportado por mar"},
+    p:{en:"Crude oil loadings rose 2.0% in 2025 to 2,224.2 million tonnes, excluding all domestic coastal trade. Some 883.0 million tonnes of it — two-fifths of the world total — left the Arabian Gulf.",
+       es:"Las cargas de petróleo crudo crecieron un 2,0 % en 2025, hasta 2.224,2 millones de toneladas, excluido todo el cabotaje. Unos 883,0 millones de toneladas, dos quintas partes del total mundial, salieron del Golfo Arábigo."},
+    src:"LSEG vessel tracking, reported in Banchero Costa weekly", period:"January–December 2025", status:"MV",
+    basis:{en:"Loadings, excluding cabotage",es:"Cargas, excluido el cabotaje"} },
+
+  { v:27.6, d:1, unit:{en:"Million tonnes",es:"Millones de toneladas"},
+    h:{en:"Refined copper produced in a year",es:"Cobre refinado producido en un año"},
+    p:{en:"More than came out of the world's copper mines in the same year — 23 million tonnes — because scrap feeds the refineries too. This is production, not trade.",
+       es:"Más de lo que salió de las minas de cobre del mundo ese mismo año, 23 millones de toneladas, porque la chatarra también alimenta las refinerías. Se trata de producción, no de comercio."},
+    src:"USGS, Mineral Commodity Summaries 2026", period:"2024", status:"M",
+    basis:{en:"World refinery production",es:"Producción mundial de refinería"} },
+
+  { v:26.26, d:2, pre:"US$", unit:{en:"Trillion",es:"Billones de dólares"},
+    h:{en:"The value of world merchandise trade",es:"El valor del comercio mundial de mercancías"},
+    p:{en:"Every physical good crossing a border in 2025, up 7% on the year before. Over the same period trade in fuels and mining products fell 4%, and fuels alone fell 10%. Commodity values and trade volumes do not move together.",
+       es:"Todos los bienes físicos que cruzaron una frontera en 2025, un 7 % más que el año anterior. En el mismo periodo, el comercio de combustibles y productos mineros cayó un 4 %, y el de combustibles por sí solo un 10 %. Los valores de las materias primas y los volúmenes comerciados no se mueven al unísono."},
+    src:"WTO, Global Trade Outlook and Statistics, March 2026", period:"2025", status:"M",
+    basis:{en:"Merchandise exports",es:"Exportaciones de mercancías"} }
+];
+
+/* ===========================================================================
+   3.  MATERIAL GROUPS
+   Names only.  No grades, no specifications, no purities, no Incoterms.
+   Each study carries an image slot: set data-img to a file path and the
+   procedural surface steps aside.
+   ======================================================================== */
+var GROUPS = [
+  { key:"energy", seed:11, hue:[36,24,14],
+    t:{en:"Energy",es:"Energía"},
+    p:{en:"Crude oil, fuels and coal. The largest trade by volume on the water, and the one most exposed to how the routes are drawn.",
+       es:"Petróleo crudo, combustibles y carbón. El mayor comercio por volumen sobre el agua, y el más expuesto a cómo se tracen las rutas."},
+    tags:{en:["Crude oil","Fuels","Coal"],es:["Petróleo crudo","Combustibles","Carbón"]} },
+
+  { key:"ferrous", seed:29, hue:[22,30,38],
+    t:{en:"Ferrous",es:"Ferrosos"},
+    p:{en:"Iron ore and the feedstock that follows it into the mills and foundries. Priced and shipped on different logic to the ore itself, which is why it keeps its own book.",
+       es:"Mineral de hierro y la materia prima que lo sigue hasta las acerías y fundiciones. Se cotiza y se embarca con una lógica distinta a la del propio mineral, y por eso tiene su propio libro."},
+    tags:{en:["Iron ore","Pig iron","Hot briquetted iron","Billet","Steel scrap","Ferrous scrap"],
+          es:["Mineral de hierro","Hierro en lingotes","Hierro briqueteado en caliente","Palanquilla","Chatarra de acero","Chatarra ferrosa"]} },
+
+  { key:"nonferrous", seed:47, hue:[30,42,52],
+    t:{en:"Non-ferrous",es:"No ferrosos"},
+    p:{en:"Copper and the precious metals. Small tonnages against everything else on this page, and the highest value per tonne we move.",
+       es:"Cobre y metales preciosos. Tonelajes pequeños frente a todo lo demás en esta página, y el mayor valor por tonelada que movemos."},
+    tags:{en:["Copper","Platinum","Palladium","Rhodium","Gold","Silver"],
+          es:["Cobre","Platino","Paladio","Rodio","Oro","Plata"]} },
+
+  { key:"critical", seed:67, hue:[18,28,20],
+    t:{en:"Critical materials",es:"Materiales críticos"},
+    p:{en:"The materials with no open exchange behind them. There is no public screen to quote from, which is precisely why this part of the trade runs on people who know it.",
+       es:"Los materiales que no tienen detrás ningún mercado organizado. No hay una pantalla pública de la que cotizar, y precisamente por eso esta parte del comercio funciona con gente que la conoce."},
+    tags:{en:["Chrome","Manganese","Antimony","Lithium"],
+          es:["Cromo","Manganeso","Antimonio","Litio"]} },
+
+  { key:"services", seed:83, hue:[40,34,46],
+    t:{en:"Services & logistics",es:"Servicios y logística"},
+    p:{en:"The people who make a cargo actually move. We broker these too, and we use them ourselves.",
+       es:"Quienes hacen que un cargamento se mueva de verdad. También intermediamos estos servicios, y nosotros mismos los usamos."},
+    tags:{en:["Ocean freight","Freight forwarding","Inspection","Warehousing","Customs clearance","Trade finance","Insurance"],
+          es:["Flete marítimo","Tránsito de carga","Inspección","Almacenaje","Despacho de aduanas","Financiación comercial","Seguro"]} }
+];
+
+/* ===========================================================================
+   4.  CHOKEPOINTS  (EIA, measured)
+   ======================================================================== */
+var CHOKE = [
+  { n:{en:"Strait of Malacca",es:"Estrecho de Malaca"},        v:23.2, lat:2.5,   lon:101.3, per:"1H 2025" },
+  { n:{en:"Strait of Hormuz",es:"Estrecho de Ormuz"},          v:20.9, lat:26.6,  lon:56.3,  per:"1H 2025" },
+  { n:{en:"Cape of Good Hope",es:"Cabo de Buena Esperanza"},   v:9.3,  lat:-34.4, lon:18.5,  per:"2024" },
+  { n:{en:"Danish Straits",es:"Estrechos daneses"},            v:4.9,  lat:56.0,  lon:11.0,  per:"2024" },
+  { n:{en:"Suez Canal & SUMED",es:"Canal de Suez y SUMED"},    v:4.8,  lat:30.0,  lon:32.5,  per:"2024" },
+  { n:{en:"Bab el-Mandeb",es:"Bab el-Mandeb"},                 v:4.1,  lat:12.6,  lon:43.4,  per:"2024" },
+  { n:{en:"Turkish Straits",es:"Estrechos turcos"},            v:3.6,  lat:41.0,  lon:29.0,  per:"2024" },
+  { n:{en:"Panama Canal",es:"Canal de Panamá"},                v:2.0,  lat:9.1,   lon:-79.7, per:"2024" }
+];
+
+var REGIONS = [
+  { n:{en:"South America",es:"Sudamérica"},     lat:-14, lon:-58 },
+  { n:{en:"Africa",es:"África"},                lat:2,   lon:20 },
+  { n:{en:"Europe",es:"Europa"},                lat:50,  lon:12 },
+  { n:{en:"Gulf",es:"Golfo"},                   lat:24,  lon:50 },
+  { n:{en:"East Asia",es:"Asia oriental"},      lat:32,  lon:112 }
+];
+
+/* Coarse land mask, 5-degree cells: LAND[row] = [[startCol,endCol],...]
+   row 0 is 90..85N, col 0 starts at lon -180.  Low resolution on purpose —
+   the continents are implied by the density of dots, with no borders. */
+var LAND = [
+  [], [[18,32],[39,41],[45,47]], [[12,32],[39,41],[45,47],[54,58]],
+  [[8,24],[40,43],[48,71]], [[3,8],[8,24],[25,33],[37,42],[42,71]],
+  [[2,8],[9,16],[21,28],[32,34],[36,42],[42,71]],
+  [[1,8],[9,16],[21,27],[35,36],[36,42],[42,71]],
+  [[10,28],[34,36],[36,42],[42,71]],
+  [[11,30],[34,43],[43,71]],
+  [[12,30],[33,36],[36,42],[42,71]],
+  [[13,30],[32,40],[40,71]],
+  [[14,29],[31,40],[40,48],[48,71]],
+  [[16,28],[30,40],[40,47],[49,54],[54,66]],
+  [[17,26],[29,40],[40,47],[50,55],[55,65]],
+  [[18,25],[30,44],[44,47],[50,56],[56,64]],
+  [[19,25],[31,46],[51,56],[56,62]],
+  [[20,25],[32,47],[55,62]],
+  [[21,28],[33,47],[56,63]],
+  [[21,29],[33,47],[56,63]],
+  [[21,29],[34,45],[57,66]],
+  [[22,30],[34,44],[61,68]],
+  [[22,30],[34,43],[45,46],[60,69]],
+  [[23,31],[34,42],[45,46],[59,69]],
+  [[24,31],[34,42],[59,69]],
+  [[24,30],[34,41],[60,69]],
+  [[25,29],[62,67],[70,71]],
+  [[26,29],[70,71]],
+  [[26,29]], [[27,29]], [[28,29]], [[27,29]],
+  [[0,20],[24,71]], [[0,71]], [[0,71]], [[0,71]], [[0,71]]
+];
+
+/* ===========================================================================
+   5.  STATE, COPY SWAP, NAVIGATION
+   ======================================================================== */
+var lang = "en", t = T.en;
+try { var sl = localStorage.getItem("jericho_lang"); if (sl === "es" || sl === "en") lang = sl; } catch(e){}
+t = T[lang];
+
+function fmt(v, d){
+  try { return v.toLocaleString(lang === "es" ? "es-ES" : "en-GB",
+        { minimumFractionDigits:d, maximumFractionDigits:d }); }
+  catch(e){ return v.toFixed(d); }
+}
+function statusWord(s){ return s === "M" ? t.stM : s === "E" ? t.stE : t.stMV; }
+
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+function applyCopy(){
+  t = T[lang];
+  var nodes = document.querySelectorAll("[data-i]");
+  for (var i = 0; i < nodes.length; i++){
+    var k = nodes[i].getAttribute("data-i");
+    if (t[k]) nodes[i].textContent = t[k];
+  }
+  // hero title carries markup, so it is set apart from the plain swap
+  document.querySelector(".hero h1").innerHTML = lang === "es"
+    ? 'Del origen al consumidor final, a través de gente que hemos <b>verificado</b>.'
+    : 'From source to end user, through people we have <b>vetted</b>.';
+  document.getElementById("langBtn").textContent = lang === "es" ? "EN" : "ES";
+  document.documentElement.lang = lang;
+  buildFacts(); buildStudies(); buildChoke();
+}
+
+var views = { home:"v-home", operate:"v-operate", handle:"v-handle", contact:"v-contact" };
+function go(name, push){
+  if (!views[name]) name = "home";
+  for (var k in views) document.getElementById(views[k]).classList.toggle("on", k === name);
+  var nl = document.querySelectorAll(".navlink");
+  for (var i = 0; i < nl.length; i++)
+    nl[i].setAttribute("aria-current", nl[i].getAttribute("data-go") === name ? "true" : "false");
+  if (push !== false) { try { location.hash = name; } catch(e){} }
+  window.scrollTo(0, 0);
+  if (name === "operate") startGlobe();
+  observeFacts();
+}
+document.addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest("[data-go]") : null;
+  if (b) { ev.preventDefault(); go(b.getAttribute("data-go")); }
+});
+window.addEventListener("hashchange", function(){
+  go((location.hash || "#home").slice(1), false);
+});
+
+document.getElementById("langBtn").addEventListener("click", function(){
+  lang = lang === "es" ? "en" : "es";
+  try { localStorage.setItem("jericho_lang", lang); } catch(e){}
+  applyCopy();
+});
+
+(function(){
+  var btn = document.getElementById("themeBtn"), root = document.documentElement;
+  function isDark(){
+    var a = root.getAttribute("data-theme");
+    if (a) return a === "dark";
+    return !window.matchMedia("(prefers-color-scheme: light)").matches;
+  }
+  function label(){ btn.textContent = isDark() ? "Light" : "Dark"; }
+  try { var s = localStorage.getItem("jericho_theme"); if (s) root.setAttribute("data-theme", s); } catch(e){}
+  label();
+  btn.addEventListener("click", function(){
+    var next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("jericho_theme", next); } catch(e){}
+    label(); repaintAll();
+  });
+})();
+
+/* ===========================================================================
+   6.  FACTS — alternating entry, count-up on every entry, expanding source
+   ======================================================================== */
+var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function buildFacts(){
+  var wrap = document.getElementById("factWrap");
+  wrap.innerHTML = "";
+  FACTS.forEach(function(f, i){
+    var side = i % 2 === 1 ? " r" : "";
+    var el = document.createElement("div");
+    el.className = "fact" + side;
+    el.innerHTML =
+      '<div class="fact-in">' +
+        '<span class="fig" data-v="' + f.v + '" data-d="' + f.d + '">' +
+          (f.pre ? '<em>' + f.pre + '</em>' : '') + '<span class="num">' + fmt(0, f.d) + '</span>' +
+        '</span>' +
+        '<span class="unit">' + f.unit[lang] + '</span>' +
+        '<h3>' + f.h[lang] + '</h3>' +
+        '<p>' + f.p[lang] + '</p>' +
+        '<div class="srcrow"><button class="srcbtn">' + t.srcOpen + '</button></div>' +
+        '<div class="srcbox" hidden>' +
+          '<div><b>' + t.lblSource + ':</b> ' + f.src + '</div>' +
+          '<div><b>' + t.lblPeriod + ':</b> ' + f.period + '</div>' +
+          '<div><b>' + t.lblBasis + ':</b> ' + f.basis[lang] + '</div>' +
+          '<div class="st"><b>' + t.lblStatus + ':</b> ' + statusWord(f.status) + '</div>' +
+        '</div>' +
+      '</div>';
+    var btn = el.querySelector(".srcbtn"), box = el.querySelector(".srcbox");
+    btn.addEventListener("click", function(){
+      box.hidden = !box.hidden;
+      btn.textContent = box.hidden ? t.srcOpen : t.srcShut;
+    });
+    wrap.appendChild(el);
+  });
+  observeFacts();
+}
+
+function countUp(el){
+  var span = el.querySelector(".num"), fig = el.querySelector(".fig");
+  if (!span || !fig) return;
+  var target = parseFloat(fig.getAttribute("data-v")), d = parseInt(fig.getAttribute("data-d"), 10);
+  if (reduce) { span.textContent = fmt(target, d); return; }
+  var start = null, dur = 1200;
+  function step(ts){
+    if (start === null) start = ts;
+    var k = Math.min(1, (ts - start) / dur);
+    var e = 1 - Math.pow(1 - k, 3);
+    span.textContent = fmt(target * e, d);
+    if (k < 1) requestAnimationFrame(step); else span.textContent = fmt(target, d);
+  }
+  requestAnimationFrame(step);
+}
+
+var factObs = null;
+function observeFacts(){
+  if (factObs) factObs.disconnect();
+  if (!("IntersectionObserver" in window)){
+    document.querySelectorAll(".fact").forEach(function(el){
+      el.classList.add("in");
+      var s = el.querySelector(".num"), f = el.querySelector(".fig");
+      if (s && f) s.textContent = fmt(parseFloat(f.getAttribute("data-v")), parseInt(f.getAttribute("data-d"),10));
+    });
+    return;
+  }
+  factObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting){ en.target.classList.add("in"); countUp(en.target); }
+      else { en.target.classList.remove("in"); }
+    });
+  }, { threshold:.45 });
+  document.querySelectorAll(".fact").forEach(function(el){ factObs.observe(el); });
+}
+
+/* ===========================================================================
+   7.  MATERIAL STUDIES — procedural surface, close and abstract, with dust.
+   Set data-img on .study-vis to swap in a real picture later.
+   ======================================================================== */
+function buildStudies(){
+  var wrap = document.getElementById("studyWrap");
+  wrap.innerHTML = "";
+  GROUPS.forEach(function(g, i){
+    var sec = document.createElement("section");
+    sec.className = "study" + (i % 2 === 1 ? " alt" : "");
+    sec.innerHTML =
+      '<div class="study-grid">' +
+        '<div class="study-vis" data-img="" data-seed="' + g.seed + '" data-hue="' + g.hue.join(",") + '">' +
+          '<!-- IMAGE SLOT: ' + g.key + ' — set data-img to a file path -->' +
+          '<canvas aria-hidden="true"></canvas>' +
+        '</div>' +
+        '<div class="study-txt">' +
+          '<div class="n">' + String(i + 1).padStart(2, "0") + '</div>' +
+          '<h3>' + g.t[lang] + '</h3>' +
+          '<p>' + g.p[lang] + '</p>' +
+          '<div class="tags">' + g.tags[lang].map(function(x){ return '<span class="tag">' + x + '</span>'; }).join("") + '</div>' +
+        '</div>' +
+      '</div>';
+    wrap.appendChild(sec);
+  });
+  document.querySelectorAll(".study-vis").forEach(initSurface);
+}
+
+/* small deterministic PRNG so a surface is stable across repaints */
+function rng(seed){ var s = seed >>> 0; return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+
+var surfaces = [];
+function initSurface(host){
+  var img = host.getAttribute("data-img");
+  if (img){
+    var im = document.createElement("img");
+    im.src = img; im.alt = "";
+    host.appendChild(im);
+    var c0 = host.querySelector("canvas"); if (c0) c0.remove();
+    return;
+  }
+  var cv = host.querySelector("canvas");
+  if (!cv) return;
+  var ctx = cv.getContext("2d");
+  var seed = parseInt(host.getAttribute("data-seed"), 10) || 7;
+  var hue = (host.getAttribute("data-hue") || "30,30,30").split(",").map(Number);
+  var obj = { host:host, cv:cv, ctx:ctx, seed:seed, hue:hue, dust:[], raf:0 };
+  surfaces.push(obj);
+  sizeSurface(obj);
+  if (!reduce) runSurface(obj);
+  else drawSurface(obj, 0);
+}
+
+function lightMode(){
+  return (getComputedStyle(document.documentElement).getPropertyValue("color-scheme") || "").indexOf("light") > -1;
+}
+
+function sizeSurface(o){
+  var r = o.host.getBoundingClientRect();
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  o.w = Math.max(1, r.width); o.h = Math.max(1, r.height);
+  o.cv.width = Math.round(o.w * dpr); o.cv.height = Math.round(o.h * dpr);
+  o.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // build the fractured surface once per size
+  var rand = rng(o.seed);
+  o.cells = [];
+  var n = Math.round(Math.min(260, (o.w * o.h) / 2600));
+  for (var i = 0; i < n; i++){
+    o.cells.push({
+      x: rand() * o.w, y: rand() * o.h,
+      r: 18 + rand() * Math.max(40, o.w / 7),
+      a: rand() * Math.PI, k: .5 + rand() * .9, tone: rand()
+    });
+  }
+  o.dust = [];
+  var dn = Math.round(Math.min(70, (o.w * o.h) / 11000));
+  for (var j = 0; j < dn; j++){
+    o.dust.push({ x: rand() * o.w, y: rand() * o.h, r: .4 + rand() * 1.5,
+      vx: .06 + rand() * .22, vy: -.02 - rand() * .1, a: .08 + rand() * .4 });
+  }
+}
+
+function drawSurface(o, tms){
+  var ctx = o.ctx, light = lightMode();
+  var base = light ? [228, 220, 206] : [26, 22, 17];
+  ctx.clearRect(0, 0, o.w, o.h);
+  ctx.fillStyle = "rgb(" + base.join(",") + ")";
+  ctx.fillRect(0, 0, o.w, o.h);
+
+  // facets — the material, close and abstract
+  for (var i = 0; i < o.cells.length; i++){
+    var c = o.cells[i];
+    var shade = light ? 1 - c.tone * .42 : .35 + c.tone * .95;
+    var r = Math.round(o.hue[0] * shade * (light ? 3.1 : 2.3));
+    var g = Math.round(o.hue[1] * shade * (light ? 3.0 : 2.1));
+    var b = Math.round(o.hue[2] * shade * (light ? 2.9 : 2.0));
+    ctx.save();
+    ctx.translate(c.x, c.y); ctx.rotate(c.a + (tms || 0) * 0.000006 * c.k);
+    ctx.beginPath();
+    ctx.moveTo(-c.r, 0); ctx.lineTo(0, -c.r * c.k); ctx.lineTo(c.r, 0); ctx.lineTo(0, c.r * c.k * .7);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(" + r + "," + g + "," + b + ",0.5)";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // cold dawn: a low raking light that travels slowly across the surface
+  var sweep = ((tms || 0) % 26000) / 26000;
+  var gx = -o.w * .4 + sweep * o.w * 1.8;
+  var lg = ctx.createLinearGradient(gx - o.w * .35, o.h, gx + o.w * .35, 0);
+  lg.addColorStop(0, "rgba(0,0,0,0)");
+  lg.addColorStop(.5, light ? "rgba(255,238,205,.5)" : "rgba(224,169,74,.21)");
+  lg.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = lg; ctx.fillRect(0, 0, o.w, o.h);
+
+  // the cold side of dawn
+  var cg = ctx.createLinearGradient(0, 0, o.w * .5, o.h);
+  cg.addColorStop(0, light ? "rgba(68,96,111,.20)" : "rgba(126,147,168,.15)");
+  cg.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = cg; ctx.fillRect(0, 0, o.w, o.h);
+
+  // dust drifting in front
+  for (var d = 0; d < o.dust.length; d++){
+    var p = o.dust[d];
+    ctx.globalAlpha = p.a;
+    ctx.fillStyle = light ? "rgba(90,74,54,.9)" : "rgba(246,232,208,.9)";
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+    if (!reduce){
+      p.x += p.vx; p.y += p.vy;
+      if (p.x > o.w + 3) p.x = -3;
+      if (p.y < -3){ p.y = o.h + 3; }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function runSurface(o){
+  function loop(ts){ drawSurface(o, ts); o.raf = requestAnimationFrame(loop); }
+  o.raf = requestAnimationFrame(loop);
+}
+
+/* ===========================================================================
+   8.  HERO — cold dawn haze
+   ======================================================================== */
+(function(){
+  var cv = document.getElementById("dawn");
+  if (!cv) return;
+  var ctx = cv.getContext("2d"), w = 0, h = 0, motes = [], raf = 0;
+  function size(){
+    var r = cv.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = Math.max(1, r.width); h = Math.max(1, r.height);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var rand = rng(5), n = Math.round(Math.min(120, (w * h) / 9000));
+    motes = [];
+    for (var i = 0; i < n; i++)
+      motes.push({ x: rand() * w, y: rand() * h, r: .4 + rand() * 1.5,
+        vx: .05 + rand() * .2, vy: -.03 - rand() * .09, a: .07 + rand() * .34 });
+  }
+  function draw(){
+    var light = lightMode();
+    ctx.clearRect(0, 0, w, h);
+    // low sun from the right, cold shadow from the left
+    var g1 = ctx.createLinearGradient(w, h * .9, w * .2, 0);
+    g1.addColorStop(0, light ? "rgba(214,166,86,.22)" : "rgba(224,169,74,.17)");
+    g1.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g1; ctx.fillRect(0, 0, w, h);
+    var g2 = ctx.createLinearGradient(0, 0, w * .62, h);
+    g2.addColorStop(0, light ? "rgba(68,96,111,.17)" : "rgba(126,147,168,.13)");
+    g2.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g2; ctx.fillRect(0, 0, w, h);
+    for (var i = 0; i < motes.length; i++){
+      var p = motes[i];
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = light ? "rgba(96,78,56,.85)" : "rgba(240,224,198,.85)";
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+      if (!reduce){
+        p.x += p.vx; p.y += p.vy;
+        if (p.x > w + 3) p.x = -3;
+        if (p.y < -3) p.y = h + 3;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function loop(){ draw(); raf = requestAnimationFrame(loop); }
+  size(); draw();
+  if (!reduce) loop();
+  window.heroResize = function(){ size(); draw(); };
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden){ cancelAnimationFrame(raf); raf = 0; }
+    else if (!reduce && !raf) loop();
+  });
+})();
+
+/* ===========================================================================
+   9.  GLOBE — dotted point cloud, free spin with inertia, then slow drift
+   ======================================================================== */
+var G = null;
+function startGlobe(){
+  var cv = document.getElementById("globe");
+  if (!cv) return;
+  if (G){ sizeGlobe(); return; }
+  G = { cv:cv, ctx:cv.getContext("2d"), rot:-0.6, tilt:0.32, vel:0.0012, drag:false,
+        px:0, py:0, last:0, pts:[], hot:-1, raf:0 };
+  buildPoints();
+  sizeGlobe();
+
+  function toLocal(ev){
+    var r = cv.getBoundingClientRect();
+    var cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    var cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+    return { x:cx, y:cy };
+  }
+  function down(ev){ G.drag = true; var p = toLocal(ev); G.px = p.x; G.py = p.y; G.vel = 0; }
+  function move(ev){
+    var p = toLocal(ev);
+    if (G.drag){
+      var dx = p.x - G.px, dy = p.y - G.py;
+      // turning slows the further in you drag, so it stays controllable
+      G.rot += dx * 0.0062;
+      G.tilt = Math.max(-0.95, Math.min(0.95, G.tilt + dy * 0.0045));
+      G.vel = dx * 0.0062;
+      G.px = p.x; G.py = p.y;
+      if (ev.cancelable) ev.preventDefault();
+    } else {
+      pickChoke(p.x, p.y);
+    }
+  }
+  function up(){ G.drag = false; }
+  cv.addEventListener("mousedown", down);
+  cv.addEventListener("touchstart", down, { passive:true });
+  window.addEventListener("mousemove", move);
+  cv.addEventListener("touchmove", move, { passive:false });
+  window.addEventListener("mouseup", up);
+  window.addEventListener("touchend", up);
+  cv.addEventListener("mouseleave", function(){ G.hot = -1; markList(); });
+
+  if (!reduce){
+    (function loop(){ stepGlobe(); drawGlobe(); G.raf = requestAnimationFrame(loop); })();
+  } else {
+    drawGlobe();
+  }
+}
+
+function buildPoints(){
+  var rand = rng(97);
+  G.pts = [];
+  for (var r = 0; r < LAND.length; r++){
+    var ranges = LAND[r];
+    for (var k = 0; k < ranges.length; k++){
+      for (var c = ranges[k][0]; c <= ranges[k][1]; c++){
+        // coastal cells get more dots, so the outline reads
+        var coastal = !inLand(r, c - 1) || !inLand(r, c + 1) || !inLand(r - 1, c) || !inLand(r + 1, c);
+        var n = coastal ? 4 : 2;
+        var latTop = 90 - r * 5, lonLeft = -180 + c * 5;
+        // thin out near the poles, where cells converge
+        var shrink = Math.cos((latTop - 2.5) * Math.PI / 180);
+        if (shrink < .18 && rand() > .35) continue;
+        for (var i = 0; i < n; i++){
+          var la = latTop - rand() * 5, lo = lonLeft + rand() * 5;
+          G.pts.push({ la:la * Math.PI / 180, lo:lo * Math.PI / 180, c:coastal });
+        }
+      }
+    }
+  }
+}
+function inLand(r, c){
+  if (r < 0 || r >= LAND.length) return false;
+  if (c < 0) c += 72; if (c > 71) c -= 72;
+  var rr = LAND[r];
+  for (var i = 0; i < rr.length; i++) if (c >= rr[i][0] && c <= rr[i][1]) return true;
+  return false;
+}
+
+function sizeGlobe(){
+  if (!G) return;
+  var r = G.cv.getBoundingClientRect();
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  G.w = Math.max(1, r.width); G.h = Math.max(1, r.height);
+  G.cv.width = Math.round(G.w * dpr); G.cv.height = Math.round(G.h * dpr);
+  G.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  G.R = Math.min(G.w, G.h) * 0.43;
+  G.cx = G.w / 2; G.cy = G.h / 2;
+  drawGlobe();
+}
+
+function stepGlobe(){
+  if (!G.drag){
+    G.rot += G.vel;
+    // coast to a stop, then resume the slow drift
+    G.vel *= 0.955;
+    if (Math.abs(G.vel) < 0.0012) G.vel += (0.0012 - G.vel) * 0.02;
+  }
+}
+
+function project(la, lo){
+  var x = Math.cos(la) * Math.sin(lo + G.rot);
+  var y = Math.sin(la) * Math.cos(G.tilt) - Math.cos(la) * Math.cos(lo + G.rot) * Math.sin(G.tilt);
+  var z = Math.sin(la) * Math.sin(G.tilt) + Math.cos(la) * Math.cos(lo + G.rot) * Math.cos(G.tilt);
+  return { x:G.cx + x * G.R, y:G.cy - y * G.R, z:z };
+}
+
+function drawGlobe(){
+  if (!G || !G.R) return;
+  var ctx = G.ctx, light = lightMode();
+  ctx.clearRect(0, 0, G.w, G.h);
+
+  // the sphere: a cold dawn sea
+  var og = ctx.createRadialGradient(G.cx - G.R * .35, G.cy - G.R * .4, G.R * .1, G.cx, G.cy, G.R);
+  if (light){
+    og.addColorStop(0, "rgba(206,196,178,.95)"); og.addColorStop(1, "rgba(176,166,148,.7)");
+  } else {
+    og.addColorStop(0, "rgba(32,38,46,.95)"); og.addColorStop(1, "rgba(14,16,20,.92)");
+  }
+  ctx.beginPath(); ctx.arc(G.cx, G.cy, G.R, 0, 6.2832); ctx.fillStyle = og; ctx.fill();
+
+  // hairline terminator
+  ctx.beginPath(); ctx.arc(G.cx, G.cy, G.R, 0, 6.2832);
+  ctx.strokeStyle = light ? "rgba(90,78,60,.35)" : "rgba(224,169,74,.22)";
+  ctx.lineWidth = 1; ctx.stroke();
+
+  // land as a field of dots, dimming as they rotate away
+  for (var i = 0; i < G.pts.length; i++){
+    var p = G.pts[i], q = project(p.la, p.lo);
+    if (q.z <= 0.02) continue;
+    var a = Math.pow(q.z, .85) * (p.c ? .92 : .6);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = light ? "rgba(58,48,36,1)" : "rgba(226,214,194,1)";
+    ctx.beginPath(); ctx.arc(q.x, q.y, p.c ? 1.25 : 1.0, 0, 6.2832); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // region labels — continents and regions only, never a port
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  for (var r = 0; r < REGIONS.length; r++){
+    var rg = REGIONS[r], rq = project(rg.lat * Math.PI / 180, rg.lon * Math.PI / 180);
+    if (rq.z <= 0.3) continue;
+    ctx.globalAlpha = Math.min(1, (rq.z - 0.3) * 3) * .75;
+    ctx.fillStyle = light ? "rgba(68,96,111,1)" : "rgba(126,147,168,1)";
+    ctx.textAlign = "center";
+    ctx.fillText(rg.n[lang].toUpperCase(), rq.x, rq.y);
+  }
+  ctx.globalAlpha = 1;
+
+  // chokepoints, scaled by measured volume
+  G.screen = [];
+  for (var c = 0; c < CHOKE.length; c++){
+    var cp = CHOKE[c], cq = project(cp.lat * Math.PI / 180, cp.lon * Math.PI / 180);
+    G.screen.push(cq);
+    if (cq.z <= 0.02) continue;
+    var rad = 2.4 + Math.sqrt(cp.v) * 1.5;
+    var on = G.hot === c;
+    ctx.globalAlpha = Math.min(1, cq.z * 1.3);
+    ctx.beginPath(); ctx.arc(cq.x, cq.y, rad, 0, 6.2832);
+    ctx.fillStyle = on ? "rgba(224,169,74,.55)" : "rgba(224,169,74,.22)";
+    ctx.fill();
+    ctx.beginPath(); ctx.arc(cq.x, cq.y, rad, 0, 6.2832);
+    ctx.strokeStyle = "rgba(224,169,74," + (on ? 1 : .75) + ")";
+    ctx.lineWidth = on ? 1.6 : 1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cq.x, cq.y, 1.6, 0, 6.2832);
+    ctx.fillStyle = "rgba(224,169,74,1)"; ctx.fill();
+    if (on){
+      ctx.globalAlpha = 1;
+      ctx.font = '500 11px "IBM Plex Mono", monospace';
+      ctx.textAlign = "left";
+      var lbl = cp.n[lang] + "  " + fmt(cp.v, 1);
+      var tw = ctx.measureText(lbl).width;
+      var lx = Math.min(cq.x + rad + 8, G.w - tw - 4);
+      ctx.fillStyle = light ? "rgba(246,241,232,.92)" : "rgba(15,13,11,.86)";
+      ctx.fillRect(lx - 4, cq.y - 13, tw + 8, 18);
+      ctx.fillStyle = light ? "rgba(21,17,12,1)" : "rgba(244,238,228,1)";
+      ctx.fillText(lbl, lx, cq.y);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function pickChoke(x, y){
+  if (!G || !G.screen) return;
+  var best = -1, bd = 18 * 18;
+  for (var i = 0; i < G.screen.length; i++){
+    var q = G.screen[i];
+    if (!q || q.z <= 0.02) continue;
+    var dx = q.x - x, dy = q.y - y, d = dx * dx + dy * dy;
+    if (d < bd){ bd = d; best = i; }
+  }
+  if (best !== G.hot){ G.hot = best; markList(); if (reduce) drawGlobe(); }
+}
+
+function buildChoke(){
+  var ul = document.getElementById("cpList");
+  if (!ul) return;
+  ul.innerHTML = "";
+  CHOKE.forEach(function(cp, i){
+    var li = document.createElement("li");
+    li.innerHTML = '<span>' + cp.n[lang] + '</span><b>' + fmt(cp.v, 1) + ' · ' + cp.per + '</b>';
+    li.addEventListener("mouseenter", function(){ if (G){ G.hot = i; markList(); if (reduce) drawGlobe(); } });
+    li.addEventListener("mouseleave", function(){ if (G){ G.hot = -1; markList(); if (reduce) drawGlobe(); } });
+    ul.appendChild(li);
+  });
+  markList();
+}
+function markList(){
+  var items = document.querySelectorAll("#cpList li");
+  for (var i = 0; i < items.length; i++) items[i].classList.toggle("hot", G && G.hot === i);
+}
+
+/* ===========================================================================
+   10.  RESIZE / REPAINT
+   ======================================================================== */
+function repaintAll(){
+  if (window.heroResize) window.heroResize();
+  surfaces.forEach(function(o){ sizeSurface(o); drawSurface(o, 0); });
+  sizeGlobe();
+}
+var rt;
+window.addEventListener("resize", function(){
+  clearTimeout(rt);
+  rt = setTimeout(repaintAll, 160);
+});
+
+/* ===========================================================================
+   11.  BOOT
+   ======================================================================== */
+applyCopy();
+go((location.hash || "#home").slice(1), false);
+</script>
