@@ -79,9 +79,10 @@ test('@robot DeskItem12_ticking_a_task_removes_it_from_the_first_page', async ({
     'a completed task should leave the first page').not.toContainText('Send the revised offer');
 
   // And the database agrees it is done, not merely the screen.
-  const saved = await verify.waitFor('jericho_tasks', rows => rows.some(r => r.completed === true),
+  const saved = await verify.waitFor('jericho_tasks',
+    t => t.title === 'Send the revised offer' && t.completed === true,
     { label: 'the completed task' });
-  expect(saved.find(r => r.title === 'Send the revised offer').completed).toBe(true);
+  expect(saved.completed).toBe(true);
 });
 
 /* ---------------- contacts ---------------- */
@@ -106,9 +107,8 @@ test('@robot DeskItem14_a_saved_contact_reaches_the_database', async ({ page }) 
 
   /* The claim comes from the database itself, not from the app reporting on its
      own behaviour. */
-  const rows = await verify.waitFor('jericho_contacts',
-    r => r.some(c => c.name === 'Hans Gunther'), { label: 'the saved contact' });
-  const saved = rows.find(c => c.name === 'Hans Gunther');
+  const saved = await verify.waitFor('jericho_contacts',
+    c => c.name === 'Hans Gunther', { label: 'the saved contact' });
   expect(saved.company).toBe('Rheinstahl GmbH');
   expect(saved.email).toBe('hans@rheinstahl.de');
 });
@@ -116,14 +116,18 @@ test('@robot DeskItem14_a_saved_contact_reaches_the_database', async ({ page }) 
 test('@robot DeskItem15_can_delete_a_contact_and_it_stays_deleted', async ({ page }) => {
   await app.openApp(page);
   await app.addContact(page, { name: 'Delete Me', company: 'Gone Ltd' });
-  await verify.waitFor('jericho_contacts', r => r.some(c => c.name === 'Delete Me'));
+  await verify.waitFor('jericho_contacts', c => c.name === 'Delete Me',
+    { label: 'the contact before deleting it' });
 
   page.on('dialog', d => d.accept());
   await page.click('#contactsBody .btn-danger');
   await page.waitForTimeout(600);
   await expect(page.locator('#contactsBody')).not.toContainText('Delete Me');
 
-  const rows = await verify.waitFor('jericho_contacts', r => !r.some(c => c.name === 'Delete Me'),
-    { label: 'the contact to be gone from the database' });
-  expect(rows.some(c => c.name === 'Delete Me')).toBe(false);
+  /* waitFor waits for something to APPEAR, so absence is polled directly. */
+  await expect.poll(
+    async () => (await verify.readCollection('jericho_contacts')).some(c => c.name === 'Delete Me'),
+    { message: 'the deleted contact should be gone from the database, not only from the screen',
+      timeout: 10000 }
+  ).toBe(false);
 });
