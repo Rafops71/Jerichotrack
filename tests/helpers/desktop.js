@@ -70,6 +70,23 @@ async function openApp(page) {
   return errors;
 }
 
+/*
+ * Wait until the app itself holds the expected number of contacts.
+ *
+ * Seeding the sandbox database does not mean the app has them yet - they arrive
+ * over a Firestore snapshot a moment later. Opening the Map tab before they land
+ * builds its filter from an empty book and, because buildMapFilter only ever
+ * builds once per session, it stays empty. Two map tests failed on exactly that
+ * and looked like missing features.
+ */
+async function waitForContacts(page, n) {
+  await page.waitForFunction(
+    expected => typeof contacts !== 'undefined' && contacts.length >= expected,
+    n,
+    { timeout: 30000 }
+  );
+}
+
 /** Click the tab of that name in the row under the search bar. */
 async function goToTab(page, tab) {
   await page.click(`[onclick="showSection('${tab}',this)"]`);
@@ -137,6 +154,6 @@ async function addTask(page, { title, due = '', priority = '' }) {
 }
 
 module.exports = {
-  openApp, goToTab, dashboardHeadings, tabNames,
+  openApp, goToTab, waitForContacts, dashboardHeadings, tabNames,
   addContact, importFile, openDuplicateFinder, addTask
 };

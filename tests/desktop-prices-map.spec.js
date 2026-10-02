@@ -175,6 +175,7 @@ test('@robot DeskItem42_can_filter_the_map_by_commodity_service_or_name', async 
   });
 
   await app.openApp(page);
+  await app.waitForContacts(page, 2);        // before the filter builds itself
   await app.goToTab(page, 'map');
   await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
 
@@ -203,6 +204,7 @@ test('@robot DeskItem43_can_zoom_in_and_see_cities', async ({ page }) => {
     lat: 36.58, lon: 36.17, trust: 'Green', kyc: 'Full KYC', notes: ''
   });
   await app.openApp(page);
+  await app.waitForContacts(page, 1);
   await app.goToTab(page, 'map');
   await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
 
