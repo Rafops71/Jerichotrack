@@ -1,4 +1,4 @@
-<title>Jericho Film Prototype</title>
+<title>Jericho</title>
 
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;600&family=Spline+Sans+Mono:wght@400;500&display=swap">
@@ -10,7 +10,7 @@
 <style>
 :root{
   --white:#FFFFFF; --ink:#101113; --dim:#5E6064; --line:#E4E5E7;
-  --film:#000000; --film-fg:#F2F3F4; --film-dim:#9AA0A6;
+  --film:#000000; --film-fg:#F2F3F4; --film-dim:#A7ADB3;
   --accent:#0E6B5C;
   --disp:"Readex Pro",system-ui,sans-serif;
   --mono:"Spline Sans Mono",ui-monospace,monospace;
@@ -18,109 +18,94 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-html{scroll-behavior:auto}
 body{
   background:var(--white); color:var(--ink);
   font-family:var(--disp); font-weight:300; font-size:16px; line-height:1.6;
   overflow-x:hidden;
 }
 .wrap{max-width:1180px; margin:0 auto; padding-inline:clamp(16px,5vw,64px)}
-.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
-h1,h2,h3{margin:0; font-weight:200; letter-spacing:-.02em; line-height:1.03; text-wrap:balance}
+h1,h2,h3{margin:0; font-weight:200; letter-spacing:-.02em; line-height:1.04; text-wrap:balance}
 p{margin:0}
 :focus-visible{outline:2px solid var(--accent); outline-offset:3px}
 
-/* ---------- top bar ---------- */
+/* ---------- bar ---------- */
 .bar{
   position:fixed; inset:0 0 auto 0; z-index:50; height:62px;
   display:flex; align-items:center; gap:22px;
   padding-inline:clamp(16px,5vw,64px);
-  color:var(--film-fg); mix-blend-mode:difference;
+  color:#fff; mix-blend-mode:difference;
 }
-.bar .nm{font-family:var(--disp); font-weight:600; font-size:17px; letter-spacing:.34em; margin-right:auto}
-.bar .lk{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:inherit; text-decoration:none; opacity:.8}
-.bar .lk:hover{opacity:1}
-@media(max-width:700px){ .bar .lk{display:none} }
+.bar .nm{font-weight:600; font-size:17px; letter-spacing:.34em; margin-right:auto}
+.bar a{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:inherit; text-decoration:none; opacity:.85}
+.bar a:hover{opacity:1}
+@media(max-width:700px){ .bar a{display:none} }
 
 /* ---------- film stages ---------- */
 .stage{position:relative; background:var(--film)}
 .stage .pin{position:sticky; top:0; height:100vh; overflow:hidden}
-.stage canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
-.stage .vig{
-  position:absolute; inset:0; pointer-events:none;
-  background:
-    linear-gradient(to bottom, rgba(4,8,12,.72) 0%, rgba(4,8,12,.22) 14%, transparent 26%),
-    radial-gradient(130% 90% at 50% 45%, transparent 38%, rgba(0,0,0,.70));
-}
-.ocean-h{height:420vh}
+.stage video, .stage canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block}
+.film-h{height:420vh}
 .globe-h{height:300vh}
 
-/* overlay text inside a film */
+/* the scrim: white type never sits directly on bright footage */
 .ov{position:absolute; inset:0; pointer-events:none; color:var(--film-fg)}
-/* scrim: white text must never sit on bright water. Reads as cinema, not a box. */
 .ov::before{
-  content:""; position:absolute; inset:0; pointer-events:none;
+  content:""; position:absolute; inset:0;
   background:
-    linear-gradient(to top, rgba(4,8,12,.86) 0%, rgba(4,8,12,.62) 22%, rgba(4,8,12,.14) 46%, transparent 62%),
-    linear-gradient(to right, rgba(4,8,12,.70) 0%, rgba(4,8,12,.30) 34%, transparent 58%);
+    linear-gradient(to top, rgba(4,8,12,.88) 0%, rgba(4,8,12,.64) 22%, rgba(4,8,12,.16) 46%, transparent 62%),
+    linear-gradient(to right, rgba(4,8,12,.74) 0%, rgba(4,8,12,.32) 34%, transparent 58%),
+    linear-gradient(to bottom, rgba(4,8,12,.70) 0%, transparent 18%);
 }
 .ov > *{position:relative}
-.ov .inner{
-  position:absolute; left:clamp(16px,5vw,64px); right:clamp(16px,5vw,64px);
-  bottom:clamp(60px,10vh,110px);
-}
-.ov h2{font-size:clamp(2rem,5.6vw,4.4rem); max-width:17ch}
+.ov .inner{position:absolute; left:clamp(16px,5vw,64px); right:clamp(16px,5vw,64px); bottom:clamp(60px,10vh,112px)}
+.ov h2{font-size:clamp(2rem,5.4vw,4.3rem); max-width:17ch}
 .ov h2 b{font-weight:600; color:#fff}
-.ov .sub{margin-top:18px; max-width:46ch; color:var(--film-dim); font-size:clamp(.95rem,1.3vw,1.1rem)}
+.ov .sub{margin-top:18px; max-width:46ch; color:var(--film-dim); font-size:clamp(.95rem,1.3vw,1.08rem)}
 .ov .cap{
-  position:absolute; left:clamp(16px,5vw,64px); top:clamp(78px,12vh,110px);
+  position:absolute; left:clamp(16px,5vw,64px); top:clamp(84px,13vh,116px);
   font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--film-dim);
 }
-/* the numbers: small, inside the scene */
-.fig{
-  position:absolute; right:clamp(16px,5vw,64px); bottom:clamp(60px,10vh,110px);
-  text-align:right; color:var(--film-dim);
-}
-.fig .v{display:block; font-family:var(--mono); font-weight:500; font-size:clamp(1.1rem,2vw,1.6rem); color:#fff; font-variant-numeric:tabular-nums}
-.fig .l{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; margin-top:6px; max-width:26ch}
-.fig .s{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:#8A9096; margin-top:6px}
-@media(max-width:700px){
-  .fig{right:auto; left:clamp(16px,5vw,64px); bottom:auto; top:40vh; text-align:left}
-}
-
-.scrollcue{
+.fig{position:absolute; right:clamp(16px,5vw,64px); bottom:clamp(60px,10vh,112px); text-align:right; max-width:46vw; color:var(--film-dim)}
+.fig .v{display:block; font-family:var(--mono); font-weight:500; font-size:clamp(1.1rem,2vw,1.55rem); color:#fff; font-variant-numeric:tabular-nums}
+.fig .l{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.17em; text-transform:uppercase; margin-top:7px}
+.fig .s{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:#8A9096; margin-top:6px}
+@media(max-width:700px){ .fig{right:auto; left:clamp(16px,5vw,64px); bottom:auto; top:42vh; text-align:left; max-width:80vw} }
+.cue{
   position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
-  font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase;
-  color:var(--film-dim); animation:bob 2.6s ease-in-out infinite;
+  font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--film-dim);
 }
-@keyframes bob{0%,100%{transform:translate(-50%,0); opacity:.5}50%{transform:translate(-50%,7px); opacity:1}}
 
-/* ---------- white sections ---------- */
+/* the video slot, shown until a clip is dropped in */
+.slot{
+  position:absolute; inset:0; display:grid; place-items:center; text-align:center;
+  background:
+    radial-gradient(120% 90% at 50% 40%, #16202a, #080b0f 70%);
+  padding:clamp(20px,5vw,60px);
+}
+.slot .box{max-width:52ch; border:1px dashed #3A454F; padding:clamp(22px,4vw,40px)}
+.slot .t{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent)}
+.slot h3{margin-top:16px; font-size:clamp(1.2rem,2.4vw,1.7rem); color:#DDE3E8}
+.slot p{margin-top:14px; font-family:var(--mono); font-size:11px; line-height:2; color:#8A9096; letter-spacing:.04em}
+.slot code{color:#C6CED5}
+
+/* ---------- white sheets ---------- */
 .sheet{background:var(--white); padding-block:clamp(70px,11vw,150px)}
 .kick{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent)}
 .sheet h2{font-size:clamp(1.7rem,3.8vw,3rem); margin-top:16px; max-width:26ch}
-.sheet .lede{margin-top:22px; max-width:56ch; color:var(--dim); font-size:clamp(1rem,1.3vw,1.12rem)}
-
+.sheet .lede{margin-top:22px; max-width:56ch; color:var(--dim); font-size:clamp(1rem,1.3vw,1.1rem)}
 .groups{margin-top:clamp(40px,6vw,76px); display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:1px; background:var(--line)}
-.grp{background:var(--white); padding:26px 24px 30px; min-width:0; position:relative; overflow:hidden}
+.grp{background:var(--white); padding:26px 24px 30px; min-width:0}
 .grp .n{font-family:var(--mono); font-size:11px; letter-spacing:.2em; color:var(--accent)}
-.grp h3{margin-top:14px; font-size:1.25rem; font-weight:300}
+.grp h3{margin-top:14px; font-size:1.22rem; font-weight:300}
 .grp ul{list-style:none; margin:16px 0 0; padding:0}
 .grp li{font-size:.92rem; color:var(--dim); padding:5px 0; border-top:1px solid var(--line)}
 .grp li:first-child{border-top:none}
 
-/* image slots — drop a file path into data-img */
-.plate{
-  position:relative; width:100%; aspect-ratio:16/9; background:#0A0B0C; overflow:hidden;
-  display:grid; place-items:center;
-}
-.plate img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
-.plate .ph{
-  font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
-  color:#8A9096; text-align:center; padding:20px; line-height:1.9;
-}
-.plate .ph b{display:block; color:#A8AEB4; margin-bottom:8px; letter-spacing:.2em}
 .strip{margin-top:clamp(40px,6vw,76px); display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:clamp(14px,2vw,26px)}
+.plate{position:relative; width:100%; aspect-ratio:16/9; background:#0A0B0C; overflow:hidden; display:grid; place-items:center}
+.plate img, .plate video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.plate .ph{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#8A9096; text-align:center; padding:20px; line-height:2}
+.plate .ph b{display:block; color:#C6CED5; margin-bottom:8px; letter-spacing:.2em}
 .strip .cl{margin-top:12px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
 
 .end{background:var(--white); padding-block:clamp(60px,9vw,120px); border-top:1px solid var(--line)}
@@ -129,50 +114,56 @@ p{margin:0}
 .end dd{margin:8px 0 0; font-family:var(--mono); font-size:13px}
 .ph2{color:var(--accent); border:1px dashed var(--accent); padding:3px 8px; border-radius:2px; display:inline-block}
 footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--dim)}
-
-.loading{
-  position:fixed; inset:0; z-index:90; background:#000; color:#9AA0A6;
-  display:grid; place-items:center; font-family:var(--mono); font-size:11px;
-  letter-spacing:.24em; text-transform:uppercase; transition:opacity .7s ease;
-}
-.loading.gone{opacity:0; pointer-events:none}
-
-@media (prefers-reduced-motion:reduce){
-  .scrollcue{animation:none}
-}
 </style>
-
-<div class="loading" id="loading">Preparing the water</div>
 
 <header class="bar">
   <span class="nm">JERICHO</span>
-  <a class="lk" href="#groups">What we handle</a>
-  <a class="lk" href="#reach">Reach</a>
-  <a class="lk" href="#contact">Contact</a>
+  <a href="#groups">What we handle</a>
+  <a href="#reach">Reach</a>
+  <a href="#contact">Contact</a>
 </header>
 
-<!-- ============ FILM 1 — OCEAN, DIVE TO THE BOW ============ -->
-<section class="stage ocean-h" id="ocean">
+<!-- ================= FILM 1 — THE SHIP (scroll-scrubbed video) ================= -->
+<section class="stage film-h" id="ocean">
   <div class="pin">
-    <canvas id="seaCanvas"></canvas>
-    <div class="vig"></div>
+    <!--
+      VIDEO SLOT 01 — the hero.
+      Put the landscape clip at data-src and the 1080x1920 version at data-src-portrait.
+      The playhead is tied to scroll: scrolling IS the camera move.
+    -->
+    <video id="heroVid" playsinline muted preload="auto"
+           data-src="" data-src-portrait="" poster=""></video>
+
+    <div class="slot" id="heroSlot">
+      <div class="box">
+        <p class="t">Video slot 01 · the hero</p>
+        <h3>Container ship, aerial descending to the bow</h3>
+        <p>6–10 s · 1920×1080 · 24 fps · h.264<br>
+           plus a 1080×1920 version for phones<br><br>
+           drop the file in and set<br>
+           <code>data-src="ship.mp4"</code><br>
+           <code>data-src-portrait="ship-v.mp4"</code><br><br>
+           scrolling will drive the playhead</p>
+      </div>
+    </div>
+
     <div class="ov">
-      <p class="cap" id="oceanCap">At sea</p>
+      <p class="cap" id="cap">At sea</p>
       <div class="inner">
-        <h2 id="oceanTitle">Material moves because someone <b>placed</b> it.</h2>
-        <p class="sub" id="oceanSub">Jericho sources and places physical commodities — energy, ferrous, non-ferrous and critical materials, with the logistics that carry them.</p>
+        <h2 id="t1">Material moves because someone <b>placed</b> it.</h2>
+        <p class="sub" id="s1">Jericho sources and places physical commodities — energy, ferrous, non-ferrous and critical materials, with the logistics that carry them.</p>
       </div>
       <div class="fig">
         <span class="v" id="figA">0</span>
         <span class="l">Tonnes moved by sea each year</span>
         <span class="s">UNCTAD · 2024</span>
       </div>
-      <p class="scrollcue">Scroll</p>
+      <p class="cue">Scroll</p>
     </div>
   </div>
 </section>
 
-<!-- ============ WHITE — WHAT WE HANDLE ============ -->
+<!-- ================= WHITE — WHAT WE HANDLE ================= -->
 <section class="sheet" id="groups">
   <div class="wrap">
     <p class="kick">What we handle</p>
@@ -181,50 +172,30 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
       as it fails on price, so both sit in the same book.</p>
 
     <div class="groups">
-      <div class="grp">
-        <div class="n">01</div><h3>Energy</h3>
-        <ul><li>Crude oil</li><li>Fuels</li><li>Coal</li></ul>
-      </div>
-      <div class="grp">
-        <div class="n">02</div><h3>Ferrous</h3>
-        <ul><li>Iron ore</li><li>Pig iron</li><li>Hot briquetted iron</li><li>Billet</li><li>Steel scrap</li><li>Ferrous scrap</li></ul>
-      </div>
-      <div class="grp">
-        <div class="n">03</div><h3>Non-ferrous</h3>
-        <ul><li>Copper</li><li>Platinum</li><li>Palladium</li><li>Rhodium</li><li>Gold</li><li>Silver</li></ul>
-      </div>
-      <div class="grp">
-        <div class="n">04</div><h3>Critical materials</h3>
-        <ul><li>Chrome</li><li>Manganese</li><li>Antimony</li><li>Lithium</li></ul>
-      </div>
-      <div class="grp">
-        <div class="n">05</div><h3>Services &amp; logistics</h3>
-        <ul><li>Ocean freight</li><li>Freight forwarding</li><li>Inspection</li><li>Warehousing</li><li>Customs clearance</li><li>Trade finance</li><li>Insurance</li></ul>
-      </div>
+      <div class="grp"><div class="n">01</div><h3>Energy</h3>
+        <ul><li>Crude oil</li><li>Fuels</li><li>Coal</li></ul></div>
+      <div class="grp"><div class="n">02</div><h3>Ferrous</h3>
+        <ul><li>Iron ore</li><li>Pig iron</li><li>Hot briquetted iron</li><li>Billet</li><li>Steel scrap</li><li>Ferrous scrap</li></ul></div>
+      <div class="grp"><div class="n">03</div><h3>Non-ferrous</h3>
+        <ul><li>Copper</li><li>Platinum</li><li>Palladium</li><li>Rhodium</li><li>Gold</li><li>Silver</li></ul></div>
+      <div class="grp"><div class="n">04</div><h3>Critical materials</h3>
+        <ul><li>Chrome</li><li>Manganese</li><li>Antimony</li><li>Lithium</li></ul></div>
+      <div class="grp"><div class="n">05</div><h3>Services &amp; logistics</h3>
+        <ul><li>Ocean freight</li><li>Freight forwarding</li><li>Inspection</li><li>Warehousing</li><li>Customs clearance</li><li>Trade finance</li><li>Insurance</li></ul></div>
     </div>
 
     <div class="strip">
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 01</b>Open-pit mine · aerial<br>terraced benches, haul trucks for scale<br>16 : 9</div></div>
-        <p class="cl">Where it starts</p>
-      </div>
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 02</b>Smelter interior · molten pour<br>orange light, dark hall<br>16 : 9</div></div>
-        <p class="cl">Where it ends</p>
-      </div>
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 03</b>Refinery at dusk<br>pipework, flare stacks, lights<br>16 : 9</div></div>
-        <p class="cl">Energy</p>
-      </div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 02 · video or still</b>Open-pit mine · aerial<br>terraced benches, haul trucks<br>16 : 9</div></div><p class="cl">Where it starts</p></div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 03 · video or still</b>Smelter · molten pour<br>orange glow, dark hall<br>16 : 9</div></div><p class="cl">Where it ends</p></div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 04 · video or still</b>Refinery at dusk<br>pipework, flare stacks<br>16 : 9</div></div><p class="cl">Energy</p></div>
     </div>
   </div>
 </section>
 
-<!-- ============ FILM 2 — GLOBE WITH ROUTES ============ -->
+<!-- ================= FILM 2 — THE GLOBE (interactive, not footage) ================= -->
 <section class="stage globe-h" id="reach">
   <div class="pin">
     <canvas id="globeCanvas"></canvas>
-    <div class="vig"></div>
     <div class="ov">
       <p class="cap">Reach</p>
       <div class="inner">
@@ -240,7 +211,7 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
   </div>
 </section>
 
-<!-- ============ WHITE — PORTS AND TRUCKING ============ -->
+<!-- ================= WHITE — THE CHAIN ================= -->
 <section class="sheet">
   <div class="wrap">
     <p class="kick">The chain</p>
@@ -248,23 +219,14 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
     <p class="lede">We hold the transaction together across all of them, and we broker the services that make
       a cargo actually move.</p>
     <div class="strip">
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 04</b>Container terminal · aerial dusk<br>gantry cranes, stacks lit, ship alongside<br>16 : 9</div></div>
-        <p class="cl">Container harbour</p>
-      </div>
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 05</b>Haul truck · low angle<br>loaded, dust trailing<br>16 : 9</div></div>
-        <p class="cl">Trucking</p>
-      </div>
-      <div>
-        <div class="plate" data-img=""><div class="ph"><b>Image slot 06</b>Steel mill run-out table<br>glowing billets on the line<br>16 : 9</div></div>
-        <p class="cl">Ferrous</p>
-      </div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 05 · video or still</b>Container terminal · dusk<br>gantry cranes, stacks lit<br>16 : 9</div></div><p class="cl">Container harbour</p></div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 06 · video or still</b>Haul truck · low angle<br>loaded, dust trailing<br>16 : 9</div></div><p class="cl">Trucking</p></div>
+      <div><div class="plate" data-src="" data-img=""><div class="ph"><b>Slot 07 · video or still</b>Steel mill run-out table<br>glowing billets on the line<br>16 : 9</div></div><p class="cl">Ferrous</p></div>
     </div>
   </div>
 </section>
 
-<!-- ============ CONTACT ============ -->
+<!-- ================= CONTACT ================= -->
 <section class="end" id="contact">
   <div class="wrap">
     <p class="kick">Contact</p>
@@ -280,625 +242,217 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
 <footer><div class="wrap">JERICHO · Dubai · prototype, placeholders present</div></footer>
 
 <script>
-/* ===========================================================================
-   Jericho film prototype
-   Three.js r128 for the water, the container vessel and the globe.
-   GSAP ScrollTrigger drives the camera. Nothing here is a picture of motion.
-   ======================================================================== */
 (function(){
   "use strict";
   var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var hasGL = (function(){
-    try { var c = document.createElement("canvas");
-          return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl"))); }
-    catch(e){ return false; }
-  })();
-
   if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 
-  /* ------------------------------------------------------------------ */
-  /*  small figures, counted up once in view                            */
-  /* ------------------------------------------------------------------ */
-  function fmt(n, d){
-    return n.toLocaleString("en-GB", { minimumFractionDigits:d, maximumFractionDigits:d });
+  /* ---------------- figures ---------------- */
+  function fmt(n,d){ return n.toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function countTo(el,target,d,suffix){
+    if(!el) return;
+    if(REDUCE||!window.gsap){ el.textContent=fmt(target,d)+(suffix||""); return; }
+    var o={v:0};
+    gsap.to(o,{v:target,duration:1.6,ease:"power2.out",
+      scrollTrigger:{trigger:el,start:"top 92%"},
+      onUpdate:function(){ el.textContent=fmt(o.v,d)+(suffix||""); }});
   }
-  function countTo(el, target, d, suffix){
-    if (!el) return;
-    if (REDUCE || !window.gsap){ el.textContent = fmt(target, d) + (suffix||""); return; }
-    var o = { v:0 };
-    gsap.to(o, {
-      v: target, duration: 1.6, ease: "power2.out",
-      scrollTrigger: { trigger: el, start: "top 92%" },
-      onUpdate: function(){ el.textContent = fmt(o.v, d) + (suffix||""); }
-    });
-  }
-  countTo(document.getElementById("figA"), 12.72, 2, " bn");
-  countTo(document.getElementById("figB"), 112500, 0, "");
+  countTo(document.getElementById("figA"),12.72,2," bn");
+  countTo(document.getElementById("figB"),112500,0,"");
 
-  /* ------------------------------------------------------------------ */
-  /*  image slots                                                        */
-  /* ------------------------------------------------------------------ */
-  Array.prototype.forEach.call(document.querySelectorAll(".plate"), function(p){
-    var src = p.getAttribute("data-img");
-    if (!src) return;
-    var im = document.createElement("img"); im.src = src; im.alt = "";
-    p.appendChild(im);
-    var ph = p.querySelector(".ph"); if (ph) ph.remove();
+  /* ---------------- plate slots: video wins, else still, else the marker ------ */
+  Array.prototype.forEach.call(document.querySelectorAll(".plate"),function(p){
+    var v=p.getAttribute("data-src"), i=p.getAttribute("data-img");
+    if(v){
+      var el=document.createElement("video");
+      el.src=v; el.muted=true; el.loop=true; el.playsInline=true; el.autoplay=true;
+      el.setAttribute("playsinline",""); el.setAttribute("muted","");
+      p.appendChild(el); el.play().catch(function(){});
+    } else if(i){
+      var im=document.createElement("img"); im.src=i; im.alt=""; p.appendChild(im);
+    } else return;
+    var ph=p.querySelector(".ph"); if(ph) ph.remove();
   });
 
-  if (!hasGL || !window.THREE){
-    var l = document.getElementById("loading");
-    if (l) l.classList.add("gone");
-    document.getElementById("ocean").style.height = "100vh";
-    document.getElementById("reach").style.height = "100vh";
-    return;
-  }
+  /* =========================================================================
+     THE HERO — the clip's playhead is tied to scroll.
+     Scrolling IS the camera move. No animation of our own.
+     ====================================================================== */
+  (function(){
+    var vid=document.getElementById("heroVid"), slot=document.getElementById("heroSlot");
+    var portrait=window.matchMedia("(max-aspect-ratio: 3/4)").matches;
+    var src=(portrait && vid.getAttribute("data-src-portrait")) || vid.getAttribute("data-src");
+    if(!src){ vid.style.display="none"; return; }      /* keep the slot marker visible */
+    if(slot) slot.remove();
+    vid.src=src;
 
-  /* ================================================================== */
-  /*  SCENE 1 — THE OCEAN AND THE CONTAINER VESSEL                      */
-  /* ================================================================== */
-  var sea = (function(){
-    var canvas = document.getElementById("seaCanvas");
-    var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:false });
-    renderer.setClearColor(0x0b1015, 1);
-    var scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0b1015, 0.0016);
-    var camera = new THREE.PerspectiveCamera(42, 1, 0.5, 6000);
+    var ready=false;
+    vid.addEventListener("loadedmetadata",function(){ ready=true; build(); });
+    /* some browsers will only decode after a play attempt */
+    vid.play().then(function(){ vid.pause(); vid.currentTime=0; }).catch(function(){});
 
-    /* --- light: low sun, cold sky --- */
-    var sun = new THREE.DirectionalLight(0xffd9a8, 2.1);
-    sun.position.set(-420, 150, -300);
-    scene.add(sun);
-    scene.add(new THREE.HemisphereLight(0x9fc4e8, 0x0a1018, 0.65));
-    scene.add(new THREE.AmbientLight(0x2a3340, 0.5));
-
-    /* --- the water: Gerstner waves in a vertex shader --- */
-    var OCEAN = 6400, SEG = 300;
-    var geo = new THREE.PlaneGeometry(OCEAN, OCEAN, SEG, SEG);
-    var uni = {
-      uTime:   { value: 0 },
-      uSunDir: { value: new THREE.Vector3(-0.72, 0.3, -0.55).normalize() },
-      uDeep:   { value: new THREE.Color(0x03101b) },
-      uShallow:{ value: new THREE.Color(0x0d3246) },
-      uFoam:   { value: new THREE.Color(0xd4e3ec) },
-      uBow:    { value: new THREE.Vector3(0, 0, 0) },
-      uAmp:    { value: 1.0 }
-    };
-    var vert = [
-      "uniform float uTime; uniform vec3 uBow; uniform float uAmp;",
-      "varying vec3 vPos; varying float vH; varying float vFoam; varying vec3 vNrm; varying vec3 vWorld;",
-      /* one Gerstner wave: dir, steepness, wavelength */
-      "vec3 gerstner(vec2 d, float steep, float len, vec2 p, inout vec3 tangent, inout vec3 binormal){",
-      "  float k = 6.28318 / len;",
-      "  float c = sqrt(9.8 / k);",
-      "  vec2 dn = normalize(d);",
-      "  float f = k * (dot(dn, p) - c * uTime);",
-      "  float a = steep / k;",
-      "  tangent += vec3(-dn.x*dn.x*(steep*sin(f)), dn.x*(steep*cos(f)), -dn.x*dn.y*(steep*sin(f)));",
-      "  binormal += vec3(-dn.x*dn.y*(steep*sin(f)), dn.y*(steep*cos(f)), -dn.y*dn.y*(steep*sin(f)));",
-      "  return vec3(dn.x*(a*cos(f)), a*sin(f), dn.y*(a*cos(f)));",
-      "}",
-      "void main(){",
-      "  vec2 p = position.xy;",
-      "  vec3 tangent = vec3(1.0,0.0,0.0), binormal = vec3(0.0,0.0,1.0);",
-      "  vec3 acc = vec3(0.0);",
-      "  acc += gerstner(vec2( 1.0, 0.25), 0.100*uAmp, 190.0, p, tangent, binormal);",
-      "  acc += gerstner(vec2( 0.7,-0.75), 0.110*uAmp,  97.0, p, tangent, binormal);",
-      "  acc += gerstner(vec2(-0.4, 0.9 ), 0.105*uAmp,  49.0, p, tangent, binormal);",
-      "  acc += gerstner(vec2( 0.9, 0.55), 0.095*uAmp,  25.0, p, tangent, binormal);",
-      "  acc += gerstner(vec2(-0.85,0.2 ), 0.080*uAmp,  12.5, p, tangent, binormal);",
-      "  vec3 pos = vec3(p.x + acc.x, acc.y, p.y + acc.z);",
-      "  vH = acc.y;",
-      /* foam where the hull pushes water aside, and on the steepest crests */
-      "  float d = length(pos.xz - uBow.xz);",
-      "  vFoam = smoothstep(120.0, 26.0, d) * 0.85 + smoothstep(3.1, 5.0, acc.y) * 0.35;",
-      "  vNrm = normalize(cross(binormal, tangent));",
-      "  vPos = pos;",
-      "  vec4 wp = modelMatrix * vec4(pos, 1.0);",
-      "  vWorld = wp.xyz;",
-      "  gl_Position = projectionMatrix * viewMatrix * wp;",
-      "}"
-    ].join("\n");
-    var frag = [
-      "uniform vec3 uDeep, uShallow, uFoam, uSunDir;",
-      "varying vec3 vPos; varying float vH; varying float vFoam; varying vec3 vNrm; varying vec3 vWorld;",
-      "void main(){",
-      "  vec3 n = normalize(vNrm);",
-      "  vec3 v = normalize(cameraPosition - vWorld);",
-      "  vec3 l = normalize(uSunDir);",
-      /* water takes its colour from the sky it reflects, never from its own height */
-      "  float up = clamp(n.y, 0.0, 1.0);",
-      "  vec3 sky = mix(vec3(0.055,0.105,0.150), vec3(0.120,0.215,0.265), up);",
-      "  vec3 col = mix(uDeep, uShallow, up * 0.50 + 0.34);",
-      "  col = mix(col, sky, 0.58);",
-      /* fresnel: the sea goes pale and reflective toward the horizon */
-      "  float fres = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 4.0);",
-      "  col = mix(col, vec3(0.30,0.40,0.46), fres * 0.65);",
-      /* one tight sun glint rather than a white field */
-      "  vec3 hv = normalize(l + v);",
-      "  float spec = pow(clamp(dot(n, hv), 0.0, 1.0), 220.0);",
-      "  col += vec3(1.0, 0.88, 0.70) * spec * 1.7;",
-      "  col += vec3(0.20,0.17,0.13) * clamp(dot(n, l), 0.0, 1.0);",
-      "  col += vec3(0.030,0.052,0.070);",
-      /* foam only where the hull tears the water, or a crest genuinely breaks */
-      "  col = mix(col, uFoam, clamp(vFoam, 0.0, 1.0) * 0.80);",
-      "  float f = clamp(length(vPos.xz) / 1700.0, 0.0, 1.0);",
-      "  col = mix(col, vec3(0.045,0.062,0.082), pow(f, 1.7));",
-      "  gl_FragColor = vec4(col, 1.0);",
-      "}"
-    ].join("\n");
-    var water = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-      uniforms: uni, vertexShader: vert, fragmentShader: frag
-    }));
-    water.rotation.x = -Math.PI / 2;
-    scene.add(water);
-
-    /* --- the container vessel, built from its plan outline --- */
-    var ship = new THREE.Group();
-    var LEN = 300, BEAM = 44, DEPTH = 26;
-
-    var plan = new THREE.Shape();
-    plan.moveTo(LEN * 0.50, 0);                             // stem
-    plan.quadraticCurveTo(LEN * 0.40,  BEAM * 0.42, LEN * 0.22,  BEAM * 0.50);
-    plan.lineTo(-LEN * 0.34,  BEAM * 0.50);
-    plan.quadraticCurveTo(-LEN * 0.50, BEAM * 0.46, -LEN * 0.50, 0);
-    plan.quadraticCurveTo(-LEN * 0.50,-BEAM * 0.46,-LEN * 0.34, -BEAM * 0.50);
-    plan.lineTo(LEN * 0.22, -BEAM * 0.50);
-    plan.quadraticCurveTo(LEN * 0.40, -BEAM * 0.42, LEN * 0.50, 0);
-
-    var hullGeo = new THREE.ExtrudeGeometry(plan, { depth: DEPTH, bevelEnabled: true,
-      bevelThickness: 2.4, bevelSize: 2.0, bevelSegments: 3, curveSegments: 20 });
-    hullGeo.rotateX(-Math.PI / 2);
-    hullGeo.translate(0, -DEPTH * 0.42, 0);
-
-    var hull = new THREE.Mesh(hullGeo, new THREE.MeshStandardMaterial({
-      color: 0x14161a, roughness: 0.74, metalness: 0.42 }));
-    ship.add(hull);
-
-    /* red boot-topping below the waterline */
-    var bootGeo = new THREE.ExtrudeGeometry(plan, { depth: 5.2, bevelEnabled:false, curveSegments: 20 });
-    bootGeo.rotateX(-Math.PI / 2);
-    bootGeo.translate(0, -DEPTH * 0.42 - 0.3, 0);
-    ship.add(new THREE.Mesh(bootGeo, new THREE.MeshStandardMaterial({
-      color: 0x6e1b14, roughness: 0.82, metalness: 0.2 })));
-
-    /* deck plate */
-    var deckGeo = new THREE.ExtrudeGeometry(plan, { depth: 1.6, bevelEnabled:false, curveSegments: 20 });
-    deckGeo.rotateX(-Math.PI / 2);
-    deckGeo.translate(0, DEPTH * 0.58, 0);
-    ship.add(new THREE.Mesh(deckGeo, new THREE.MeshStandardMaterial({
-      color: 0x2b2f35, roughness: 0.9 })));
-
-    /* containers: bays along the hull, rows across, tiers up */
-    var CW = 11.6, CH = 7.4, CL = 19.2;
-    var palette = [0xB5342A, 0x1F5F86, 0x8C8F93, 0x2E6B4F, 0xC4821F,
-                   0x6E3A72, 0x1C2B3A, 0xA8452E, 0x3A6E7A];
-    var boxGeo = new THREE.BoxGeometry(CL, CH, CW);
-    var bays = 11, rows = 3, tiersMax = 5;
-    var count = 0;
-    var mats = palette.map(function(c){
-      return new THREE.MeshStandardMaterial({ color:c, roughness:0.86, metalness:0.12 });
-    });
-    for (var b = 0; b < bays; b++){
-      var x = -LEN * 0.30 + b * (CL + 1.1);
-      if (x > LEN * 0.20) continue;
-      /* a realistic stow: lower amidships, stepped down toward the bow */
-      var near = 1 - Math.abs(x) / (LEN * 0.40);
-      var tiers = Math.max(2, Math.round(2 + near * (tiersMax - 2)));
-      for (var r = 0; r < rows; r++){
-        var z = (r - (rows - 1) / 2) * (CW + 1.0);
-        for (var t = 0; t < tiers; t++){
-          var m = new THREE.Mesh(boxGeo, mats[(b * 7 + r * 3 + t) % mats.length]);
-          m.position.set(x, DEPTH * 0.58 + 1.6 + CH * 0.5 + t * (CH + 0.25), z);
-          ship.add(m); count++;
+    function build(){
+      if(!window.gsap||!window.ScrollTrigger||REDUCE){
+        vid.loop=true; vid.play().catch(function(){});
+        return;
+      }
+      var state={t:0};
+      gsap.to(state,{
+        t:1, ease:"none",
+        scrollTrigger:{trigger:"#ocean",start:"top top",end:"+=250%",scrub:0.45},
+        onUpdate:function(){
+          if(!ready||!vid.duration) return;
+          var want=Math.min(vid.duration-0.03,state.t*vid.duration);
+          if(Math.abs(vid.currentTime-want)>0.015) vid.currentTime=want;
         }
-      }
+      });
     }
-
-    /* superstructure aft, and the funnel */
-    var white = new THREE.MeshStandardMaterial({ color: 0xD9DCE0, roughness: 0.7 });
-    var dark  = new THREE.MeshStandardMaterial({ color: 0x1A1D21, roughness: 0.7 });
-    for (var s = 0; s < 4; s++){
-      var w = 30 - s * 2.4, hh = 7.4, dd = BEAM * 0.74 - s * 2.2;
-      var blk = new THREE.Mesh(new THREE.BoxGeometry(w, hh, dd), white);
-      blk.position.set(-LEN * 0.375, DEPTH * 0.58 + 1.6 + hh * 0.5 + s * hh, 0);
-      ship.add(blk);
-    }
-    var bridge = new THREE.Mesh(new THREE.BoxGeometry(24, 5.6, BEAM * 0.80), dark);
-    bridge.position.set(-LEN * 0.375, DEPTH * 0.58 + 1.6 + 4 * 7.4 + 2.8, 0);
-    ship.add(bridge);
-    var funnel = new THREE.Mesh(new THREE.BoxGeometry(11, 15, 13), dark);
-    funnel.position.set(-LEN * 0.445, DEPTH * 0.58 + 1.6 + 8, 0);
-    ship.add(funnel);
-    /* forecastle */
-    var fc = new THREE.Mesh(new THREE.BoxGeometry(26, 5.4, BEAM * 0.72), new THREE.MeshStandardMaterial({
-      color: 0x191C20, roughness: 0.8 }));
-    fc.position.set(LEN * 0.40, DEPTH * 0.58 + 1.6 + 2.7, 0);
-    ship.add(fc);
-
-    scene.add(ship);
-
-    /* --- wake: a long foam ribbon astern, scrolling --- */
-    var wakeCanvas = document.createElement("canvas");
-    wakeCanvas.width = 64; wakeCanvas.height = 512;
-    var wc = wakeCanvas.getContext("2d");
-    for (var y = 0; y < 512; y++){
-      var a = Math.pow(1 - y / 512, 1.5);
-      for (var x = 0; x < 64; x++){
-        var edge = 1 - Math.abs(x - 32) / 32;
-        var n = 0.55 + 0.45 * Math.sin(x * 0.7 + y * 0.21) * Math.cos(y * 0.07);
-        wc.fillStyle = "rgba(226,238,246," + (a * edge * n * 0.9).toFixed(3) + ")";
-        wc.fillRect(x, y, 1, 1);
-      }
-    }
-    var wakeTex = new THREE.CanvasTexture(wakeCanvas);
-    wakeTex.wrapS = wakeTex.wrapT = THREE.RepeatWrapping;
-    var wake = new THREE.Mesh(
-      new THREE.PlaneGeometry(150, 1500, 1, 1),
-      new THREE.MeshBasicMaterial({ map:wakeTex, transparent:true, opacity:0.5,
-        depthWrite:false, blending:THREE.AdditiveBlending })
-    );
-    wake.rotation.x = -Math.PI / 2;
-    wake.position.set(-LEN * 0.5 - 740, 1.6, 0);
-    scene.add(wake);
-
-    /* --- bow foam: soft camera-facing sprites, so it churns instead of
-           showing its polygons at a low angle --- */
-    var fc2 = document.createElement("canvas"); fc2.width = fc2.height = 128;
-    var fx = fc2.getContext("2d");
-    var rg = fx.createRadialGradient(64, 64, 2, 64, 64, 62);
-    rg.addColorStop(0.00, "rgba(255,255,255,0.95)");
-    rg.addColorStop(0.35, "rgba(232,243,250,0.55)");
-    rg.addColorStop(0.70, "rgba(210,228,240,0.16)");
-    rg.addColorStop(1.00, "rgba(200,220,235,0)");
-    fx.fillStyle = rg; fx.fillRect(0, 0, 128, 128);
-    /* break the perfect circle so it reads as spray, not a dot */
-    for (var q = 0; q < 160; q++){
-      var ax = Math.random() * 128, ay = Math.random() * 128;
-      var dd = Math.hypot(ax - 64, ay - 64) / 64;
-      if (dd > 1) continue;
-      fx.globalAlpha = (1 - dd) * 0.35 * Math.random();
-      fx.fillStyle = "#ffffff";
-      fx.beginPath(); fx.arc(ax, ay, 1 + Math.random() * 6, 0, 6.283); fx.fill();
-    }
-    fx.globalAlpha = 1;
-    var foamTex = new THREE.CanvasTexture(fc2);
-
-    var foamGroup = new THREE.Group();
-    var foams = [];
-    for (var i2 = 0; i2 < 34; i2++){
-      var sp = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: foamTex, transparent: true, opacity: 0,
-        depthWrite: false, blending: THREE.AdditiveBlending
-      }));
-      foams.push({ m: sp, seed: Math.random() * 6.28, side: i2 % 2 ? 1 : -1, k: Math.random() });
-      foamGroup.add(sp);
-    }
-    scene.add(foamGroup);
-
-    return { renderer:renderer, scene:scene, camera:camera, uni:uni, ship:ship,
-             wake:wake, wakeTex:wakeTex, foams:foams, LEN:LEN, DEPTH:DEPTH, count:count };
   })();
 
-  /* ================================================================== */
-  /*  SCENE 2 — THE GLOBE AND THE LANES                                 */
-  /* ================================================================== */
-  var orb = (function(){
-    var canvas = document.getElementById("globeCanvas");
-    var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:false });
-    renderer.setClearColor(0x000000, 1);
-    var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    camera.position.set(0, 0, 7.4);
-
-    var group = new THREE.Group();
-    scene.add(group);
-
-    /* the sphere: a dark glass ball with a lit rim */
-    var ball = new THREE.Mesh(
-      new THREE.SphereGeometry(2, 72, 54),
-      new THREE.MeshStandardMaterial({ color:0x0a1016, roughness:0.55, metalness:0.25 })
-    );
-    group.add(ball);
-
-    /* graticule */
-    var gr = new THREE.LineSegments(
-      new THREE.WireframeGeometry(new THREE.SphereGeometry(2.004, 36, 18)),
-      new THREE.LineBasicMaterial({ color:0x1d2c36, transparent:true, opacity:0.5 })
-    );
-    group.add(gr);
-
-    /* coarse land mask, 5-degree cells, drawn as points */
-    var LAND = [
-      [], [[18,32],[39,41],[45,47]], [[12,32],[39,41],[45,47],[54,58]],
-      [[8,24],[40,43],[48,71]], [[3,8],[8,24],[25,33],[37,42],[42,71]],
-      [[2,8],[9,16],[21,28],[32,34],[36,42],[42,71]],
-      [[1,8],[9,16],[21,27],[35,36],[36,42],[42,71]],
-      [[10,28],[34,36],[36,42],[42,71]],
-      [[11,30],[34,43],[43,71]],
-      [[12,30],[33,36],[36,42],[42,71]],
-      [[13,30],[32,40],[40,71]],
-      [[14,29],[31,40],[40,48],[48,71]],
-      [[16,28],[30,40],[40,47],[49,54],[54,66]],
-      [[17,26],[29,40],[40,47],[50,55],[55,65]],
-      [[18,25],[30,44],[44,47],[50,56],[56,64]],
-      [[19,25],[31,46],[51,56],[56,62]],
-      [[20,25],[32,47],[55,62]],
-      [[21,28],[33,47],[56,63]],
-      [[21,29],[33,47],[56,63]],
-      [[21,29],[34,45],[57,66]],
-      [[22,30],[34,44],[61,68]],
-      [[22,30],[34,43],[45,46],[60,69]],
-      [[23,31],[34,42],[45,46],[59,69]],
-      [[24,31],[34,42],[59,69]],
-      [[24,30],[34,41],[60,69]],
-      [[25,29],[62,67],[70,71]],
-      [[26,29],[70,71]],
-      [[26,29]], [[27,29]], [[28,29]], [[27,29]],
-      [[0,20],[24,71]], [[0,71]], [[0,71]], [[0,71]], [[0,71]]
-    ];
-    var pos = [];
-    for (var r = 0; r < LAND.length; r++){
-      for (var k = 0; k < LAND[r].length; k++){
-        for (var c = LAND[r][k][0]; c <= LAND[r][k][1]; c++){
-          for (var j = 0; j < 3; j++){
-            var la = (90 - r * 5 - Math.random() * 5) * Math.PI / 180;
-            var lo = (-180 + c * 5 + Math.random() * 5) * Math.PI / 180;
-            var rad = 2.012;
-            pos.push(rad * Math.cos(la) * Math.sin(lo),
-                     rad * Math.sin(la),
-                     rad * Math.cos(la) * Math.cos(lo));
-          }
-        }
-      }
-    }
-    var pg = new THREE.BufferGeometry();
-    pg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    group.add(new THREE.Points(pg, new THREE.PointsMaterial({
-      color:0xcfd8de, size:0.019, sizeAttenuation:true, transparent:true, opacity:0.9 })));
-
-    /* the ordinary lanes, as great-circle arcs that draw and fade */
-    function v3(latDeg, lonDeg, rad){
-      var la = latDeg * Math.PI / 180, lo = lonDeg * Math.PI / 180;
-      return new THREE.Vector3(rad * Math.cos(la) * Math.sin(lo),
-                               rad * Math.sin(la),
-                               rad * Math.cos(la) * Math.cos(lo));
-    }
-    var LANES = [
-      [[-23, -43], [51,   4]],   // South America to north-west Europe
-      [[-29,  31], [25,  56]],   // southern Africa to the Gulf
-      [[ 25,  56], [31, 121]],   // Gulf to east Asia
-      [[-20, 118], [31, 121]],   // west Australia to east Asia
-      [[ 51,   4], [40, -74]],   // north-west Europe to north America
-      [[ 25,  56], [19,  73]],   // Gulf to south Asia
-      [[-34,  18], [ 1, 104]],   // round the Cape to the straits
-      [[ 31, 121], [34,-118]]    // east Asia to west coast north America
-    ];
-    var arcs = [];
-    LANES.forEach(function(L, idx){
-      var a = v3(L[0][0], L[0][1], 2.01), b = v3(L[1][0], L[1][1], 2.01);
-      var mid = a.clone().add(b).multiplyScalar(0.5);
-      var lift = 2.01 + a.distanceTo(b) * 0.22;
-      mid.normalize().multiplyScalar(lift);
-      var curve = new THREE.QuadraticBezierCurve3(a, mid, b);
-      var pts = curve.getPoints(120);
-      var g = new THREE.BufferGeometry().setFromPoints(pts);
-      g.setDrawRange(0, 0);
-      var line = new THREE.Line(g, new THREE.LineBasicMaterial({
-        color: idx % 3 === 0 ? 0x2fd6b4 : 0x7fd4ff, transparent:true, opacity:0.85 }));
-      group.add(line);
-      /* a travelling bead of cargo */
-      var bead = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8),
-        new THREE.MeshBasicMaterial({ color:0xeafff9 }));
-      group.add(bead);
-      arcs.push({ line:line, curve:curve, bead:bead, total:120,
-                  phase: idx / LANES.length, speed: 0.055 + (idx % 4) * 0.012 });
-    });
-
-    /* a rim light so the sphere reads as a lit object on black */
-    var rim = new THREE.DirectionalLight(0xbfe4ff, 2.6); rim.position.set(-4, 2, 3);
-    scene.add(rim);
-    var warm = new THREE.DirectionalLight(0xffd0a0, 1.1); warm.position.set(3, -1, 2);
-    scene.add(warm);
-    scene.add(new THREE.AmbientLight(0x1a2630, 0.9));
-
-    group.rotation.x = 0.33;
-
-    /* drag to turn */
-    var drag = false, px = 0, vel = 0.0016;
-    function down(e){ drag = true; px = (e.touches ? e.touches[0].clientX : e.clientX); vel = 0; }
-    function move(e){
-      if (!drag) return;
-      var x = (e.touches ? e.touches[0].clientX : e.clientX);
-      var dx = x - px; px = x;
-      group.rotation.y += dx * 0.005; vel = dx * 0.005;
-      if (e.cancelable) e.preventDefault();
-    }
-    function up(){ drag = false; }
-    canvas.addEventListener("mousedown", down);
-    canvas.addEventListener("touchstart", down, { passive:true });
-    window.addEventListener("mousemove", move);
-    canvas.addEventListener("touchmove", move, { passive:false });
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchend", up);
-    canvas.style.cursor = "grab";
-
-    return { renderer:renderer, scene:scene, camera:camera, group:group, arcs:arcs,
-             step:function(){ if (!drag){ group.rotation.y += vel; vel += (0.0016 - vel) * 0.02; } } };
-  })();
-
-  /* ================================================================== */
-  /*  SIZING                                                            */
-  /* ================================================================== */
-  function fit(o, el){
-    var r = el.getBoundingClientRect();
-    var w = Math.max(1, r.width), h = Math.max(1, r.height);
-    o.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    o.renderer.setSize(w, h, false);
-    o.camera.aspect = w / h;
-    o.camera.updateProjectionMatrix();
-  }
-  function fitAll(){
-    fit(sea, document.getElementById("seaCanvas"));
-    fit(orb, document.getElementById("globeCanvas"));
-  }
-  fitAll();
-  var rt;
-  window.addEventListener("resize", function(){
-    clearTimeout(rt); rt = setTimeout(function(){ fitAll(); if (window.ScrollTrigger) ScrollTrigger.refresh(); }, 140);
-  });
-
-  /* ================================================================== */
-  /*  THE CAMERA DIVE — scroll drives it                                */
-  /*  high and astern  ->  along the stacks  ->  low over the bow        */
-  /* ================================================================== */
-  var camState = { t: 0 };
-  /* ship: bow at x=+150, stern at x=-150, boxes up to y~55, beam +-22.
-     the path stays outside the hull and finishes above and ahead of the stem,
-     looking back and down at the bow opening the water. */
-  var KEYS = [
-    { p:[-620, 300, 380], l:[  10,  12, 0], fov:46, amp:1.00 },  // high, astern, whole ship
-    { p:[-330, 168, 262], l:[  30,  22, 0], fov:42, amp:1.00 },  // dropping in
-    { p:[ -30,  88, 176], l:[ 120,  26, 0], fov:38, amp:1.05 },  // running along the stacks
-    { p:[ 262,  84,  96], l:[ 152,   6, 0], fov:35, amp:1.12 },  // swinging ahead of the bow
-    { p:[ 322, 112,  70], l:[ 150,  -6, 0], fov:38, amp:1.20 }   // above and ahead of the stem
-  ];
-  var tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
-  function applyCam(t){
-    var n = KEYS.length - 1;
-    var f = Math.max(0, Math.min(0.9999, t)) * n;
-    var i = Math.floor(f), k = f - i;
-    var A = KEYS[i], B = KEYS[Math.min(n, i + 1)];
-    var e = k * k * (3 - 2 * k);                     // smoothstep between keys
-    tmpA.set(A.p[0], A.p[1], A.p[2]);
-    tmpB.set(B.p[0], B.p[1], B.p[2]);
-    sea.camera.position.copy(tmpA.lerp(tmpB, e));
-    tmpA.set(A.l[0], A.l[1], A.l[2]);
-    tmpB.set(B.l[0], B.l[1], B.l[2]);
-    sea.camera.lookAt(tmpA.lerp(tmpB, e));
-    sea.camera.fov = A.fov + (B.fov - A.fov) * e;
-    sea.camera.updateProjectionMatrix();
-    sea.uni.uAmp.value = A.amp + (B.amp - A.amp) * e;
-  }
-  applyCam(0);
-
-  if (window.gsap && window.ScrollTrigger && !REDUCE){
-    gsap.to(camState, {
-      t: 1, ease: "none",
-      scrollTrigger: {
-        trigger: "#ocean", start: "top top", end: "+=250%",
-        scrub: 0.6
-      },
-      onUpdate: function(){ applyCam(camState.t); }
-    });
-    /* the words hand over as the camera arrives at the bow */
-    gsap.timeline({ scrollTrigger:{ trigger:"#ocean", start:"18% top", end:"55% top", scrub:0.5 } })
-      .to("#oceanTitle, #oceanSub", { opacity:0, y:-18, duration:1 })
+  /* words hand over partway through the clip */
+  if(window.gsap&&window.ScrollTrigger&&!REDUCE){
+    gsap.timeline({scrollTrigger:{trigger:"#ocean",start:"18% top",end:"52% top",scrub:0.5}})
+      .to("#t1, #s1",{opacity:0,y:-18,duration:1})
       .add(function(){
-        var t = document.getElementById("oceanTitle"), s = document.getElementById("oceanSub"),
-            c = document.getElementById("oceanCap");
-        if (!t) return;
-        t.innerHTML = 'Twelve and a half <b>billion tonnes</b> a year, one cargo at a time.';
-        s.textContent = "Our part is the one nobody photographs: finding the material, qualifying both ends, and staying on the deal until it is discharged and paid.";
-        c.textContent = "Over the bow";
+        var t=document.getElementById("t1"),s=document.getElementById("s1"),c=document.getElementById("cap");
+        if(!t) return;
+        t.innerHTML='Twelve and a half <b>billion tonnes</b> a year, one cargo at a time.';
+        s.textContent="Our part is the one nobody photographs: finding the material, qualifying both ends, and staying on the deal until it is discharged and paid.";
+        c.textContent="Over the bow";
       })
-      .to("#oceanTitle, #oceanSub", { opacity:1, y:0, duration:1 });
-    /* clear the overlay before the pin releases, so no text rides up into the bar */
-    gsap.fromTo("#ocean .ov", { opacity:1 }, {
-      opacity:0, ease:"none",
-      scrollTrigger:{ trigger:"#ocean", start:"62% top", end:"73% top", scrub:0.4 }
+      .to("#t1, #s1",{opacity:1,y:0,duration:1});
+    gsap.fromTo("#ocean .ov",{opacity:1},{opacity:0,ease:"none",
+      scrollTrigger:{trigger:"#ocean",start:"62% top",end:"73% top",scrub:0.4}});
+    gsap.utils.toArray(".grp").forEach(function(el,i){
+      gsap.fromTo(el,{y:26,opacity:0},{y:0,opacity:1,duration:.7,delay:i*0.05,ease:"power2.out",
+        scrollTrigger:{trigger:el,start:"top 88%"}});
     });
-
-    /* globe: scrub a slow approach */
-    gsap.fromTo(orb.camera.position, { z: 9.2 }, {
-      z: 5.6, ease:"none",
-      scrollTrigger:{ trigger:"#reach", start:"top top", end:"+=160%", scrub:0.6 }
+    gsap.utils.toArray(".strip > div").forEach(function(el,i){
+      gsap.fromTo(el,{y:34,opacity:0},{y:0,opacity:1,duration:.8,delay:i*0.08,ease:"power2.out",
+        scrollTrigger:{trigger:el,start:"top 90%"}});
     });
-    /* the white sheets lift in */
-    gsap.utils.toArray(".grp").forEach(function(el, i){
-      gsap.fromTo(el, { y:26, opacity:0 }, {
-        y:0, opacity:1, duration:.7, delay:i * 0.05, ease:"power2.out",
-        scrollTrigger:{ trigger:el, start:"top 88%" }
-      });
-    });
-    gsap.utils.toArray(".strip > div").forEach(function(el, i){
-      gsap.fromTo(el, { y:34, opacity:0 }, {
-        y:0, opacity:1, duration:.8, delay:i * 0.08, ease:"power2.out",
-        scrollTrigger:{ trigger:el, start:"top 90%" }
-      });
-    });
-  } else {
-    applyCam(0.62);
   }
 
-  /* ================================================================== */
-  /*  RENDER LOOP — only what is on screen                              */
-  /* ================================================================== */
-  var clock = new THREE.Clock();
-  var oceanEl = document.getElementById("ocean"), reachEl = document.getElementById("reach");
-  function visible(el){
-    var r = el.getBoundingClientRect();
-    return r.bottom > -40 && r.top < window.innerHeight + 40;
-  }
-  function frame(){
-    var dt = clock.getDelta(), tt = clock.getElapsedTime();
+  /* =========================================================================
+     THE GLOBE — interactive, so it stays real geometry rather than footage
+     ====================================================================== */
+  var hasGL=(function(){ try{var c=document.createElement("canvas");
+    return !!(window.WebGLRenderingContext&&(c.getContext("webgl")||c.getContext("experimental-webgl")));}catch(e){return false;} })();
+  if(!hasGL||!window.THREE){ document.getElementById("reach").style.height="100vh"; return; }
 
-    if (visible(oceanEl)){
-      sea.uni.uTime.value = tt * 0.9;
-      /* the ship rides the swell: gentle pitch, roll and heave */
-      sea.ship.position.y = Math.sin(tt * 0.52) * 2.6 + Math.sin(tt * 0.83) * 1.1;
-      sea.ship.rotation.z = Math.sin(tt * 0.41) * 0.019;
-      sea.ship.rotation.x = Math.sin(tt * 0.63 + 1.1) * 0.011;
-      sea.uni.uBow.value.set(sea.LEN * 0.5, 0, 0);
-      sea.wake.position.y = 1.4 + sea.ship.position.y * 0.3;
-      sea.wakeTex.offset.y = (tt * 0.26) % 1;
-      /* bow foam churning either side of the stem */
-      for (var i = 0; i < sea.foams.length; i++){
-        var f = sea.foams[i], ph = (tt * (0.9 + f.k * 0.7) + f.seed) % 1;
-        var sc = 5 + f.k * 9 + ph * 15;
-        f.m.scale.set(sc, sc, 1);
-        f.m.position.set(sea.LEN * 0.5 - 4 - ph * 118,
-                         1.6 + sea.ship.position.y * 0.4 + Math.sin(ph * 6.28) * 1.3,
-                         f.side * (4 + ph * 34 + f.k * 7));
-        f.m.material.opacity = (1 - ph) * (1 - ph) * 0.30;
-      }
-      sea.renderer.render(sea.scene, sea.camera);
+  var canvas=document.getElementById("globeCanvas");
+  var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+  renderer.setClearColor(0x000000,1);
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(38,1,0.1,100);
+  camera.position.set(0,0,7.4);
+  var group=new THREE.Group(); scene.add(group);
+
+  group.add(new THREE.Mesh(new THREE.SphereGeometry(2,72,54),
+    new THREE.MeshStandardMaterial({color:0x0a1016,roughness:0.55,metalness:0.25})));
+  group.add(new THREE.LineSegments(
+    new THREE.WireframeGeometry(new THREE.SphereGeometry(2.004,36,18)),
+    new THREE.LineBasicMaterial({color:0x1d2c36,transparent:true,opacity:0.5})));
+
+  var LAND=[[],[[18,32],[39,41],[45,47]],[[12,32],[39,41],[45,47],[54,58]],
+    [[8,24],[40,43],[48,71]],[[3,8],[8,24],[25,33],[37,42],[42,71]],
+    [[2,8],[9,16],[21,28],[32,34],[36,42],[42,71]],
+    [[1,8],[9,16],[21,27],[35,36],[36,42],[42,71]],
+    [[10,28],[34,36],[36,42],[42,71]],[[11,30],[34,43],[43,71]],
+    [[12,30],[33,36],[36,42],[42,71]],[[13,30],[32,40],[40,71]],
+    [[14,29],[31,40],[40,48],[48,71]],[[16,28],[30,40],[40,47],[49,54],[54,66]],
+    [[17,26],[29,40],[40,47],[50,55],[55,65]],[[18,25],[30,44],[44,47],[50,56],[56,64]],
+    [[19,25],[31,46],[51,56],[56,62]],[[20,25],[32,47],[55,62]],
+    [[21,28],[33,47],[56,63]],[[21,29],[33,47],[56,63]],[[21,29],[34,45],[57,66]],
+    [[22,30],[34,44],[61,68]],[[22,30],[34,43],[45,46],[60,69]],
+    [[23,31],[34,42],[45,46],[59,69]],[[24,31],[34,42],[59,69]],
+    [[24,30],[34,41],[60,69]],[[25,29],[62,67],[70,71]],[[26,29],[70,71]],
+    [[26,29]],[[27,29]],[[28,29]],[[27,29]],
+    [[0,20],[24,71]],[[0,71]],[[0,71]],[[0,71]],[[0,71]]];
+  var pos=[];
+  for(var r=0;r<LAND.length;r++) for(var k=0;k<LAND[r].length;k++)
+    for(var c=LAND[r][k][0];c<=LAND[r][k][1];c++) for(var j=0;j<3;j++){
+      var la=(90-r*5-Math.random()*5)*Math.PI/180, lo=(-180+c*5+Math.random()*5)*Math.PI/180;
+      pos.push(2.012*Math.cos(la)*Math.sin(lo),2.012*Math.sin(la),2.012*Math.cos(la)*Math.cos(lo));
     }
+  var pg=new THREE.BufferGeometry();
+  pg.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  group.add(new THREE.Points(pg,new THREE.PointsMaterial({
+    color:0xcfd8de,size:0.019,sizeAttenuation:true,transparent:true,opacity:0.9})));
 
-    if (visible(reachEl)){
-      orb.step();
-      for (var a = 0; a < orb.arcs.length; a++){
-        var A = orb.arcs[a];
-        var p = ((tt * A.speed) + A.phase) % 1.35;      // draw, hold, then restart
-        var drawn = Math.min(1, p / 0.72);
-        A.line.geometry.setDrawRange(0, Math.floor(drawn * A.total));
-        A.line.material.opacity = p > 1.1 ? Math.max(0, (1.35 - p) / 0.25) * 0.85 : 0.85;
-        if (drawn > 0.02 && drawn < 1){
-          A.bead.visible = true;
-          A.bead.position.copy(A.curve.getPoint(drawn));
-        } else {
-          A.bead.visible = false;
-        }
-      }
-      orb.renderer.render(orb.scene, orb.camera);
-    }
-    requestAnimationFrame(frame);
+  function v3(a,b,rad){ var la=a*Math.PI/180,lo=b*Math.PI/180;
+    return new THREE.Vector3(rad*Math.cos(la)*Math.sin(lo),rad*Math.sin(la),rad*Math.cos(la)*Math.cos(lo)); }
+  var LANES=[[[-23,-43],[51,4]],[[-29,31],[25,56]],[[25,56],[31,121]],[[-20,118],[31,121]],
+             [[51,4],[40,-74]],[[25,56],[19,73]],[[-34,18],[1,104]],[[31,121],[34,-118]]];
+  var arcs=[];
+  LANES.forEach(function(L,idx){
+    var a=v3(L[0][0],L[0][1],2.01), b=v3(L[1][0],L[1][1],2.01);
+    var mid=a.clone().add(b).multiplyScalar(0.5);
+    mid.normalize().multiplyScalar(2.01+a.distanceTo(b)*0.22);
+    var curve=new THREE.QuadraticBezierCurve3(a,mid,b);
+    var g=new THREE.BufferGeometry().setFromPoints(curve.getPoints(120));
+    g.setDrawRange(0,0);
+    var line=new THREE.Line(g,new THREE.LineBasicMaterial({
+      color: idx%3===0?0x2fd6b4:0x7fd4ff, transparent:true, opacity:0.85}));
+    group.add(line);
+    var bead=new THREE.Mesh(new THREE.SphereGeometry(0.022,10,8),
+      new THREE.MeshBasicMaterial({color:0xeafff9}));
+    group.add(bead);
+    arcs.push({line:line,curve:curve,bead:bead,total:120,phase:idx/LANES.length,speed:0.055+(idx%4)*0.012});
+  });
+
+  var rim=new THREE.DirectionalLight(0xbfe4ff,2.6); rim.position.set(-4,2,3); scene.add(rim);
+  var warm=new THREE.DirectionalLight(0xffd0a0,1.1); warm.position.set(3,-1,2); scene.add(warm);
+  scene.add(new THREE.AmbientLight(0x1a2630,0.9));
+  group.rotation.x=0.33;
+
+  var drag=false,px=0,vel=0.0016;
+  function dn(e){drag=true;px=(e.touches?e.touches[0].clientX:e.clientX);vel=0;}
+  function mv(e){ if(!drag)return; var x=(e.touches?e.touches[0].clientX:e.clientX);
+    var dx=x-px; px=x; group.rotation.y+=dx*0.005; vel=dx*0.005; if(e.cancelable)e.preventDefault(); }
+  function upp(){drag=false;}
+  canvas.addEventListener("mousedown",dn); canvas.addEventListener("touchstart",dn,{passive:true});
+  window.addEventListener("mousemove",mv); canvas.addEventListener("touchmove",mv,{passive:false});
+  window.addEventListener("mouseup",upp); window.addEventListener("touchend",upp);
+  canvas.style.cursor="grab";
+
+  function fit(){
+    var r=canvas.getBoundingClientRect(), w=Math.max(1,r.width), h=Math.max(1,r.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
   }
-  requestAnimationFrame(frame);
+  fit();
+  var rt; window.addEventListener("resize",function(){ clearTimeout(rt);
+    rt=setTimeout(function(){ fit(); if(window.ScrollTrigger) ScrollTrigger.refresh(); },140); });
 
-  /* lift the curtain once the first frame is on screen */
-  setTimeout(function(){
-    var l = document.getElementById("loading");
-    if (l) l.classList.add("gone");
-  }, 420);
+  if(window.gsap&&window.ScrollTrigger&&!REDUCE){
+    gsap.fromTo(camera.position,{z:9.2},{z:5.6,ease:"none",
+      scrollTrigger:{trigger:"#reach",start:"top top",end:"+=160%",scrub:0.6}});
+  }
 
-  /* anchors, without fighting ScrollTrigger */
-  Array.prototype.forEach.call(document.querySelectorAll('.bar a[href^="#"]'), function(a){
-    a.addEventListener("click", function(ev){
-      var el = document.querySelector(a.getAttribute("href"));
-      if (!el) return;
+  var clock=new THREE.Clock(), reach=document.getElementById("reach");
+  (function loop(){
+    var tt=clock.getElapsedTime();
+    var rb=reach.getBoundingClientRect();
+    if(rb.bottom>-40&&rb.top<window.innerHeight+40){
+      if(!drag){ group.rotation.y+=vel; vel+=(0.0016-vel)*0.02; }
+      for(var a=0;a<arcs.length;a++){
+        var A=arcs[a], p=((tt*A.speed)+A.phase)%1.35, drawn=Math.min(1,p/0.72);
+        A.line.geometry.setDrawRange(0,Math.floor(drawn*A.total));
+        A.line.material.opacity = p>1.1 ? Math.max(0,(1.35-p)/0.25)*0.85 : 0.85;
+        if(drawn>0.02&&drawn<1){ A.bead.visible=true; A.bead.position.copy(A.curve.getPoint(drawn)); }
+        else A.bead.visible=false;
+      }
+      renderer.render(scene,camera);
+    }
+    requestAnimationFrame(loop);
+  })();
+
+  Array.prototype.forEach.call(document.querySelectorAll('.bar a[href^="#"]'),function(a){
+    a.addEventListener("click",function(ev){
+      var el=document.querySelector(a.getAttribute("href")); if(!el) return;
       ev.preventDefault();
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset, behavior: "smooth" });
+      window.scrollTo({top:el.getBoundingClientRect().top+window.pageYOffset,behavior:"smooth"});
     });
   });
 })();
