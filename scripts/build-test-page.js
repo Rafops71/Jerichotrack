@@ -28,6 +28,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -203,6 +204,54 @@ const built = esbuild.buildSync({
 if (built.errors && built.errors.length) {
   console.error(built.errors.map(e => e.text).join('\n'));
   fatal('could not bundle the local Firebase SDK.');
+}
+
+/* ---- 5b. Vendor the map libraries and the world atlas ------------------- */
+/*
+ * The map pulls d3, d3-sankey, topojson and the world atlas from cdnjs and
+ * jsdelivr at runtime. Left pointing there, the robot depends on this machine's
+ * proxy, which throttles repeated fetches: the map tests passed alone and failed
+ * inside a suite with net::ERR_TOO_MANY_RETRIES, which read as an app fault and
+ * was not one.
+ *
+ * So these are cached locally once and the sandbox build is pointed at the
+ * copies, exactly as the Firebase SDK already is. The files are the same files
+ * the live app uses - this changes where the robot fetches them from, not what
+ * the app does. index.html itself is never modified.
+ *
+ * Only the app that actually has a map is patched; companion.html has none.
+ */
+const MAP_ASSETS = [
+  ['https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js', 'd3.min.js'],
+  ['https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js', 'd3-sankey.min.js'],
+  ['https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js', 'topojson.min.js'],
+  ['https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json', 'countries-110m.json']
+];
+
+if (html.includes('const MAP_LIBS=[')) {
+  const vendorDir = path.join(OUT_DIR, 'vendor');
+  fs.mkdirSync(vendorDir, { recursive: true });
+
+  for (const [url, name] of MAP_ASSETS) {
+    const dest = path.join(vendorDir, name);
+    if (fs.existsSync(dest) && fs.statSync(dest).size > 1000) continue;   // cached
+    /*
+     * curl rather than fetch: it picks the proxy up from the environment, which
+     * Node's fetch does not, and this is the one place that has to reach out.
+     */
+    const got = spawnSync('curl', ['-sSfL', '--max-time', '90', '-o', dest, url],
+                          { cwd: ROOT, stdio: 'inherit' });
+    if (got.status !== 0 || !fs.existsSync(dest) || fs.statSync(dest).size < 1000) {
+      fatal('could not cache ' + name + ' for the sandbox build.',
+            'The map tests need it locally. Check the network, then re-run.');
+    }
+  }
+
+  for (const [url, name] of MAP_ASSETS) {
+    html = mustReplace(html, url, './vendor/' + name, 'the map asset ' + name);
+  }
+  console.log('Cached ' + MAP_ASSETS.length + ' map assets in ' +
+              path.relative(ROOT, vendorDir) + ' and pointed the sandbox at them');
 }
 
 /* ---- 6. Safety net: the page must not be able to reach the real project -- */

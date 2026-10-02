@@ -77,21 +77,48 @@ test('@robot DeskItem39_the_ticker_scrolls_without_going_blank', async ({ page }
 
 /* ---------------- the map ---------------- */
 
+/*
+ * The globe draws on a CANVAS, not an svg - d3.geoPath(proj, ctx) paints to a 2D
+ * context. The network and flow views are the svg ones. Asserting svg here cost
+ * three wrong diagnoses, twice reported as an app bug when the map was working
+ * the whole time; so these check the canvas, and check it was actually painted
+ * rather than merely created.
+ */
+
+/** Is this canvas painted, or a blank rectangle? */
+async function canvasIsPainted(page) {
+  return page.evaluate(() => {
+    const c = document.querySelector('#mapStage canvas');
+    if (!c) return { painted: false, why: 'no canvas' };
+    const ctx = c.getContext('2d');
+    const { data } = ctx.getImageData(0, 0, c.width, c.height);
+    let lit = 0;
+    for (let i = 3; i < data.length; i += 4 * 97) if (data[i] > 8) lit++;   // sample alpha
+    return { painted: lit > 50, lit, w: c.width, h: c.height };
+  });
+}
+
+/** A cheap signature of what the canvas currently shows, to spot a redraw. */
+async function canvasSignature(page) {
+  return page.evaluate(() => {
+    const c = document.querySelector('#mapStage canvas');
+    if (!c) return 'none';
+    const { data } = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    let h = 0;
+    for (let i = 0; i < data.length; i += 4 * 301) h = (h * 31 + data[i]) % 1e9;
+    return String(h);
+  });
+}
+
 test('@robot DeskItem40_the_map_opens_and_draws_the_world', async ({ page }) => {
   await app.openApp(page);
   await app.goToTab(page, 'map');
 
-  /*
-   * The country paths come from the world atlas, so a drawn map means both d3
-   * and the atlas arrived and the projection ran.
-   *
-   * The app has its own message for a map that cannot load, so wait for EITHER
-   * outcome and report what it said. A bare timeout on the svg tells you nothing
-   * about why, which cost an hour the first time this failed.
-   */
+  /* Wait for either outcome and report what the app said. A bare timeout tells
+     you nothing about why, which is what sent me down three wrong paths. */
   await page.waitForFunction(
     () => {
-      if (document.querySelector('#mapStage svg')) return true;
+      if (document.querySelector('#mapStage canvas')) return true;
       const l = document.getElementById('mapLoading');
       return !!(l && /could not load/i.test(l.textContent || ''));
     },
@@ -101,34 +128,40 @@ test('@robot DeskItem40_the_map_opens_and_draws_the_world', async ({ page }) => 
 
   const said = (await page.locator('#mapLoading').innerText().catch(() => '')).trim();
   const libs = await page.evaluate(() => ({ d3: typeof window.d3, topo: typeof window.topojson }));
-  expect(await page.locator('#mapStage svg').count(),
-    'the map did not draw. The app said: "' + said + '". ' +
-    'd3=' + libs.d3 + ', topojson=' + libs.topo).toBeGreaterThan(0);
+  expect(await page.locator('#mapStage canvas').count(),
+    'the map did not draw. The app said: "' + said + '". d3=' + libs.d3 + ', topojson=' + libs.topo)
+    .toBeGreaterThan(0);
 
-  const paths = await page.locator('#mapStage svg path').count();
-  expect(paths, 'the world should be drawn as country shapes').toBeGreaterThan(50);
+  const paint = await canvasIsPainted(page);
+  expect(paint.painted,
+    'the canvas exists but nothing was painted on it: ' + JSON.stringify(paint)).toBe(true);
 });
 
 test('@robot DeskItem41_can_switch_between_the_operations_and_atlas_maps', async ({ page }) => {
   await app.openApp(page);
   await app.goToTab(page, 'map');
-  await expect(page.locator('#mapStage svg')).toBeVisible({ timeout: 45000 });
+  await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
 
-  const before = await page.locator('#globeStyleBtn').innerText();
+  const beforeLabel = (await page.locator('#globeStyleBtn').innerText()).trim();
+  const beforePixels = await canvasSignature(page);
+
   await page.click('#globeStyleBtn');
-  await page.waitForTimeout(1200);
-  const after = await page.locator('#globeStyleBtn').innerText();
+  await page.waitForTimeout(1500);
 
-  expect(after.trim(), 'the button should now offer the other look, was: ' + before)
-    .not.toBe(before.trim());
-  await expect(page.locator('#mapStage svg'),
-    'the map should still be drawn after switching look').toBeVisible();
-  expect(await page.locator('#mapStage svg path').count()).toBeGreaterThan(50);
+  const afterLabel = (await page.locator('#globeStyleBtn').innerText()).trim();
+  expect(afterLabel, 'the button should now offer the other look, was: ' + beforeLabel)
+    .not.toBe(beforeLabel);
+
+  /* The look has to actually change, not just the button text. */
+  expect(await canvasSignature(page),
+    'switching the look should repaint the map differently').not.toBe(beforePixels);
+  expect((await canvasIsPainted(page)).painted,
+    'the map should still be painted after switching look').toBe(true);
 });
 
 test('@robot DeskItem42_can_filter_the_map_by_commodity_service_or_name', async ({ page }) => {
-  /* Two counterparties with positions already set, so the test is about the
-     filter rather than about geocoding. */
+  /* Two counterparties with positions already set, so this is about the filter
+     rather than about geocoding. */
   await verify.seed('jericho_contacts', '910001', {
     id: 910001, name: 'Chidi Okonkwo', company: 'Lagos Metals Ltd', type: 'Seller',
     city: 'Lagos', country: 'Nigeria', commodity: 'Copper Cathodes',
@@ -143,21 +176,24 @@ test('@robot DeskItem42_can_filter_the_map_by_commodity_service_or_name', async 
 
   await app.openApp(page);
   await app.goToTab(page, 'map');
-  await expect(page.locator('#mapStage svg')).toBeVisible({ timeout: 45000 });
+  await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
 
   const options = await page.locator('#mapFilter option').allInnerTexts();
-  expect(options.join(' | '), 'the filter should offer commodities').toMatch(/Copper Cathodes/i);
-  expect(options.join(' | '), 'the filter should offer services').toMatch(/Warehousing/i);
-  expect(options.join(' | '), 'the filter should offer names').toMatch(/Chidi Okonkwo|Lagos Metals/i);
+  const joined = options.join(' | ');
+  expect(joined, 'the filter should offer commodities').toMatch(/Copper Cathodes/i);
+  expect(joined, 'the filter should offer services').toMatch(/Warehousing/i);
+  expect(joined, 'the filter should offer names').toMatch(/Chidi Okonkwo|Lagos Metals/i);
 
-  // Choosing one narrows what is counted as showing.
-  const all = (await page.locator('#mapCount').innerText()).match(/\d+/);
+  // Everyone first: the count reads "N of M shown".
+  await expect(page.locator('#mapCount')).toContainText('2 of 2');
+
+  // Narrowing to one commodity leaves one, and it is the right one.
   await page.selectOption('#mapFilter', { label: options.find(o => /Copper Cathodes/i.test(o)) });
   await page.waitForTimeout(900);
-  const narrowed = (await page.locator('#mapCount').innerText()).match(/\d+/);
-  expect(Number(narrowed[0]), 'filtering should show fewer than everything')
-    .toBeLessThan(Number(all[0]) + 1);
-  expect(Number(narrowed[0]), 'the copper seller should still be showing').toBeGreaterThan(0);
+  await expect(page.locator('#mapCount')).toContainText('1 of 2');
+  await expect(page.locator('#mapList')).toContainText('Lagos Metals Ltd');
+  await expect(page.locator('#mapList'),
+    'the warehouse does not trade copper and should drop out').not.toContainText('Rotterdam');
 });
 
 test('@robot DeskItem43_can_zoom_in_and_see_cities', async ({ page }) => {
@@ -168,22 +204,25 @@ test('@robot DeskItem43_can_zoom_in_and_see_cities', async ({ page }) => {
   });
   await app.openApp(page);
   await app.goToTab(page, 'map');
-  await expect(page.locator('#mapStage svg')).toBeVisible({ timeout: 45000 });
+  await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
 
-  const label = () => page.locator('#mapZoomLabel').innerText();
-  const before = await label();
+  const before = (await page.locator('#mapZoomLabel').innerText()).trim();
+  const beforePixels = await canvasSignature(page);
+
   await page.click('[onclick="mapZoom(1)"]');
   await page.click('[onclick="mapZoom(1)"]');
-  await page.waitForTimeout(900);
-  const after = await label();
-  expect(after.trim(), 'zooming in should change the zoom reading, was: ' + before)
-    .not.toBe(before.trim());
+  await page.waitForTimeout(1200);
 
-  /* Zoomed in, the city has to be identifiable, not just the country. */
-  const stage = await page.locator('#mapStage').innerText();
-  const list = await page.locator('#mapList').innerText().catch(() => '');
-  expect((stage + ' ' + list), 'the city should be named once zoomed in')
-    .toMatch(/Iskenderun/i);
+  expect((await page.locator('#mapZoomLabel').innerText()).trim(),
+    'zooming should change the zoom reading, was: ' + before).not.toBe(before);
+  expect(await canvasSignature(page),
+    'zooming in should redraw the globe larger').not.toBe(beforePixels);
+
+  /* The city has to be identifiable, not just the country. The canvas labels are
+     painted pixels, so the readable proof is the match list beside the map. */
+  await expect(page.locator('#mapList'),
+    'the city should be named next to the map').toContainText(/Iskenderun/i);
+  await expect(page.locator('#mapList')).toContainText(/Turkey/i);
 });
 
 /* ---------------- backup ---------------- */
