@@ -7,3 +7,4 @@ firestore-debug.log
 ui-debug.log
 .claude/settings.local.json
 .impeccable/review/
+site/vid/*.webm

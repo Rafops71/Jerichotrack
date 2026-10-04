@@ -35,7 +35,7 @@ p{margin:0}
   padding-inline:clamp(16px,5vw,64px);
   color:#fff; mix-blend-mode:difference;
 }
-.bar .nm{font-weight:600; font-size:17px; letter-spacing:.34em; margin-right:auto}
+.bar .nm{opacity:0; transition:opacity .4s ease; font-weight:600; font-size:17px; letter-spacing:.34em; margin-right:auto}
 .bar a{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:inherit; text-decoration:none; opacity:.85}
 .bar a:hover{opacity:1}
 @media(max-width:700px){ .bar a{display:none} }
@@ -70,6 +70,14 @@ p{margin:0}
 .fig .l{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.17em; text-transform:uppercase; margin-top:7px}
 .fig .s{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:#8A9096; margin-top:6px}
 @media(max-width:700px){ .fig{right:auto; left:clamp(16px,5vw,64px); bottom:auto; top:42vh; text-align:left; max-width:80vw} }
+.fitbtn{
+  position:absolute; right:clamp(16px,5vw,64px); top:clamp(84px,13vh,116px); z-index:6;
+  font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  background:rgba(8,12,16,.72); border:1px solid rgba(255,255,255,.3); color:#F2F3F4;
+  padding:8px 12px; border-radius:2px; cursor:pointer; pointer-events:auto;
+}
+.fitbtn:hover{border-color:#fff}
+.fitwhole #heroVid{object-fit:contain}
 .cue{
   position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
   font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--film-dim);
@@ -132,7 +140,7 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
       The playhead is tied to scroll: scrolling IS the camera move.
     -->
     <video id="heroVid" playsinline muted preload="auto"
-           data-src="" data-src-portrait="" poster=""></video>
+           data-src="vid/jericho-opener.mp4" data-src-portrait="" poster=""></video>
 
     <div class="slot" id="heroSlot">
       <div class="box">
@@ -148,16 +156,17 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
     </div>
 
     <div class="ov">
-      <p class="cap" id="cap">At sea</p>
+      <p class="cap" id="cap"></p>
       <div class="inner">
-        <h2 id="t1">Material moves because someone <b>placed</b> it.</h2>
-        <p class="sub" id="s1">Jericho sources and places physical commodities — energy, ferrous, non-ferrous and critical materials, with the logistics that carry them.</p>
+        <h2 id="t1" style="opacity:0">Material moves because someone <b>placed</b> it.</h2>
+        <p class="sub" id="s1" style="opacity:0">Jericho sources and places physical commodities — energy, ferrous, non-ferrous and critical materials, with the logistics that carry them.</p>
       </div>
       <div class="fig">
         <span class="v" id="figA">0</span>
         <span class="l">Tonnes moved by sea each year</span>
         <span class="s">UNCTAD · 2024</span>
       </div>
+      <button class="fitbtn" id="fitBtn">Shape: fill</button>
       <p class="cue">Scroll</p>
     </div>
   </div>
@@ -309,9 +318,22 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
     }
   })();
 
-  /* words hand over partway through the clip */
+  /* temporary: flip between filling the screen and showing the whole frame */
+  (function(){
+    var b=document.getElementById("fitBtn"); if(!b) return;
+    b.addEventListener("click", function(){
+      var whole = document.body.classList.toggle("fitwhole");
+      b.textContent = whole ? "Shape: whole video" : "Shape: fill";
+    });
+  })();
+
+  /* the brand lands alone, then the words arrive */
   if(window.gsap&&window.ScrollTrigger&&!REDUCE){
-    gsap.timeline({scrollTrigger:{trigger:"#ocean",start:"18% top",end:"52% top",scrub:0.5}})
+    gsap.to("#t1, #s1",{opacity:1,duration:1,ease:"none",
+      scrollTrigger:{trigger:"#ocean",start:"14% top",end:"24% top",scrub:0.4}});
+    gsap.to(".bar .nm",{opacity:1,duration:1,ease:"none",
+      scrollTrigger:{trigger:"#ocean",start:"58% top",end:"70% top",scrub:0.4}});
+    gsap.timeline({scrollTrigger:{trigger:"#ocean",start:"30% top",end:"52% top",scrub:0.5}})
       .to("#t1, #s1",{opacity:0,y:-18,duration:1})
       .add(function(){
         var t=document.getElementById("t1"),s=document.getElementById("s1"),c=document.getElementById("cap");
