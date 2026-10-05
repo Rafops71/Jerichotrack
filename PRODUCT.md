@@ -45,6 +45,8 @@ has NOT cleared it as a site claim. See *Capabilities and Constraints*.
 ## Operating Context
 
 - **Base: Dubai.** Confirmed as the only location the site may name.
+- Jericho does **not** provide services or logistics. Those are bought from third
+  parties by the counterparties; the site must never present them as Jericho's.
 - Physical commodity brokerage: finds the material, qualifies both ends, holds the
   transaction together until it ships and is paid.
 - Two principals, Rafael and Rodrigo, with no staff. Evidenced in the internal
@@ -68,15 +70,15 @@ has NOT cleared it as a site claim. See *Capabilities and Constraints*.
 
 1. The name Jericho.
 2. Dubai as the base.
-3. The five commodity groups and the services, with the materials named under
-   each as listed below.
+3. The four commodity groups, with the materials named under each as listed
+   below.
 
 **Everything else is a placeholder or omitted.** The user explicitly did not clear
 the two-principal structure, the counterparty-screening claim, the legal entity,
 registration, VAT, trade licence, or any location beyond Dubai. These are true or
 pending but may not appear as site claims yet.
 
-**The five groups (confirmed complete and accurate):**
+**The four groups (confirmed complete and accurate):**
 
 | Group | Materials |
 |---|---|
@@ -84,7 +86,6 @@ pending but may not appear as site claims yet.
 | Ferrous | Iron ore, pig iron, hot briquetted iron, billet, steel scrap, ferrous scrap |
 | Non-ferrous | Copper, platinum, palladium, rhodium, gold, silver |
 | Critical materials | Chrome, manganese, antimony, lithium |
-| Services & logistics | Ocean freight, freight forwarding, inspection, warehousing, customs clearance, trade finance, insurance |
 
 **Absolute content prohibitions, set by the user and non-negotiable:**
 
