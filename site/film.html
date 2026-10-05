@@ -10,7 +10,7 @@
 <style>
 :root{
   --white:#FFFFFF; --ink:#101113; --dim:#5E6064; --line:#E4E5E7;
-  --film:#000000; --film-fg:#F2F3F4; --film-dim:#A7ADB3;
+  --film:#FFFFFF; --film-fg:#101113; --film-dim:#5E6064;
   --accent:#0E6B5C;
   --disp:"Readex Pro",system-ui,sans-serif;
   --mono:"Spline Sans Mono",ui-monospace,monospace;
@@ -33,7 +33,7 @@ p{margin:0}
   position:fixed; inset:0 0 auto 0; z-index:50; height:62px;
   display:flex; align-items:center; gap:22px;
   padding-inline:clamp(16px,5vw,64px);
-  color:#fff; mix-blend-mode:difference;
+  color:var(--ink);
 }
 .bar .nm{opacity:0; transition:opacity .4s ease; font-weight:600; font-size:17px; letter-spacing:.34em; margin-right:auto}
 .bar a{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:inherit; text-decoration:none; opacity:.85}
@@ -49,52 +49,64 @@ p{margin:0}
 
 /* the scrim: white type never sits directly on bright footage */
 .ov{position:absolute; inset:0; pointer-events:none; color:var(--film-fg)}
+/* no wash over the footage: the words sit on their own solid panels instead,
+   so the film stays exactly as shot and the type stays fully legible */
 .ov::before{
   content:""; position:absolute; inset:0;
-  background:
-    linear-gradient(to top, rgba(4,8,12,.88) 0%, rgba(4,8,12,.64) 22%, rgba(4,8,12,.16) 46%, transparent 62%),
-    linear-gradient(to right, rgba(4,8,12,.74) 0%, rgba(4,8,12,.32) 34%, transparent 58%),
-    linear-gradient(to bottom, rgba(4,8,12,.70) 0%, transparent 18%);
+  background:linear-gradient(to bottom, rgba(255,255,255,.88) 0%, rgba(255,255,255,.52) 38%, rgba(255,255,255,.16) 70%, transparent 100%);
+  height:150px;
 }
 .ov > *{position:relative}
-.ov .inner{position:absolute; left:clamp(16px,5vw,64px); right:clamp(16px,5vw,64px); bottom:clamp(60px,10vh,112px)}
-.ov h2{font-size:clamp(2rem,5.4vw,4.3rem); max-width:17ch}
-.ov h2 b{font-weight:600; color:#fff}
-.ov .sub{margin-top:18px; max-width:46ch; color:var(--film-dim); font-size:clamp(.95rem,1.3vw,1.08rem)}
+.ov .inner{
+  position:absolute; left:0; bottom:0; max-width:min(60ch,54vw);
+  background:var(--white);
+  padding:clamp(26px,3.4vw,46px) clamp(26px,4vw,56px) clamp(30px,4vw,52px) clamp(16px,5vw,64px);
+}
+@media(max-width:700px){ .ov .inner{max-width:100%; right:0} }
+.ov h2{font-size:clamp(1.65rem,3.3vw,2.85rem); max-width:19ch}
+.ov h2 b{font-weight:600; color:#000}
+.ov .sub{margin-top:16px; max-width:46ch; color:var(--dim); font-size:clamp(.95rem,1.3vw,1.06rem)}
 .ov .cap{
   position:absolute; left:clamp(16px,5vw,64px); top:clamp(84px,13vh,116px);
-  font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--film-dim);
+  font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink); background:var(--white); padding:7px 11px;
 }
-.fig{position:absolute; right:clamp(16px,5vw,64px); bottom:clamp(60px,10vh,112px); text-align:right; max-width:46vw; color:var(--film-dim)}
-.fig .v{display:block; font-family:var(--mono); font-weight:500; font-size:clamp(1.1rem,2vw,1.55rem); color:#fff; font-variant-numeric:tabular-nums}
+.ov .cap:empty{display:none}
+.fig{
+  position:absolute; right:0; bottom:0; text-align:right; max-width:40vw; color:var(--dim);
+  background:var(--white); padding:22px clamp(16px,5vw,64px) 24px 28px;
+}
+@media(max-width:700px){ .fig{right:auto; left:0; bottom:auto; top:16vh; text-align:left; max-width:72vw; padding:16px 22px} }
+.fig .v{display:block; font-family:var(--mono); font-weight:500; font-size:clamp(1.1rem,2vw,1.55rem); color:#101113; font-variant-numeric:tabular-nums}
 .fig .l{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.17em; text-transform:uppercase; margin-top:7px}
-.fig .s{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:#8A9096; margin-top:6px}
+.fig .s{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:#6E7276; margin-top:6px}
 @media(max-width:700px){ .fig{right:auto; left:clamp(16px,5vw,64px); bottom:auto; top:42vh; text-align:left; max-width:80vw} }
 .fitbtn{
   position:absolute; right:clamp(16px,5vw,64px); top:clamp(84px,13vh,116px); z-index:6;
   font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
-  background:rgba(8,12,16,.72); border:1px solid rgba(255,255,255,.3); color:#F2F3F4;
+  background:rgba(255,255,255,.86); border:1px solid rgba(0,0,0,.25); color:#101113;
   padding:8px 12px; border-radius:2px; cursor:pointer; pointer-events:auto;
 }
-.fitbtn:hover{border-color:#fff}
+.fitbtn:hover{border-color:#101113}
 .fitwhole #heroVid{object-fit:contain}
 .cue{
   position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
-  font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--film-dim);
+  font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--ink); background:var(--white); padding:6px 12px;
 }
 
 /* the video slot, shown until a clip is dropped in */
 .slot{
   position:absolute; inset:0; display:grid; place-items:center; text-align:center;
   background:
-    radial-gradient(120% 90% at 50% 40%, #16202a, #080b0f 70%);
+    radial-gradient(120% 90% at 50% 40%, #F7F8F9, #E9EBED 70%);
   padding:clamp(20px,5vw,60px);
 }
-.slot .box{max-width:52ch; border:1px dashed #3A454F; padding:clamp(22px,4vw,40px)}
+.slot .box{max-width:52ch; border:1px dashed #BFC5CB; padding:clamp(22px,4vw,40px)}
 .slot .t{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent)}
-.slot h3{margin-top:16px; font-size:clamp(1.2rem,2.4vw,1.7rem); color:#DDE3E8}
-.slot p{margin-top:14px; font-family:var(--mono); font-size:11px; line-height:2; color:#8A9096; letter-spacing:.04em}
-.slot code{color:#C6CED5}
+.slot h3{margin-top:16px; font-size:clamp(1.2rem,2.4vw,1.7rem); color:#24282C}
+.slot p{margin-top:14px; font-family:var(--mono); font-size:11px; line-height:2; color:#5E6064; letter-spacing:.04em}
+.slot code{color:#101113}
 
 /* ---------- white sheets ---------- */
 .sheet{background:var(--white); padding-block:clamp(70px,11vw,150px)}
@@ -110,10 +122,10 @@ p{margin:0}
 .grp li:first-child{border-top:none}
 
 .strip{margin-top:clamp(40px,6vw,76px); display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:clamp(14px,2vw,26px)}
-.plate{position:relative; width:100%; aspect-ratio:16/9; background:#0A0B0C; overflow:hidden; display:grid; place-items:center}
+.plate{position:relative; width:100%; aspect-ratio:16/9; background:#EEF0F2; overflow:hidden; display:grid; place-items:center}
 .plate img, .plate video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
-.plate .ph{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#8A9096; text-align:center; padding:20px; line-height:2}
-.plate .ph b{display:block; color:#C6CED5; margin-bottom:8px; letter-spacing:.2em}
+.plate .ph{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#5E6064; text-align:center; padding:20px; line-height:2}
+.plate .ph b{display:block; color:#101113; margin-bottom:8px; letter-spacing:.2em}
 .strip .cl{margin-top:12px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
 
 .end{background:var(--white); padding-block:clamp(60px,9vw,120px); border-top:1px solid var(--line)}
@@ -340,7 +352,7 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
         if(!t) return;
         t.innerHTML='Twelve and a half <b>billion tonnes</b> a year, one cargo at a time.';
         s.textContent="Our part is the one nobody photographs: finding the material, qualifying both ends, and staying on the deal until it is discharged and paid.";
-        c.textContent="Over the bow";
+        c.textContent="Dubai";
       })
       .to("#t1, #s1",{opacity:1,y:0,duration:1});
     gsap.fromTo("#ocean .ov",{opacity:1},{opacity:0,ease:"none",
@@ -364,17 +376,17 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
 
   var canvas=document.getElementById("globeCanvas");
   var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
-  renderer.setClearColor(0x000000,1);
+  renderer.setClearColor(0xffffff,1);
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(38,1,0.1,100);
   camera.position.set(0,0,7.4);
   var group=new THREE.Group(); scene.add(group);
 
   group.add(new THREE.Mesh(new THREE.SphereGeometry(2,72,54),
-    new THREE.MeshStandardMaterial({color:0x0a1016,roughness:0.55,metalness:0.25})));
+    new THREE.MeshStandardMaterial({color:0xF4F5F6,roughness:0.85,metalness:0.0})));
   group.add(new THREE.LineSegments(
     new THREE.WireframeGeometry(new THREE.SphereGeometry(2.004,36,18)),
-    new THREE.LineBasicMaterial({color:0x1d2c36,transparent:true,opacity:0.5})));
+    new THREE.LineBasicMaterial({color:0x9AA3AA,transparent:true,opacity:0.55})));
 
   var LAND=[[],[[18,32],[39,41],[45,47]],[[12,32],[39,41],[45,47],[54,58]],
     [[8,24],[40,43],[48,71]],[[3,8],[8,24],[25,33],[37,42],[42,71]],
@@ -400,7 +412,7 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
   var pg=new THREE.BufferGeometry();
   pg.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
   group.add(new THREE.Points(pg,new THREE.PointsMaterial({
-    color:0xcfd8de,size:0.019,sizeAttenuation:true,transparent:true,opacity:0.9})));
+    color:0x2B3238,size:0.019,sizeAttenuation:true,transparent:true,opacity:0.95})));
 
   function v3(a,b,rad){ var la=a*Math.PI/180,lo=b*Math.PI/180;
     return new THREE.Vector3(rad*Math.cos(la)*Math.sin(lo),rad*Math.sin(la),rad*Math.cos(la)*Math.cos(lo)); }
@@ -415,17 +427,17 @@ footer{padding-block:34px; font-family:var(--mono); font-size:11px; letter-spaci
     var g=new THREE.BufferGeometry().setFromPoints(curve.getPoints(120));
     g.setDrawRange(0,0);
     var line=new THREE.Line(g,new THREE.LineBasicMaterial({
-      color: idx%3===0?0x2fd6b4:0x7fd4ff, transparent:true, opacity:0.85}));
+      color: idx%3===0?0x0E6B5C:0x1F6FA8, transparent:true, opacity:0.9}));
     group.add(line);
     var bead=new THREE.Mesh(new THREE.SphereGeometry(0.022,10,8),
-      new THREE.MeshBasicMaterial({color:0xeafff9}));
+      new THREE.MeshBasicMaterial({color:0x0E6B5C}));
     group.add(bead);
     arcs.push({line:line,curve:curve,bead:bead,total:120,phase:idx/LANES.length,speed:0.055+(idx%4)*0.012});
   });
 
-  var rim=new THREE.DirectionalLight(0xbfe4ff,2.6); rim.position.set(-4,2,3); scene.add(rim);
-  var warm=new THREE.DirectionalLight(0xffd0a0,1.1); warm.position.set(3,-1,2); scene.add(warm);
-  scene.add(new THREE.AmbientLight(0x1a2630,0.9));
+  var rim=new THREE.DirectionalLight(0xffffff,1.5); rim.position.set(-4,2,3); scene.add(rim);
+  var warm=new THREE.DirectionalLight(0xdfe6ec,0.9); warm.position.set(3,-1,2); scene.add(warm);
+  scene.add(new THREE.AmbientLight(0xffffff,0.95));
   group.rotation.x=0.33;
 
   var drag=false,px=0,vel=0.0016;
