@@ -78,6 +78,13 @@ module.exports = [
   { n: 44, group: 'Map',           text: 'Contacts that arrive late still turn up in the map dropdown' },
   { n: 45, group: 'Map',           text: 'If the map cannot load it tells me why and lets me try again' },
 
+  /* 17/10/2026. "What I want is a system that does not crash." These four are
+     the crash paths that were actually reachable, each now proved shut. */
+  { n: 50, group: 'Never crashes', text: 'Damaged saved data does not stop the app opening, and is not thrown away' },
+  { n: 51, group: 'Never crashes', text: 'A device with no room left says so instead of breaking' },
+  { n: 52, group: 'Never crashes', text: 'One bad record does not take down the whole tab' },
+  { n: 53, group: 'Never crashes', text: 'If something does break, it says so on screen instead of going silent' },
+
   { n: 46, group: 'Safety',        text: 'Nothing I do in the test app can reach my real data',
     manual: false },
   { n: 47, group: 'Safety',        text: 'Without the password, nothing is connected and nothing is readable',

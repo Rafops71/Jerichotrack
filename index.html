@@ -220,6 +220,44 @@ tr:hover td { background: #fafbfc; }
 </head>
 <body>
 
+<!--
+  A fault anywhere below used to leave this app silent: no message, nothing
+  working, and no way to see why on an iPad with no developer console. The
+  companion app has carried this banner for a while; the desktop app never had
+  it. It shows what broke and stays out of the way otherwise.
+-->
+<div id="fatalErrorBanner" style="display:none;background:#fdecea;border-bottom:2px solid #e74c3c;
+  color:#8f2b22;padding:11px 16px;font-size:13px;line-height:1.5;position:relative;z-index:9000;"></div>
+
+<script>
+/* Deliberately the first script on the page, so it is already listening before
+   anything else runs and can report a failure in the app's own setup. */
+window.__jerichoFaults = [];
+function showFatalError(msg){
+  const el=document.getElementById('fatalErrorBanner');
+  const text=String(msg||'Unknown error');
+  window.__jerichoFaults.push({ when:new Date().toISOString(), what:text });
+  if(!el) return;
+  el.style.display='block';
+  // Only the first fault is spelled out; a cascade of follow-on errors would
+  // otherwise bury the one that actually started it.
+  const first=window.__jerichoFaults[0].what;
+  const more=window.__jerichoFaults.length-1;
+  el.innerHTML='<strong>&#9888; Something broke. The app may not work properly.</strong><br>'+
+    first.replace(/&/g,'&amp;').replace(/</g,'&lt;')+
+    (more? '<br><span style="font-size:11px;opacity:.8;">and '+more+' more problem'+(more===1?'':'s')+' after it</span>':'')+
+    '<br><span style="font-size:11px;opacity:.85;">Copy this message and send it to Claude. '+
+    'Your saved data is not affected by this.</span>';
+}
+window.addEventListener('error',function(e){
+  showFatalError((e.message||'Unknown error')+(e.lineno?' (line '+e.lineno+')':''));
+});
+window.addEventListener('unhandledrejection',function(e){
+  const r=e.reason;
+  showFatalError('Background task failed: '+((r&&r.message)?r.message:String(r)));
+});
+</script>
+
 <div id="lockScreen">
   <div class="lock-box">
     <div class="lk-mark">&#9889;</div>
@@ -867,22 +905,136 @@ async function doLock(){
 window.addEventListener('jericho-unlocked',()=>lockUI(false));
 window.addEventListener('jericho-locked',()=>lockUI(true));
 
+/*
+ * Reading saved data must never be able to kill the app.
+ *
+ * This used to be eight bare JSON.parse calls with "|| []" after each one. The
+ * fallback is useless against the real failure: a half-written or tampered entry
+ * makes JSON.parse THROW, and the throw happened at the top level, so every
+ * line of the app below it never ran. One damaged entry and the whole thing was
+ * dead on arrival with a blank screen and no explanation.
+ *
+ * Damaged data is also never thrown away. The unreadable text is kept under its
+ * own name with a .broken suffix so it can still be recovered by hand, and the
+ * banner says so, because silently starting with an empty contact book would
+ * look exactly like losing everything.
+ */
+function readSaved(lsKey,label){
+  let raw=null;
+  try{ raw=localStorage.getItem(lsKey); }
+  catch(e){
+    // Private mode, or storage disabled altogether.
+    showFatalError('Could not read saved '+label+' from this browser: '+e.message+
+                   '. The cloud copy will still load if you are signed in.');
+    return [];
+  }
+  if(raw===null||raw==='') return [];
+  try{
+    const parsed=JSON.parse(raw);
+    if(!Array.isArray(parsed)){
+      throw new Error('expected a list, found '+(parsed===null?'null':typeof parsed));
+    }
+    return parsed;
+  }catch(e){
+    try{
+      if(!localStorage.getItem(lsKey+'.broken')) localStorage.setItem(lsKey+'.broken',raw);
+    }catch(_){ /* nothing more can be done; the message below still appears */ }
+    showFatalError('The saved '+label+' on this device could not be read ('+e.message+
+      '). It has been kept aside as "'+lsKey+'.broken" and nothing was deleted. '+
+      'The cloud copy will load over the top if you are signed in.');
+    return [];
+  }
+}
+
 function loadAllFromLocalStorage(){
-  leads=JSON.parse(localStorage.getItem('jericho_leads'))||[];
-  pipeline=JSON.parse(localStorage.getItem('jericho_pipeline'))||[];
-  contacts=JSON.parse(localStorage.getItem('jericho_contacts'))||[];
-  tasks=JSON.parse(localStorage.getItem('jericho_tasks'))||[];
-  commsLog=JSON.parse(localStorage.getItem('jericho_commslog'))||[];
-  documents=JSON.parse(localStorage.getItem('jericho_documents'))||[];
-  brokerQuotes=JSON.parse(localStorage.getItem('jericho_broker_quotes'))||[];
-  relationships=JSON.parse(localStorage.getItem('jericho_relationships'))||[];
+  leads=readSaved('jericho_leads','leads');
+  pipeline=readSaved('jericho_pipeline','deals');
+  contacts=readSaved('jericho_contacts','contacts');
+  tasks=readSaved('jericho_tasks','tasks');
+  commsLog=readSaved('jericho_commslog','comms log');
+  documents=readSaved('jericho_documents','documents');
+  brokerQuotes=readSaved('jericho_broker_quotes','broker quotes');
+  relationships=readSaved('jericho_relationships','relationships');
 }
 loadAllFromLocalStorage();
+
+/*
+ * The caches are conveniences, not records: a damaged one is simply started
+ * again. Unlike the contact book there is nothing here worth keeping aside, but
+ * it still must not throw, because these run at the top level too.
+ */
+function readSavedObject(lsKey){
+  try{
+    const raw=localStorage.getItem(lsKey);
+    if(!raw) return {};
+    const o=JSON.parse(raw);
+    return (o&&typeof o==='object'&&!Array.isArray(o))?o:{};
+  }catch(e){ try{ localStorage.removeItem(lsKey); }catch(_){} return {}; }
+}
+function readSavedList(lsKey){
+  try{
+    const raw=localStorage.getItem(lsKey);
+    if(!raw) return [];
+    const a=JSON.parse(raw);
+    return Array.isArray(a)?a:[];
+  }catch(e){ try{ localStorage.removeItem(lsKey); }catch(_){} return []; }
+}
+
+/*
+ * Writing to this browser's storage can fail outright: iPad Safari in private
+ * mode refuses, and every browser refuses once its quota is full. That throw
+ * used to come straight out of persist(), so the save button appeared to break
+ * the app even though the cloud write would have succeeded.
+ *
+ * Now the failure is reported and the cloud write still goes ahead, which is
+ * the copy that actually matters.
+ */
+function saveLocal(lsKey,value){
+  try{
+    localStorage.setItem(lsKey,JSON.stringify(value));
+    return true;
+  }catch(e){
+    const full=/quota|exceed|full/i.test(e.name+' '+e.message);
+    setSyncStatus(window._fbReady?'online':'offline');
+    toast(full
+      ? 'This device has run out of room, so nothing could be saved locally. Your cloud copy is still being updated.'
+      : 'This device refused to save locally ('+e.message+'). Your cloud copy is still being updated.',
+      'error', 9000);
+    return false;
+  }
+}
+
+/*
+ * Run something that draws the screen, and survive it going wrong.
+ *
+ * One malformed record -- from an old backup, a half-finished import, a field
+ * that is a number where a string was expected -- used to take out whatever was
+ * drawing it. Inside the sync callback that killed the rest of the sync; inside
+ * a tab switch it left the tab blank with no reason. Now the fault is named in
+ * the banner and everything around it carries on.
+ */
+function safely(what,fn){
+  try{ return fn(); }
+  catch(e){
+    showFatalError('Problem while '+what+': '+((e&&e.message)?e.message:String(e)));
+    return undefined;
+  }
+}
+
+/*
+ * For caches and preferences. Same protection, no message: losing a remembered
+ * globe style or a geocode lookup is not worth interrupting him for, but it
+ * must still never throw out of whatever was running.
+ */
+function saveLocalQuiet(lsKey,value){
+  try{ localStorage.setItem(lsKey,typeof value==='string'?value:JSON.stringify(value)); return true; }
+  catch(e){ return false; }
+}
 
 // Save locally always (instant, safe fallback) + push to Firestore if available
 function persist(key,arr){
   DATA_MAP[key].set(arr);
-  localStorage.setItem(DATA_MAP[key].lsKey,JSON.stringify(arr));
+  saveLocal(DATA_MAP[key].lsKey,arr);
 }
 
 async function saveItemToCloud(key,item){
@@ -925,14 +1077,21 @@ function startCloudSync(){
       const items=[];
       snapshot.forEach(docSnap=>items.push(docSnap.data()));
       DATA_MAP[key].set(items);
-      localStorage.setItem(DATA_MAP[key].lsKey,JSON.stringify(items));
-      DATA_MAP[key].render();
-      updateDashboard();
+      saveLocalQuiet(DATA_MAP[key].lsKey,items);
+      /* Each of these is wrapped on its own: a record that breaks the contacts
+         list must not stop the dashboard counting, or stop the next collection
+         syncing at all. */
+      safely('showing the '+key,()=>DATA_MAP[key].render());
+      safely('updating the dashboard',()=>updateDashboard());
       // Contacts and leads arriving while the map is open should appear on it,
       // rather than waiting for the tab to be left and reopened.
       if(document.getElementById('map-section').style.display==='block'
-         && MAPQ.loaded && (key==='contacts'||key==='leads')) renderMapView();
-      if(document.getElementById('backup-section').style.display==='block')updateBackupStats();
+         && MAPQ.loaded && (key==='contacts'||key==='leads')){
+        safely('redrawing the map',()=>renderMapView());
+      }
+      if(document.getElementById('backup-section').style.display==='block'){
+        safely('updating the backup counts',()=>updateBackupStats());
+      }
       setSyncStatus('online');
       firstLoadCount++;
     },(error)=>{
@@ -985,8 +1144,8 @@ function sortLeads(f){doSort(leads,f);renderLeads();}
 function sortContacts(f){doSort(contacts,f);renderContacts();}
 
 // PRICE CACHE (stays local-only — just a temporary API cache, not shared data)
-let priceCache=JSON.parse(localStorage.getItem('jericho_price_cache'))||{};
-function saveCache(){localStorage.setItem('jericho_price_cache',JSON.stringify(priceCache));}
+let priceCache=readSavedObject('jericho_price_cache');
+function saveCache(){saveLocalQuiet('jericho_price_cache',priceCache);}
 function isStale(key,maxHours){if(!priceCache[key]||!priceCache[key].ts)return true;return(Date.now()-priceCache[key].ts)>maxHours*3600000;}
 function makeCard(id,label,cssClass){return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}"><h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;}
 function fillCard(id,price,unit,change,pct,source,ts){
@@ -1184,17 +1343,21 @@ function showSection(s,btn){
   const target=document.getElementById(map[s]||'');
   if(!target){ document.getElementById('mainContent').style.display='block'; updateDashboard(); return; }
   target.style.display='block';
-  if(s==='dashboard')updateDashboard();
-  else if(s==='leads')renderLeads();
-  else if(s==='pipeline')renderPipeline();
-  else if(s==='contacts')renderContacts();
-  else if(s==='tasks')renderTasks();
-  else if(s==='commslog')renderComms();
-  else if(s==='documents')renderDocs();
-  else if(s==='prices'){renderPriceGrids();renderQuotes();fetchAllPrices(false);}
-  else if(s==='relationships')renderRelationships();
-  else if(s==='map')openMap();
-  else if(s==='backup')updateBackupStats();
+  /* Opening a tab must never be able to break the app. If the thing that draws
+     it fails, the banner says which tab and the rest stays usable. */
+  safely('opening '+s,()=>{
+    if(s==='dashboard')updateDashboard();
+    else if(s==='leads')renderLeads();
+    else if(s==='pipeline')renderPipeline();
+    else if(s==='contacts')renderContacts();
+    else if(s==='tasks')renderTasks();
+    else if(s==='commslog')renderComms();
+    else if(s==='documents')renderDocs();
+    else if(s==='prices'){renderPriceGrids();renderQuotes();fetchAllPrices(false);}
+    else if(s==='relationships')renderRelationships();
+    else if(s==='map')openMap();
+    else if(s==='backup')updateBackupStats();
+  });
 }
 
 // LEADS
@@ -1490,7 +1653,7 @@ async function purgeCommissions(){
     const snap=await getDocs(col);
     let n=0;
     for(const d of snap.docs){ await deleteDoc(doc(col,d.id)); n++; }
-    localStorage.setItem('jericho_comm_purged','1');
+    saveLocalQuiet('jericho_comm_purged','1');
     if(n) toast(n+' commission record'+(n===1?'':'s')+' permanently deleted','info',6000);
   }catch(e){ /* left for the next load; the flag is only set on success */ }
 }
@@ -1889,7 +2052,7 @@ async function impCommit(){
 // import let them through or they were typed in twice by hand. It only
 // ever proposes; the merge happens when the user presses the button.
 // ============================================================
-let DUP = { pairs: [], dismissed: JSON.parse(localStorage.getItem('jericho_dupe_ok') || '[]') };
+let DUP = { pairs: [], dismissed: readSavedList('jericho_dupe_ok') };
 
 function dupPairKey(a,b){ return [a.id,b.id].sort().join('~'); }
 
@@ -1999,7 +2162,7 @@ async function dupMerge(i){
 function dupNotSame(i){
   const p=DUP.pairs[i]; if(!p) return;
   DUP.dismissed.push(dupPairKey(p.keep,p.drop));
-  localStorage.setItem('jericho_dupe_ok',JSON.stringify(DUP.dismissed));
+  saveLocalQuiet('jericho_dupe_ok',DUP.dismissed);
   dupScan();
 }
 
@@ -2017,7 +2180,7 @@ function dupNotSame(i){
 // key and allows browser calls; results are cached locally so the
 // same city is never looked up twice.
 // ------------------------------------------------------------
-let geoCache=JSON.parse(localStorage.getItem('jericho_geocache')||'{}');
+let geoCache=readSavedObject('jericho_geocache');
 function geoKey(city,country){ return ((city||'')+'|'+(country||'')).trim().toLowerCase(); }
 const COUNTRY_ALIAS={ 'uae':'united arab emirates','usa':'united states','us':'united states',
   'uk':'united kingdom','england':'united kingdom','scotland':'united kingdom','wales':'united kingdom',
@@ -2052,7 +2215,7 @@ async function geocode(city,country){
               || (want?null:res[0]);
     geoCache[k]= pick ? {lon:pick.longitude,lat:pick.latitude,label:pick.name+', '+(pick.country||'')} : null;
   }catch(e){ return null; }
-  localStorage.setItem('jericho_geocache',JSON.stringify(geoCache));
+  saveLocalQuiet('jericho_geocache',geoCache);
   return geoCache[k];
 }
 // Saving never waits on the network: the record is already stored, and the
@@ -2150,7 +2313,7 @@ const GLOBE_STYLES={
 };
 function toggleGlobeStyle(btn){
   MAPQ.style = MAPQ.style==='ops' ? 'atlas' : 'ops';
-  localStorage.setItem('jericho_globe_style',MAPQ.style);
+  saveLocalQuiet('jericho_globe_style',MAPQ.style);
   if(btn) btn.textContent=GLOBE_STYLES[MAPQ.style].name;
   renderMapView();
 }
