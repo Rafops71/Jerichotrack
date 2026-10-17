@@ -928,6 +928,10 @@ function startCloudSync(){
       localStorage.setItem(DATA_MAP[key].lsKey,JSON.stringify(items));
       DATA_MAP[key].render();
       updateDashboard();
+      // Contacts and leads arriving while the map is open should appear on it,
+      // rather than waiting for the tab to be left and reopened.
+      if(document.getElementById('map-section').style.display==='block'
+         && MAPQ.loaded && (key==='contacts'||key==='leads')) renderMapView();
       if(document.getElementById('backup-section').style.display==='block')updateBackupStats();
       setSyncStatus('online');
       firstLoadCount++;
@@ -2176,21 +2180,55 @@ function loadScript(src){
   return new Promise((res,rej)=>{
     if(document.querySelector('script[data-map="'+src+'"]')) return res();
     const el=document.createElement('script');
-    el.src=src; el.dataset.map=src; el.onload=()=>res(); el.onerror=()=>rej(new Error('load failed: '+src));
+    el.src=src; el.dataset.map=src;
+    /*
+     * A failed tag is removed again. Left in place it would satisfy the check
+     * above on the next attempt, so Try again would skip the download and then
+     * fail on the missing library instead -- a worse error than the real one.
+     */
+    const fail=(why)=>{ el.remove(); rej(new Error(why+': '+src.split('/').pop())); };
+    const timer=setTimeout(()=>fail('timed out'),MAP_STEP_TIMEOUT);
+    el.onload=()=>{ clearTimeout(timer); res(); };
+    el.onerror=()=>{ clearTimeout(timer); fail('could not be downloaded'); };
     document.head.appendChild(el);
   });
+}
+
+/*
+ * Nothing the map waits for may wait forever. Before this, a download that
+ * never answered -- a hotel wifi that accepts the connection and then goes
+ * quiet -- left "Loading map..." on screen with no reason given and no way
+ * forward short of reloading the whole app.
+ */
+const MAP_STEP_TIMEOUT=20000;
+function withTimeout(promise,what){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timed out waiting for '+what)),MAP_STEP_TIMEOUT))
+  ]);
 }
 async function openMap(){
   const loading=document.getElementById('mapLoading');
   if(!MAPQ.loaded){
     try{
+      loading.style.display='';
       loading.textContent='Loading map…';
       for(const u of MAP_LIBS) await loadScript(u);
-      const r=await fetch(MAP_ATLAS); if(!r.ok) throw new Error('atlas HTTP '+r.status);
-      MAPQ.atlas=await r.json();
+      const r=await withTimeout(fetch(MAP_ATLAS),'the world map data');
+      if(!r.ok) throw new Error('the world map data came back as HTTP '+r.status);
+      MAPQ.atlas=await withTimeout(r.json(),'the world map data to finish arriving');
       MAPQ.loaded=true;
     }catch(e){
-      loading.textContent='Map could not load — check your connection and reopen this tab.';
+      /*
+       * Say what failed and offer the button, rather than asking him to reload
+       * the app. The reason is shown because "check your connection" was wrong
+       * as often as it was right: the same message appeared for a blocked CDN,
+       * a slow one, and a bad response.
+       */
+      loading.style.display='';
+      loading.innerHTML='<div style="font-weight:bold;margin-bottom:6px;">The map could not load.</div>'+
+        '<div style="font-size:12px;color:#777;margin-bottom:10px;">'+escapeMapMsg(e&&e.message?e.message:'reason unknown')+'</div>'+
+        '<button class="mapbtn" onclick="retryMap(this)">Try again</button>';
       return;
     }
   }
@@ -2199,6 +2237,16 @@ async function openMap(){
   if(gb) gb.textContent=GLOBE_STYLES[MAPQ.style].name;
   buildMapFilter();
   renderMapView();
+}
+function escapeMapMsg(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+// Try again starts the whole load from scratch: the failed script tags removed
+// themselves, so nothing half-loaded is reused.
+async function retryMap(btn){
+  if(btn){ btn.disabled=true; btn.textContent='Trying…'; }
+  MAPQ.loaded=false; MAPQ.atlas=null;
+  await openMap();
 }
 function showMapView(v,btn){
   document.querySelectorAll('.mapbtn').forEach(b=>b.classList.remove('active'));
@@ -2209,8 +2257,21 @@ function showMapView(v,btn){
 }
 function buildMapFilter(){
   const sel=document.getElementById('mapFilter');
-  if(sel.dataset.built) return;
   const people=mapPeople();
+  /*
+   * Rebuilt whenever the book changes, not once per visit.
+   *
+   * This used to guard on sel.dataset.built and build a single time. Opening the
+   * Map tab in the first second or two after loading -- before the contacts had
+   * arrived from the cloud -- built the list from an empty book, so it offered
+   * commodities and services but no names and no roles, and stayed that way
+   * until the page was reloaded. The signature below is what the list is built
+   * from, so an unchanged book costs nothing and a changed one is picked up.
+   */
+  const sig=people.length+'|'+people.map(p=>(p.company||p.name)+'/'+(p.role||'')+'/'+p.mats.join('+')).sort().join(';');
+  if(sel.dataset.sig===sig) return;
+  // Keep whatever the user had chosen, if it still exists after the rebuild.
+  const was=sel.value;
   const used=new Set(); people.forEach(p=>p.mats.forEach(m=>used.add(m)));
   // Every material is listed, including the ones nobody trades yet: looking one
   // up and being told nobody matches is the point, not an empty dropdown.
@@ -2225,7 +2286,13 @@ function buildMapFilter(){
   if(roles.length) html+='<optgroup label="Role">'+roles.map(r=>'<option value="R::'+r+'">'+r+'</option>').join('')+'</optgroup>';
   const names=people.slice().sort((a,b)=>(a.company||a.name).localeCompare(b.company||b.name));
   if(names.length) html+='<optgroup label="Contacts">'+names.map(p=>'<option value="N::'+(p.company||p.name)+'">'+(p.company?p.company+' — '+p.name:p.name)+'</option>').join('')+'</optgroup>';
-  sel.innerHTML=html; sel.dataset.built='1';
+  sel.innerHTML=html; sel.dataset.sig=sig;
+  if(was && [...sel.options].some(o=>o.value===was)) sel.value=was;
+  else if(was && was!=='ALL'){
+    // The chosen contact or material is no longer in the book; fall back to
+    // everyone rather than leaving the map filtered by something invisible.
+    sel.value='ALL'; MAPQ.filter='ALL';
+  }
 }
 function matchesFilter(p){
   const f=MAPQ.filter;
@@ -2264,6 +2331,7 @@ function renderMapView(){
   const stage=document.getElementById('mapStage');
   stage.querySelectorAll('canvas,svg').forEach(n=>n.remove());
   document.getElementById('mapBlurb').textContent=MAP_BLURB[MAPQ.view];
+  buildMapFilter();   // cheap when nothing changed; picks up a late sync
   if(MAPQ.view==='globe') drawMapGlobe();
   else if(MAPQ.view==='network') drawMapNetwork();
   else drawMapFlow();

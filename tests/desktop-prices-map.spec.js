@@ -227,9 +227,71 @@ test('@robot DeskItem43_can_zoom_in_and_see_cities', async ({ page }) => {
   await expect(page.locator('#mapList')).toContainText(/Turkey/i);
 });
 
+test('@robot DeskItem44_late_contacts_still_reach_the_map_dropdown', async ({ page }) => {
+  /*
+   * The map's dropdown used to be built once per visit. Opening the Map tab
+   * before the contacts had arrived from the cloud left it without names or
+   * roles for the rest of the session. This opens the map on an EMPTY book
+   * first, which is the hard case, then adds a contact.
+   */
+  await app.openApp(page);
+  await app.goToTab(page, 'map');
+  await expect(page.locator('#mapStage canvas')).toHaveCount(1, { timeout: 60000 });
+
+  const before = (await page.locator('#mapFilter option').allInnerTexts()).join(' | ');
+  expect(before, 'with an empty book there is nobody to list').not.toMatch(/Lagos Metals/i);
+
+  // A contact arrives while the map is already open and being looked at.
+  await verify.seed('jericho_contacts', '930001', {
+    id: 930001, name: 'Chidi Okonkwo', company: 'Lagos Metals Ltd', type: 'Seller',
+    city: 'Lagos', country: 'Nigeria', commodity: 'Copper Cathodes',
+    lat: 6.45, lon: 3.39, trust: 'Green', kyc: 'Full KYC', notes: ''
+  });
+  await app.waitForContacts(page, 1);
+
+  await expect
+    .poll(async () => (await page.locator('#mapFilter option').allInnerTexts()).join(' | '),
+      { message: 'a contact that arrives late must still appear in the dropdown', timeout: 20000 })
+    .toMatch(/Lagos Metals/i);
+
+  // And it is on the map itself, not only in the list.
+  await expect(page.locator('#mapCount')).toContainText('1 of 1');
+});
+
+test('@robot DeskItem45_a_map_that_cannot_load_says_why_and_offers_a_retry', async ({ page }) => {
+  await app.openApp(page);
+
+  /* Break the map's downloads the way a bad connection would: the request is
+     accepted and then nothing comes back. */
+  let blocked = true;
+  await page.route('**/vendor/{d3.min.js,d3-sankey.min.js,topojson.min.js,countries-110m.json}',
+    route => { if (blocked) route.abort('failed'); else route.continue(); });
+
+  await app.goToTab(page, 'map');
+
+  const loading = page.locator('#mapLoading');
+  await expect(loading, 'it must admit the map failed rather than claiming to still be loading')
+    .toContainText(/could not load/i, { timeout: 60000 });
+
+  /* It has to say WHICH thing failed. "Check your connection" was shown for a
+     blocked CDN, a slow one and a bad response alike, which told him nothing. */
+  const said = await loading.innerText();
+  expect(said, 'the reason should name what actually failed, got: ' + said)
+    .toMatch(/d3|topojson|countries-110m|world map data|timed out|download/i);
+
+  const retry = loading.locator('button');
+  await expect(retry, 'there must be a way forward without reloading the app').toHaveCount(1);
+
+  // With the connection back, Try again draws the map - no reload needed.
+  blocked = false;
+  await retry.click();
+  await expect(page.locator('#mapStage canvas'),
+    'Try again should load the map once the connection is back').toHaveCount(1, { timeout: 60000 });
+});
+
 /* ---------------- backup ---------------- */
 
-test('@robot DeskItem44_can_download_a_backup_of_everything', async ({ page }) => {
+test('@robot DeskItem48_can_download_a_backup_of_everything', async ({ page }) => {
   await app.openApp(page);
   await app.addContact(page, { name: 'Backup Check', company: 'Backup Co' });
   await app.goToTab(page, 'backup');
@@ -254,7 +316,7 @@ test('@robot DeskItem44_can_download_a_backup_of_everything', async ({ page }) =
     .not.toHaveProperty('commissions');
 });
 
-test('@robot DeskItem45_the_backup_counts_match_what_is_in_the_app', async ({ page }) => {
+test('@robot DeskItem49_the_backup_counts_match_what_is_in_the_app', async ({ page }) => {
   await app.openApp(page);
   await app.addContact(page, { name: 'Counted One', company: 'A' });
   await app.addContact(page, { name: 'Counted Two', company: 'B' });

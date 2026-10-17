@@ -72,8 +72,11 @@ module.exports = [
   { n: 42, group: 'Map',           text: 'I can filter the map by commodity, service or name' },
   { n: 43, group: 'Map',           text: 'I can zoom in and see cities, not only countries' },
 
-  { n: 44, group: 'Backup',        text: 'I can download a backup of everything' },
-  { n: 45, group: 'Backup',        text: 'The backup counts match what is actually in the app' },
+  { n: 48, group: 'Backup',        text: 'I can download a backup of everything' },
+  { n: 49, group: 'Backup',        text: 'The backup counts match what is actually in the app' },
+
+  { n: 44, group: 'Map',           text: 'Contacts that arrive late still turn up in the map dropdown' },
+  { n: 45, group: 'Map',           text: 'If the map cannot load it tells me why and lets me try again' },
 
   { n: 46, group: 'Safety',        text: 'Nothing I do in the test app can reach my real data',
     manual: false },
