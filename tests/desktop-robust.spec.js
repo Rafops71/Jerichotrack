@@ -70,7 +70,10 @@ test('@robot DeskItem51_a_full_device_says_so_instead_of_breaking', async ({ pag
 
   /* It must say so plainly, stay standing, and still get the contact to the
      cloud - which is the copy that actually matters. */
-  await expect(page.locator('.toast, #toastContainer')).toContainText(/room|save/i, { timeout: 10000 });
+  /* The container, not ".toast" as well: matching both resolves to several
+     elements at once and Playwright refuses that rather than guessing. */
+  await expect(page.locator('#toastContainer'))
+    .toContainText(/run out of room|refused to save/i, { timeout: 10000 });
   await expect(page.locator('#contactsBody')).toBeVisible();
 
   const saved = await verify.waitFor('jericho_contacts', c => c.name === 'Full Disk Test',
