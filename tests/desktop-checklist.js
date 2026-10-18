@@ -85,6 +85,12 @@ module.exports = [
   { n: 52, group: 'Never crashes', text: 'One bad record does not take down the whole tab' },
   { n: 53, group: 'Never crashes', text: 'If something does break, it says so on screen instead of going silent' },
 
+  /* 18/10/2026, from "did you stress test it through all ways possible". Both
+     of these were measured or reproduced first, not guessed at. */
+  { n: 54, group: 'Never crashes', text: 'Two thousand contacts do not freeze the app' },
+  { n: 55, group: 'Never crashes', text: 'Find Duplicates on two thousand contacts answers quickly' },
+  { n: 56, group: 'Never crashes', text: 'An imported name containing code is shown as text, never obeyed' },
+
   { n: 46, group: 'Safety',        text: 'Nothing I do in the test app can reach my real data',
     manual: false },
   { n: 47, group: 'Safety',        text: 'Without the password, nothing is connected and nothing is readable',

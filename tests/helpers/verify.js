@@ -118,4 +118,21 @@ async function seed(collection, id, obj) {
   return true;
 }
 
-module.exports = { readCollection, wipe, waitFor, stayedEmpty, seed, PROJECT };
+/*
+ * Seed many documents at once, for volume testing.
+ *
+ * Seeding one at a time is too slow for thousands, and seeding into
+ * localStorage instead does not work: the app syncs from this database a moment
+ * later and replaces whatever was in local storage. A stress run that skips this
+ * measures an empty list - the first attempt reported "0 pairs in 148ms" and
+ * looked like a pass.
+ */
+async function seedMany(collection, items, { chunk = 40 } = {}) {
+  for (let i = 0; i < items.length; i += chunk) {
+    await Promise.all(items.slice(i, i + chunk).map(item =>
+      seed(collection, String(item.id), item)));
+  }
+  return items.length;
+}
+
+module.exports = { readCollection, wipe, waitFor, stayedEmpty, seed, seedMany, PROJECT };

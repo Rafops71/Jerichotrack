@@ -1005,6 +1005,26 @@ function saveLocal(lsKey,value){
 }
 
 /*
+ * Text from outside, made safe to put on the page.
+ *
+ * Every list in this app is built as HTML and the records are dropped straight
+ * in. A contact imported from a phone or a spreadsheet whose name contains
+ * markup was therefore treated as INSTRUCTIONS rather than as words: a name of
+ * <img src=x onerror=...> ran its code inside the signed-in app, and a company
+ * field containing a stray </td></tr> split the table into an extra row.
+ * Both were reproduced before this was written, not imagined.
+ *
+ * companion.html has escaped text in dozens of places for a long time; this
+ * app never did. Numbers and ids are safe as they are; anything a person or a
+ * file can set goes through here.
+ */
+function esc(v){
+  if(v===null||v===undefined) return '';
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/*
  * Run something that draws the screen, and survive it going wrong.
  *
  * One malformed record -- from an old backup, a half-finished import, a field
@@ -1122,7 +1142,7 @@ function globalSearchFn(q){
   documents.forEach(d=>{if((d.name+(d.party||'')+(d.linked||'')).toLowerCase().includes(ql))items.push({type:'Doc',label:d.name,section:'documents'});});
   commsLog.forEach(c=>{if((c.contact+c.summary+(c.linked||'')).toLowerCase().includes(ql))items.push({type:'Comms',label:c.contact+': '+c.summary.substring(0,40),section:'commslog'});});
   if(!items.length){res.innerHTML='<div class="gsr-item" style="color:#999;">No results found.</div>';res.style.display='block';return;}
-  res.innerHTML=items.slice(0,12).map(i=>`<div class="gsr-item" onclick="goToSection('${i.section}')"><span class="gsr-type">${i.type}</span>${i.label}</div>`).join('');
+  res.innerHTML=items.slice(0,12).map(i=>`<div class="gsr-item" onclick="goToSection('${esc(i.section)}')"><span class="gsr-type">${esc(i.type)}</span>${esc(i.label)}</div>`).join('');
   res.style.display='block';
 }
 function goToSection(s){
@@ -1147,7 +1167,7 @@ function sortContacts(f){doSort(contacts,f);renderContacts();}
 let priceCache=readSavedObject('jericho_price_cache');
 function saveCache(){saveLocalQuiet('jericho_price_cache',priceCache);}
 function isStale(key,maxHours){if(!priceCache[key]||!priceCache[key].ts)return true;return(Date.now()-priceCache[key].ts)>maxHours*3600000;}
-function makeCard(id,label,cssClass){return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${label}"><h4>${label}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;}
+function makeCard(id,label,cssClass){return `<div class="live-card ${cssClass}" id="card_${id}" data-label="${esc(label)}"><h4>${esc(label)}</h4><div class="lc-price">—</div><div class="lc-unit">Loading...</div></div>`;}
 function fillCard(id,price,unit,change,pct,source,ts){
   const el=document.getElementById('card_'+id);if(!el)return;
   const label=el.dataset.label||id;
@@ -1155,7 +1175,7 @@ function fillCard(id,price,unit,change,pct,source,ts){
   const arrow=dir==='up'?'▲':dir==='down'?'▼':'—';
   const chg=(change!==null&&change!==undefined)?`<span class="lc-${dir}">${arrow} ${Math.abs(change).toFixed(2)}${pct?' ('+Math.abs(pct).toFixed(2)+'%)':''}</span>`:'';
   const time=ts?new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
-  el.innerHTML=`<h4>${label}</h4><div class="lc-price">${price}</div><div class="lc-unit">${unit}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
+  el.innerHTML=`<h4>${esc(label)}</h4><div class="lc-price">${esc(price)}</div><div class="lc-unit">${esc(unit)}</div><div class="lc-chg">${chg}</div><div class="lc-src">Source: ${source} · ${time}</div>`;
 }
 function errCard(id,msg){const el=document.getElementById('card_'+id);if(!el)return;const label=el.dataset.label||id;el.innerHTML=`<h4>${label}</h4><div class="lc-err">${msg||'Unavailable'}</div>`;}
 function renderPriceGrids(){
@@ -1309,7 +1329,7 @@ function buildTicker(){
   track.style.animation='';
   track.style.setProperty('--ticker-secs',(items.length*4.5).toFixed(0)+'s');
   const all=[...items,...items];
-  track.innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${i.p}</span></div>`).join('');
+  track.innerHTML=all.map(i=>`<div class="ticker-item"><span class="t-name">${i.n}</span><span class="t-price">${esc(i.p)}</span></div>`).join('');
 }
 
 // HUNTER.IO EMAIL VERIFY
@@ -1417,7 +1437,7 @@ function renderLeads(q=''){
   let data=q?leads.filter(l=>(l.name+l.company+l.country+l.type+(l.introBy||'')+(l.commodity||'')).toLowerCase().includes(q.toLowerCase())):leads;
   if(!data.length){tb.innerHTML='<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">No leads found.</td></tr>';return;}
   const sc={'New':'#3498db','Contacted':'#e8a020','Qualified':'#9b59b6','Opportunity':'#27ae60','Dead':'#999'};
-  tb.innerHTML=data.map(l=>`<tr><td><strong>${l.name}</strong></td><td>${l.company||'-'}</td><td>${l.type||'-'}</td><td>${l.country||'-'}</td><td>${l.introBy||'-'}</td><td><span class="badge" style="background:${sc[l.status]||'#999'}">${l.status}</span></td><td>${l.followup||'-'}</td><td><button class="btn-danger" onclick="deleteLead(${l.id})">Delete</button></td></tr>`).join('');
+  tb.innerHTML=data.map(l=>`<tr><td><strong>${esc(l.name)}</strong></td><td>${esc(l.company||'-')}</td><td>${esc(l.type||'-')}</td><td>${esc(l.country||'-')}</td><td>${esc(l.introBy||'-')}</td><td><span class="badge" style="background:${sc[l.status]||'#999'}">${esc(l.status)}</span></td><td>${esc(l.followup||'-')}</td><td><button class="btn-danger" onclick="deleteLead(${l.id})">Delete</button></td></tr>`).join('');
 }
 function deleteLead(id){if(confirm('Delete this lead?')){leads=leads.filter(l=>l.id!==id);persist('leads',leads);renderLeads();deleteItemFromCloud('leads',id);toast('Lead deleted','info');}}
 
@@ -1441,7 +1461,7 @@ function renderPipeline(){
   const daysOld=d=>d.createdAt?Math.floor((Date.now()-new Date(d.createdAt))/86400000):0;
   board.innerHTML=stages.map(stage=>{
     const deals=pipeline.filter(d=>d.stage===stage);
-    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;"><div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};"><div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${d.commodity}</div><div style="font-size:11px;color:#666;margin-top:2px;">${d.buyer||''} ${d.buyer&&d.seller?'→':''} ${d.seller||''}</div><div style="font-size:11px;color:#666;">${d.quantity||''} ${d.unit||''} ${d.price?'@ '+d.price:''}</div><div style="font-size:10px;color:#999;margin-top:2px;">${d.broker||''}</div><div style="font-size:10px;color:#bbb;">Age: ${daysOld(d)} days</div><div style="margin-top:7px;"><select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select><button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button></div></div>`).join('')}</div>`;
+    return `<div style="min-width:185px;max-width:210px;background:#f8f9fa;border-radius:8px;padding:12px;flex-shrink:0;"><div style="font-weight:bold;color:#1a2e4a;font-size:11px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8a020;">${stage} <span style="background:#1a2e4a;color:white;border-radius:10px;padding:2px 6px;font-size:10px;">${deals.length}</span></div>${deals.length===0?'<div style="color:#ccc;font-size:12px;text-align:center;padding:15px 0;">Empty</div>':''}${deals.map(d=>`<div style="background:white;border-radius:6px;padding:10px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:3px solid ${getTrustColor(d.trust)};"><div style="font-weight:bold;font-size:13px;color:#1a2e4a;">${esc(d.commodity)}</div><div style="font-size:11px;color:#666;margin-top:2px;">${esc(d.buyer||'')} ${d.buyer&&d.seller?'→':''} ${esc(d.seller||'')}</div><div style="font-size:11px;color:#666;">${esc(d.quantity||'')} ${esc(d.unit||'')} ${d.price?'@ '+d.price:''}</div><div style="font-size:10px;color:#999;margin-top:2px;">${esc(d.broker||'')}</div><div style="font-size:10px;color:#bbb;">Age: ${daysOld(d)} days</div><div style="margin-top:7px;"><select onchange="moveDeal(${d.id},this.value)" style="font-size:11px;padding:3px;border:1px solid #ddd;border-radius:4px;width:100%;margin-bottom:4px;">${stages.map(s=>`<option ${s===stage?'selected':''}>${s}</option>`).join('')}</select><button onclick="deleteDeal(${d.id})" style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;width:100%;">Delete</button></div></div>`).join('')}</div>`;
   }).join('');
 }
 
@@ -1464,7 +1484,7 @@ function renderContacts(_,q=''){
   if(!data.length){tb.innerHTML='<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">No contacts found.</td></tr>';return;}
   const tC={'Green':'trust-green','Yellow':'trust-yellow','Red':'trust-red','Unknown':'trust-grey'};
   const kC={'Full KYC':'kyc-yes','Partial KYC':'kyc-partial','No KYC':'kyc-no'};
-  tb.innerHTML=data.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${c.company||'-'}</td><td>${c.type||'-'}</td><td>${c.country||'-'}</td><td>${c.commodity||'-'}</td><td>${c.introBy||'-'}</td><td><span class="badge ${tC[c.trust]||'trust-grey'}">${c.trust}</span></td><td><span class="badge ${kC[c.kyc]||'kyc-no'}">${c.kyc}</span></td><td>${c.followup||'-'}</td><td><button class="btn-danger" onclick="deleteContact(${c.id})">Delete</button></td></tr>`).join('');
+  tb.innerHTML=data.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.company||'-')}</td><td>${esc(c.type||'-')}</td><td>${esc(c.country||'-')}</td><td>${esc(c.commodity||'-')}</td><td>${esc(c.introBy||'-')}</td><td><span class="badge ${tC[c.trust]||'trust-grey'}">${esc(c.trust)}</span></td><td><span class="badge ${kC[c.kyc]||'kyc-no'}">${esc(c.kyc)}</span></td><td>${esc(c.followup||'-')}</td><td><button class="btn-danger" onclick="deleteContact(${c.id})">Delete</button></td></tr>`).join('');
 }
 function deleteContact(id){if(confirm('Delete this contact?')){contacts=contacts.filter(c=>c.id!==id);persist('contacts',contacts);renderContacts();deleteItemFromCloud('contacts',id);toast('Contact deleted','info');}}
 
@@ -1483,7 +1503,7 @@ function completeTask(id){const t=tasks.find(t=>t.id===id);if(t){t.completed=tru
 function deleteTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(t=>t.id!==id);persist('tasks',tasks);renderTasks();updateDashboard();deleteItemFromCloud('tasks',id);toast('Task deleted','info');}}
 function taskCard(t){
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div style="flex:1;min-width:180px;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${t.title}</div><div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${t.priority}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${t.category}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${t.assigned}</span>`:''}</div>${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${t.linked}</div>`:''}${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${t.due}</div>`:''}</div><div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div></div>`;
+  return `<div style="background:white;border-radius:6px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;"><div style="flex:1;min-width:180px;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;${t.completed?'text-decoration:line-through;opacity:0.5':''}">${esc(t.title)}</div><div style="margin-top:4px;"><span class="badge ${pC[t.priority]||'priority-low'}" style="margin-right:5px;">${esc(t.priority)}</span><span style="background:#e8f4fd;color:#1a2e4a;padding:2px 7px;border-radius:10px;font-size:11px;margin-right:5px;">${esc(t.category)}</span>${t.assigned?`<span style="font-size:11px;color:#999;">→ ${esc(t.assigned)}</span>`:''}</div>${t.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${esc(t.linked)}</div>`:''}${t.due?`<div style="font-size:12px;color:#666;margin-top:3px;">📅 ${esc(t.due)}</div>`:''}</div><div style="display:flex;gap:5px;">${!t.completed?`<button class="btn-complete" onclick="completeTask(${t.id})">✓</button>`:''}<button class="btn-danger" onclick="deleteTask(${t.id})">✕</button></div></div>`;
 }
 function renderTasks(){
   const sf=document.getElementById('filterTaskStatus').value,pf=document.getElementById('filterTaskPriority').value,cf=document.getElementById('filterTaskCategory').value;
@@ -1528,7 +1548,7 @@ function renderComms(q=''){
   data=[...data].reverse();
   if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No communications logged yet.</div>';return;}
   const oc={'Positive':'#27ae60','Neutral':'#3498db','Negative':'#e74c3c','Waiting':'#e8a020'};
-  container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;"><div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${c.contact}</div><div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${c.type}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${c.outcome}</span><span style="font-size:11px;color:#999;">${c.direction} · ${c.date}</span></div>${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${c.linked}</div>`:''}<div style="font-size:13px;color:#555;margin-top:6px;">${c.summary}</div>${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${c.followupDate||'date not set'}</div>`:''}</div><button class="btn-danger" onclick="deleteComm(${c.id})">✕</button></div></div>`).join('');
+  container.innerHTML=data.map(c=>`<div class="comms-entry ${c.type.toLowerCase()}" style="margin-bottom:10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;"><div style="flex:1;"><div style="font-weight:bold;font-size:14px;color:#1a2e4a;">${esc(c.contact)}</div><div style="margin-top:4px;"><span class="badge" style="background:#1a2e4a;margin-right:5px;">${esc(c.type)}</span><span class="badge" style="background:${oc[c.outcome]||'#999'};margin-right:5px;">${esc(c.outcome)}</span><span style="font-size:11px;color:#999;">${esc(c.direction)} · ${esc(c.date)}</span></div>${c.linked?`<div style="font-size:12px;color:#999;margin-top:3px;">📎 ${esc(c.linked)}</div>`:''}<div style="font-size:13px;color:#555;margin-top:6px;">${esc(c.summary)}</div>${c.followup==='Yes'?`<div style="font-size:12px;color:#e8a020;margin-top:4px;">⏰ Follow-up: ${esc(c.followupDate||'date not set')}</div>`:''}</div><button class="btn-danger" onclick="deleteComm(${c.id})">✕</button></div></div>`).join('');
 }
 
 // DOCUMENTS
@@ -1549,7 +1569,7 @@ function renderDocs(q=''){
   let data=documents.filter(d=>(!tf||d.type===tf)&&(!sf||d.status===sf)&&(!q||(d.name+(d.party||'')+(d.linked||'')+d.type).toLowerCase().includes(q.toLowerCase())));
   if(!data.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No documents found.</td></tr>';return;}
   const sC={'Received':'trust-green','Sent':'trust-yellow','Pending':'trust-grey','Signed':'kyc-yes','Expired':'trust-red'};
-  tb.innerHTML=data.map(d=>`<tr><td><strong>${d.name}</strong></td><td><span class="badge" style="background:#1a2e4a;">${d.type}</span></td><td>${d.party||'-'}</td><td>${d.linked||'-'}</td><td>${d.date||'-'}</td><td><span class="badge ${sC[d.status]||'trust-grey'}">${d.status}</span></td><td style="font-size:12px;">${d.location||'-'}</td><td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${d.expiry||'-'}</td><td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td></tr>`).join('');
+  tb.innerHTML=data.map(d=>`<tr><td><strong>${esc(d.name)}</strong></td><td><span class="badge" style="background:#1a2e4a;">${esc(d.type)}</span></td><td>${esc(d.party||'-')}</td><td>${esc(d.linked||'-')}</td><td>${esc(d.date||'-')}</td><td><span class="badge ${sC[d.status]||'trust-grey'}">${esc(d.status)}</span></td><td style="font-size:12px;">${esc(d.location||'-')}</td><td style="color:${d.expiry&&d.expiry<today?'#e74c3c':'inherit'}">${esc(d.expiry||'-')}</td><td><button class="btn-danger" onclick="deleteDoc(${d.id})">Delete</button></td></tr>`).join('');
 }
 
 // BROKER QUOTES
@@ -1568,7 +1588,7 @@ function renderQuotes(){
   const tb=document.getElementById('quotesBody');if(!tb)return;
   if(!brokerQuotes.length){tb.innerHTML='<tr><td colspan="9" style="padding:30px;text-align:center;color:#999;">No broker quotes yet.</td></tr>';return;}
   const dc={'Offer (seller quote)':'#e74c3c','Bid (buyer quote)':'#27ae60','Reference / Market':'#3498db'};
-  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${q.commodity}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${q.price||'-'}</td><td>${q.origin||'-'}</td><td>${q.terms||'-'}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${q.direction||'-'}</span></td><td>${q.source||'-'}</td><td>${q.date||'-'}</td><td style="font-size:12px;max-width:160px;">${q.notes||'-'}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
+  tb.innerHTML=[...brokerQuotes].reverse().map(q=>`<tr><td><strong>${esc(q.commodity)}</strong></td><td style="font-weight:bold;color:#1a2e4a;">${esc(q.price||'-')}</td><td>${esc(q.origin||'-')}</td><td>${esc(q.terms||'-')}</td><td><span class="badge" style="background:${dc[q.direction]||'#999'}">${esc(q.direction||'-')}</span></td><td>${esc(q.source||'-')}</td><td>${esc(q.date||'-')}</td><td style="font-size:12px;max-width:160px;">${esc(q.notes||'-')}</td><td><button class="btn-danger" onclick="deleteQuote(${q.id})">Delete</button></td></tr>`).join('');
 }
 
 // RELATIONSHIPS
@@ -1589,7 +1609,7 @@ function renderRelationships(q=''){
   let data=q?relationships.filter(r=>(r.from+r.to+r.type).toLowerCase().includes(q.toLowerCase())):relationships;
   if(!data.length){container.innerHTML='<div style="background:white;border-radius:8px;padding:30px;text-align:center;color:#999;">No relationships mapped yet.</div>';return;}
   const sc={'Strong':'#27ae60','Medium':'#e8a020','Weak':'#999','Unknown':'#ccc'};
-  container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${r.from}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${r.type}</span><span style="font-weight:bold;color:#1a2e4a;">${r.to}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${r.strength}</span>${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${r.date}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${r.notes}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
+  container.innerHTML=`<div class="rel-map">${data.map(r=>`<div class="rel-entry"><div style="flex:1;"><span style="font-weight:bold;color:#1a2e4a;">${esc(r.from)}</span><span style="margin:0 8px;color:#e8a020;font-weight:bold;">${esc(r.type)}</span><span style="font-weight:bold;color:#1a2e4a;">${esc(r.to)}</span><div style="margin-top:4px;"><span class="badge" style="background:${sc[r.strength]||'#999'};margin-right:5px;">${esc(r.strength)}</span>${r.date?`<span style="font-size:11px;color:#999;margin-left:8px;">Since ${esc(r.date)}</span>`:''}</div>${r.notes?`<div style="font-size:12px;color:#888;margin-top:4px;">${esc(r.notes)}</div>`:''}</div><button class="btn-danger" onclick="deleteRel(${r.id})">✕</button></div>`).join('')}</div>`;
 }
 
 // BACKUP
@@ -1684,8 +1704,8 @@ function updateDashboard(){
   document.getElementById('overdueCount').textContent=ov.length;
   document.getElementById('tasksTodayCount').textContent=dt.length;
   const pC={'High':'priority-high','Medium':'priority-medium','Low':'priority-low'};
-  document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td style="color:#e74c3c;">${t.due}</td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
-  document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${t.title}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${t.priority}</span></td><td>${t.linked||'-'}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
+  document.getElementById('dashOverdueBody').innerHTML=ov.length?ov.map(t=>`<tr><td><strong>${esc(t.title)}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${esc(t.priority)}</span></td><td style="color:#e74c3c;">${esc(t.due)}</td><td>${esc(t.linked||'-')}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No overdue tasks. ✅</td></tr>';
+  document.getElementById('dashTodayBody').innerHTML=dt.length?dt.map(t=>`<tr><td><strong>${esc(t.title)}</strong></td><td><span class="badge ${pC[t.priority]||'priority-low'}">${esc(t.priority)}</span></td><td>${esc(t.linked||'-')}</td><td><button class="btn-complete" onclick="completeTask(${t.id});updateDashboard()">✓ Done</button></td></tr>`).join(''):'<tr><td colspan="4" style="padding:20px;text-align:center;color:#999;">No tasks due today.</td></tr>';
 }
 
 // ============================================================
@@ -1984,8 +2004,8 @@ function impRender(){
       parsed.slice(0,5).map(c=>{
         const d=impFindExisting(c);
         const why=d?matchReason(c,d):'';
-        return `<tr class="${d?'dupe':''}"><td>${c.name||'—'}${d?` <span style="color:#b7791f;font-size:11px;">already in book as ${d.name||d.company} — ${why}</span>`:''}</td>`+
-          `<td>${c.company||'—'}</td><td>${c.email||'—'}</td><td>${c.phone||'—'}</td><td>${c.city||'—'}</td></tr>`;
+        return `<tr class="${d?'dupe':''}"><td>${esc(c.name||'—')}${d?` <span style="color:#b7791f;font-size:11px;">already in book as ${esc(d.name||d.company)} — ${esc(why)}</span>`:''}</td>`+
+          `<td>${esc(c.company||'—')}</td><td>${esc(c.email||'—')}</td><td>${esc(c.phone||'—')}</td><td>${esc(c.city||'—')}</td></tr>`;
       }).join('')+'</tbody></table>'+
       (parsed.length>5?`<div style="font-size:12px;color:#999;padding:6px 0;">…and ${parsed.length-5} more</div>`:'')
     : '';
@@ -2078,30 +2098,89 @@ function dupWeight(c){
   return n;
 }
 
+/*
+ * The most pairs worth putting on screen at once. Beyond this the page itself
+ * becomes the problem, and a list nobody can read through is no more useful
+ * than a shorter one.
+ */
+const DUP_MAX_SHOWN=200;
+
+/*
+ * Only compare records that could possibly match.
+ *
+ * This used to compare every contact against every other. At 2000 contacts that
+ * is two million comparisons, each doing string cleaning and pattern matching,
+ * and the measured cost was 19.4 SECONDS with the app frozen solid -- the click
+ * that started it timed out. On an iPad's slower processor it would be worse,
+ * and Safari may kill a page that unresponsive, which is a crash as far as
+ * anyone using it is concerned.
+ *
+ * Every reason a pair can be flagged -- in matchReason and in weakReason alike
+ * -- requires the two records to share at least one of: an email address, a
+ * phone number, or a company AND a surname. So records are first dropped into
+ * buckets on those three keys, and only records landing in the same bucket are
+ * compared. Nothing about WHICH pairs are reported changes; the comparisons that
+ * could never match are simply not made.
+ *
+ * The company bucket carries the surname too, because both rules that rely on
+ * the company also require the surname to match -- exactly, or as an initial.
+ * Without that, a book where everyone works for one firm would be back to
+ * comparing everything against everything.
+ */
 function dupScan(){
   DUP.pairs=[];
-  for(let i=0;i<contacts.length;i++){
-    for(let j=i+1;j<contacts.length;j++){
-      const a=contacts[i], b=contacts[j];
-      const strong=matchReason(a,b);
-      const why=strong||weakReason(a,b);
-      if(!why) continue;
-      if(DUP.dismissed.includes(dupPairKey(a,b))) continue;
-      // The fuller record survives; a tie keeps the older one, so the entry
-      // your deals and call logs were written against stays put.
-      const wa=dupWeight(a), wb=dupWeight(b);
-      const keep = wa>wb ? a : wb>wa ? b : (a.id<=b.id ? a : b);
-      DUP.pairs.push({ keep, drop: keep===a?b:a, why, weak: !strong });
+  const dismissed=new Set(DUP.dismissed);
+  const surnameOf=(name)=>{
+    const t=keyName(name).split(' ').filter(Boolean);
+    return t.length?t[t.length-1]:'';
+  };
+
+  const buckets=new Map();
+  const put=(k,i)=>{ let a=buckets.get(k); if(!a){ a=[]; buckets.set(k,a); } a.push(i); };
+  contacts.forEach((c,i)=>{
+    const em=(c.email||'').trim().toLowerCase();
+    if(em) put('e:'+em,i);
+    const ph=keyPhone(c.phone);
+    if(ph) put('p:'+ph,i);
+    const co=keyCompany(c.company), sur=surnameOf(c.name);
+    if(co&&sur) put('c:'+co+'|'+sur,i);
+  });
+
+  const seen=new Set();
+  for(const list of buckets.values()){
+    if(list.length<2) continue;
+    for(let x=0;x<list.length;x++){
+      for(let y=x+1;y<list.length;y++){
+        const i=list[x], j=list[y];
+        // The same pair can land in two buckets; judge it once.
+        const pairId=i<j?(i+'~'+j):(j+'~'+i);
+        if(seen.has(pairId)) continue;
+        seen.add(pairId);
+
+        const a=contacts[i], b=contacts[j];
+        const strong=matchReason(a,b);
+        const why=strong||weakReason(a,b);
+        if(!why) continue;
+        if(dismissed.has(dupPairKey(a,b))) continue;
+        // The fuller record survives; a tie keeps the older one, so the entry
+        // your deals and call logs were written against stays put.
+        const wa=dupWeight(a), wb=dupWeight(b);
+        const keep = wa>wb ? a : wb>wa ? b : (a.id<=b.id ? a : b);
+        DUP.pairs.push({ keep, drop: keep===a?b:a, why, weak: !strong });
+      }
     }
   }
   DUP.pairs.sort((x,y)=>(x.weak?1:0)-(y.weak?1:0));
+  // Certain matches first, so a truncated list keeps the ones worth acting on.
+  DUP.total=DUP.pairs.length;
+  if(DUP.pairs.length>DUP_MAX_SHOWN) DUP.pairs=DUP.pairs.slice(0,DUP_MAX_SHOWN);
   dupRender();
 }
 
 function dupCell(c,keep){
   const row=(lab,v)=>v?`<div class="fld"><span>${lab}</span>${v}</div>`:'';
   return `<div class="dup-col ${keep?'dup-keep':'dup-gone'}">`+
-    `<div class="nm">${c.name||'(no name)'}<span class="tag">${keep?'kept':'removed'}</span></div>`+
+    `<div class="nm">${esc(c.name||'(no name)')}<span class="tag">${keep?'kept':'removed'}</span></div>`+
     row('Company',c.company)+row('Role',c.type)+row('Email',c.email)+row('Phone',c.phone)+
     row('City',[c.city,c.country].filter(Boolean).join(', '))+row('Commodity',c.commodity)+
     row('Trust',c.trust&&c.trust!=='Unknown'?c.trust:'')+row('KYC',c.kyc&&c.kyc!=='No KYC'?c.kyc:'')+
@@ -2114,9 +2193,14 @@ function dupRender(){
     el.innerHTML='<div style="padding:14px;color:#27ae60;font-size:14px;">No duplicates found. Your contact book is clean.</div>';
     return;
   }
-  el.innerHTML=DUP.pairs.map((p,i)=>
+  // Say so when the list was cut short, rather than quietly showing 200 of 900.
+  const cut = (DUP.total||DUP.pairs.length) - DUP.pairs.length;
+  el.innerHTML=(cut>0
+    ? '<div class="imp-warn" style="margin-bottom:10px;">Showing the '+DUP.pairs.length+
+      ' clearest of '+DUP.total+' possible pairs. Merge or dismiss some and reopen this to see the rest.</div>'
+    : '')+DUP.pairs.map((p,i)=>
     `<div class="dup-pair">`+
-      `<div class="dup-why${p.weak?' dup-weak':''}">${p.weak?'Might be the same person':'Looks like the same person'} &mdash; ${p.why}</div>`+
+      `<div class="dup-why${p.weak?' dup-weak':''}">${p.weak?'Might be the same person':'Looks like the same person'} &mdash; ${esc(p.why)}</div>`+
       `<div class="dup-cols">${dupCell(p.keep,true)}${dupCell(p.drop,false)}</div>`+
       `<div class="dup-act">`+
         `<button class="btn-success" onclick="dupMerge(${i})">Merge into one</button>`+
@@ -2694,7 +2778,7 @@ function drawMapGlobe(){
       ? (people.length
           ? 'None of your '+people.length+' contacts has a country the map recognises. Add a country, or a city, to place them.'
           : 'No contacts or leads yet. Add one and it will appear here.')
-      : 'Nobody in your book matches <strong>'+label+'</strong>. That is a gap worth filling.')+'</div>';
+      : 'Nobody in your book matches <strong>'+esc(label)+'</strong>. That is a gap worth filling.')+'</div>';
   } else {
     list.innerHTML='<div class="mlh">Matches &middot; '+hits.length+'</div>'+
       hits.slice().sort((a,b)=>(a.country||'').localeCompare(b.country||'')).map((p,i)=>
