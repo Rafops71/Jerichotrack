@@ -824,6 +824,10 @@ function explainSync(){
   if(syncDenied.size){
     toast('Not syncing: '+[...syncDenied].map(c=>c.replace('jericho_','')).join(', ')+
       '. These save on this device only. Fix the Firestore rules in the Firebase console.','error',9000);
+  } else if(window._fbReady && navigator.onLine === false){
+    toast('No connection. Everything you add is saved on this device and goes to the cloud ' +
+      'as soon as you are back online. Do not clear your browser data until the pill turns green.',
+      'info',9000);
   } else if(window._fbReady){
     toast('All collections are syncing live.','success');
   } else {
@@ -845,6 +849,11 @@ function setSyncStatus(state,collection){
   el.title='';
   if(state==='online'){el.classList.add('online');el.textContent='✅ Synced — Live';}
   else if(state==='offline'){el.classList.add('offline');el.textContent='⚠️ Offline — saving locally';}
+  /* Saved on the device, not yet confirmed in the cloud. Distinct from
+     'offline', because the connection may be fine and the write still in
+     flight, and distinct from 'online', because nothing is safe elsewhere
+     yet. */
+  else if(state==='pending'){el.classList.add('offline');el.textContent='📴 Not yet in the cloud';}
   else{el.classList.add('syncing');el.textContent='🔄 Connecting...';}
 }
 window.addEventListener('online',()=>setSyncStatus('online'));
@@ -1112,7 +1121,17 @@ function startCloudSync(){
       if(document.getElementById('backup-section').style.display==='block'){
         safely('updating the backup counts',()=>updateBackupStats());
       }
-      setSyncStatus('online');
+      /*
+       * Only claim "Synced - Live" when this snapshot actually came from the
+       * server. Firestore also fires snapshots from its own local cache -- a
+       * save made with no signal produces one -- and this used to report
+       * "online" for those too. The pill read "Synced - Live" through a whole
+       * offline session, which is the one moment it must not say that.
+       */
+      const fromCache = snapshot.metadata && snapshot.metadata.fromCache;
+      const pending = snapshot.metadata && snapshot.metadata.hasPendingWrites;
+      setSyncStatus((fromCache || pending || navigator.onLine === false)
+        ? 'pending' : 'online');
       firstLoadCount++;
     },(error)=>{
       console.warn('Sync error on '+colName+':',error);

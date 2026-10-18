@@ -118,3 +118,38 @@ test('@robot DeskItem56_an_imported_name_with_code_in_it_is_shown_as_text', asyn
   await expect(page.locator('#contactsBody')).toContainText('<img src=x');
   await expect(page.locator('#contactsBody')).toContainText('Normal Person');
 });
+
+/*
+ * Item 57. The pill used to read "Synced - Live" through an entire offline
+ * session, because every snapshot flipped it to online -- including the ones
+ * Firestore serves from its own cache when a save is made with no signal.
+ * Rafael trades from his phone; "it is in the cloud" has to mean that.
+ */
+test('@robot DeskItem57_offline_never_claims_the_cloud', async ({ page, context }) => {
+  await verify.wipe();
+  await app.openApp(page);
+  await page.waitForTimeout(1500);
+  expect(await page.locator('#syncStatus').innerText()).toContain('Synced');
+
+  await context.setOffline(true);
+  await page.waitForTimeout(600);
+  await app.addContact(page, { name: 'No Signal Sam', company: 'Dead Zone Ltd' });
+  await page.waitForTimeout(2500);
+
+  const offlinePill = (await page.locator('#syncStatus').innerText()).trim();
+  console.log('   while offline the pill reads: ' + JSON.stringify(offlinePill));
+  // The work is kept, and shown.
+  expect(await page.locator('#contactsBody').innerText()).toContain('No Signal Sam');
+  // But it must not be called synced.
+  expect(offlinePill).not.toContain('Synced');
+  expect(offlinePill).not.toContain('Live');
+
+  await context.setOffline(false);
+  await page.waitForTimeout(7000);
+  const backPill = (await page.locator('#syncStatus').innerText()).trim();
+  console.log('   back online the pill reads: ' + JSON.stringify(backPill));
+  expect(backPill).toContain('Synced');
+  const inCloud = (await verify.readCollection('jericho_contacts'))
+    .some(c => c.name === 'No Signal Sam');
+  expect(inCloud, 'the offline contact should reach the cloud once reconnected').toBe(true);
+});

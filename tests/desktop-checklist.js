@@ -90,6 +90,7 @@ module.exports = [
   { n: 54, group: 'Never crashes', text: 'Two thousand contacts do not freeze the app' },
   { n: 55, group: 'Never crashes', text: 'Find Duplicates on two thousand contacts answers quickly' },
   { n: 56, group: 'Never crashes', text: 'An imported name containing code is shown as text, never obeyed' },
+  { n: 57, group: 'Never crashes', text: 'With no signal it never claims my work is in the cloud' },
 
   { n: 46, group: 'Safety',        text: 'Nothing I do in the test app can reach my real data',
     manual: false },
