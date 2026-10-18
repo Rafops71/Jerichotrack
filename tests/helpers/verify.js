@@ -48,10 +48,33 @@ async function readCollection(name) {
   }));
 }
 
-/** Wipe the sandbox between tests so each one starts from nothing. */
-async function wipe() {
-  const resp = await fetch(ADMIN, { method: 'DELETE', headers: HEADERS });
-  if (!resp.ok) throw new Error(`Sandbox wipe failed: HTTP ${resp.status}`);
+/*
+ * Wipe the sandbox between tests so each one starts from nothing.
+ *
+ * The emulator answers 409 when it is still busy with the previous test's
+ * writes, and the volume tests leave two thousand documents behind. That 409
+ * came out as a test failure naming the app -- three checklist items read as
+ * broken when nothing was wrong with them. So a conflict is waited out rather
+ * than reported.
+ */
+async function wipe({ attempts = 12 } = {}) {
+  let last = '';
+  for (let i = 0; i < attempts; i++) {
+    let resp;
+    try {
+      resp = await fetch(ADMIN, { method: 'DELETE', headers: HEADERS });
+    } catch (e) {
+      last = e.message;                       // emulator still starting up
+      await new Promise(r => setTimeout(r, 500 + i * 250));
+      continue;
+    }
+    if (resp.ok) return;
+    last = 'HTTP ' + resp.status;
+    // 409 means busy, not broken. Anything else is worth failing on at once.
+    if (resp.status !== 409) break;
+    await new Promise(r => setTimeout(r, 500 + i * 250));
+  }
+  throw new Error(`Sandbox wipe failed after ${attempts} attempts: ${last}`);
 }
 
 /** Poll until a collection contains a matching document, or time out. */
