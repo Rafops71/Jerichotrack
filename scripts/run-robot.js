@@ -80,16 +80,31 @@ async function seedSandboxAccount() {
  * after every run. Both are already in .gitignore.
  */
 const EMULATOR_LOGS = ['firebase-debug.log', 'firestore-debug.log', 'ui-debug.log'];
-function clearEmulatorLogs(when) {
-  let freed = 0;
+
+/*
+ * Send the emulator's debug logs to /dev/null by making each one a symlink
+ * there, so nothing is written in the first place.
+ *
+ * Clearing them before and after a run was not enough, and the reason is worth
+ * writing down: the logs grow THIRTY GIGABYTES during a single run that seeds
+ * two thousand contacts. The disk filled mid-run, the emulator began refusing
+ * requests, and tests failed in ways that read as bugs in the app. Cleaning up
+ * afterwards cannot help with a disk that is already full.
+ *
+ * They are debug logs for a sandbox that is thrown away, and both names are
+ * already in .gitignore.
+ */
+function silenceEmulatorLogs() {
   for (const name of EMULATOR_LOGS) {
     const f = path.join(ROOT, name);
     try {
-      if (fs.existsSync(f)) { freed += fs.statSync(f).size; fs.unlinkSync(f); }
-    } catch { /* in use, or already gone; not worth failing the run over */ }
-  }
-  if (freed > 50 * 1024 * 1024) {
-    console.log('      cleared ' + (freed / 1073741824).toFixed(1) + 'GB of emulator logs ' + when);
+      const existing = fs.existsSync(f) || fs.lstatSync ? (() => {
+        try { return fs.lstatSync(f); } catch { return null; }
+      })() : null;
+      if (existing && existing.isSymbolicLink() && fs.readlinkSync(f) === '/dev/null') continue;
+      if (existing) fs.unlinkSync(f);
+      fs.symlinkSync('/dev/null', f);
+    } catch { /* a plain file we cannot replace is not worth failing the run over */ }
   }
 }
 
@@ -106,6 +121,19 @@ function checkDiskSpace() {
                   'will fail in ways that look like app bugs. Free some space first.');
     process.exit(1);
   }
+}
+
+/*
+ * Both halves, not just one.
+ *
+ * This used to decide the sandbox was ready by checking the database port
+ * alone. An orphaned emulator left over from an interrupted run answers there
+ * while its sign-in half is gone, so the runner skipped starting the pair and
+ * then failed with "the Auth emulator never came up. Nothing was tested." It
+ * cost two runs before the pattern was obvious.
+ */
+async function sandboxIsReady() {
+  return (await emulatorIsUp()) && (await authEmulatorIsUp());
 }
 
 (async () => {
@@ -128,10 +156,17 @@ function checkDiskSpace() {
   if (doDesktop && run('node', ['scripts/build-test-page.js', 'index.html']).status !== 0) process.exit(1);
 
   console.log('\n[2/5] Checking the local sandbox database...');
-  clearEmulatorLogs('from the last run');
+  silenceEmulatorLogs();
   checkDiskSpace();
-  let up = await emulatorIsUp();
+  let up = await sandboxIsReady();
   let emulator = null;
+  if (!up && await emulatorIsUp()) {
+    console.error('      FAILED: something already answers on 127.0.0.1:8080 but the '
+      + 'sign-in emulator on 9099 is not running. That is usually an emulator left '
+      + 'behind by an interrupted run. Stop it and try again:');
+    console.error('        ps -eo pid,args | grep [e]mulator     then  kill -9 <pid>');
+    process.exit(1);
+  }
   if (!up) {
     console.log('      not running - starting it');
     /*
@@ -146,7 +181,7 @@ function checkDiskSpace() {
                      { cwd: ROOT, stdio: 'ignore', detached: false });
     for (let i = 0; i < 60 && !up; i++) {
       await new Promise(r => setTimeout(r, 1000));
-      up = await emulatorIsUp();
+      up = await sandboxIsReady();
     }
   }
   if (!up) {
@@ -184,8 +219,5 @@ function checkDiskSpace() {
   const report = run('node', ['scripts/report.js'].concat(only ? [only] : []));
 
   if (emulator) emulator.kill();
-  // Give the jar a moment to let go of the files before clearing them.
-  await new Promise(r => setTimeout(r, 1500));
-  clearEmulatorLogs('after this run');
   process.exit(report.status === 0 ? 0 : 1);
 })();
