@@ -68,6 +68,46 @@ async function seedSandboxAccount() {
   }
 }
 
+/*
+ * The emulator writes firebase-debug.log and firestore-debug.log beside the
+ * repo, at full verbosity, and never trims them. Seeding two thousand contacts
+ * for the volume test produced TWENTY GIGABYTES in one file and nine in the
+ * other, which filled the container's disk; the emulator then started refusing
+ * requests and three tests failed with "Sandbox wipe failed: HTTP 409" -- a
+ * failure that looks like a bug in the app and is not one.
+ *
+ * They are debug logs for a throwaway sandbox, so they are cleared before and
+ * after every run. Both are already in .gitignore.
+ */
+const EMULATOR_LOGS = ['firebase-debug.log', 'firestore-debug.log', 'ui-debug.log'];
+function clearEmulatorLogs(when) {
+  let freed = 0;
+  for (const name of EMULATOR_LOGS) {
+    const f = path.join(ROOT, name);
+    try {
+      if (fs.existsSync(f)) { freed += fs.statSync(f).size; fs.unlinkSync(f); }
+    } catch { /* in use, or already gone; not worth failing the run over */ }
+  }
+  if (freed > 50 * 1024 * 1024) {
+    console.log('      cleared ' + (freed / 1073741824).toFixed(1) + 'GB of emulator logs ' + when);
+  }
+}
+
+/* Refuse to start a long run that is going to die of a full disk half way. */
+function checkDiskSpace() {
+  const out = spawnSync('df', ['-Pk', ROOT], { encoding: 'utf8' });
+  if (out.status !== 0 || !out.stdout) return;
+  const line = out.stdout.trim().split('\n').pop().split(/\s+/);
+  const freeMb = Number(line[3]) / 1024;
+  if (!isFinite(freeMb)) return;
+  console.log('      disk free: ' + Math.round(freeMb) + 'MB');
+  if (freeMb < 500) {
+    console.error('      FAILED: under 500MB free. The emulator will fill it and the run ' +
+                  'will fail in ways that look like app bugs. Free some space first.');
+    process.exit(1);
+  }
+}
+
 (async () => {
   /*
    * Which app to test. Both are tested by default, because a change to one has
@@ -88,6 +128,8 @@ async function seedSandboxAccount() {
   if (doDesktop && run('node', ['scripts/build-test-page.js', 'index.html']).status !== 0) process.exit(1);
 
   console.log('\n[2/5] Checking the local sandbox database...');
+  clearEmulatorLogs('from the last run');
+  checkDiskSpace();
   let up = await emulatorIsUp();
   let emulator = null;
   if (!up) {
@@ -142,5 +184,8 @@ async function seedSandboxAccount() {
   const report = run('node', ['scripts/report.js'].concat(only ? [only] : []));
 
   if (emulator) emulator.kill();
+  // Give the jar a moment to let go of the files before clearing them.
+  await new Promise(r => setTimeout(r, 1500));
+  clearEmulatorLogs('after this run');
   process.exit(report.status === 0 ? 0 : 1);
 })();
