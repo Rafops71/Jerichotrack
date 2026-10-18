@@ -150,10 +150,36 @@ async function seed(collection, id, obj) {
  * measures an empty list - the first attempt reported "0 pairs in 148ms" and
  * looked like a pass.
  */
-async function seedMany(collection, items, { chunk = 40 } = {}) {
+async function seedMany(collection, items, { chunk = 400 } = {}) {
+  /*
+   * One commit per batch, not one request per document.
+   *
+   * Forty parallel single-document POSTs still meant two thousand round trips,
+   * which took so long that the two volume tests hit the seven minute ceiling
+   * and were reported as the APP being slow. It was the setup. Firestore's
+   * :commit endpoint takes many writes in one request, and it caps at 500, so
+   * the batches stay under that.
+   */
+  const DOCS = `projects/${PROJECT}/databases/(default)/documents`;
   for (let i = 0; i < items.length; i += chunk) {
-    await Promise.all(items.slice(i, i + chunk).map(item =>
-      seed(collection, String(item.id), item)));
+    const writes = items.slice(i, i + chunk).map(item => ({
+      update: {
+        name: `${DOCS}/${collection}/${String(item.id)}`,
+        fields: encodeFields(item)
+      }
+    }));
+    const resp = await fetch(
+      `${BASE}:commit`,
+      {
+        method: 'POST',
+        headers: { ...HEADERS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ writes })
+      }
+    );
+    if (!resp.ok) {
+      throw new Error(`Seeding ${items.length} into ${collection} failed: ` +
+        `HTTP ${resp.status} ${(await resp.text()).slice(0, 200)}`);
+    }
   }
   return items.length;
 }

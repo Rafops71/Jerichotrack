@@ -156,7 +156,19 @@ test('probe_two_tabs_at_once', async ({ page, context }) => {
   await verify.wipe();
   await app.openApp(page);
   const second = await context.newPage();
-  await app.openApp(second);
+  /*
+   * The second tab shares the signed-in session, so the password screen is
+   * usually not there to fill. openApp() assumed it always is and timed out
+   * waiting -- a failure in the probe, not in the app.
+   */
+  await second.goto('/.robot/index.test.html');
+  await second.waitForTimeout(1500);
+  if (await second.locator('#lockScreen').isVisible().catch(() => false)) {
+    await app.openApp(second);
+  }
+  await second.waitForTimeout(2500);
+  console.log('TWO TABS: second tab signed in without asking again =',
+    !(await second.locator('#lockScreen').isVisible().catch(() => false)));
 
   await app.addContact(page, { name: 'From Tab One', company: 'One Ltd' });
   await page.waitForTimeout(3000);
