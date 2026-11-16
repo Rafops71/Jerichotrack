@@ -322,6 +322,40 @@ all present in the prompt the worker actually sends - a careless edit cannot
 drop them silently. Whether the model reads a given mishearing correctly is its
 own behaviour and is checked by live runs, not by those tests.
 
+## Firestore security — FIXED 28 September 2026
+
+**The database was open to the internet.** The live rule was Firebase's test-mode
+default, left from setup:
+
+    allow read, write: if request.time < timestamp.date(2026, 12, 31);
+
+That permits anyone, with no login, to read, change or delete everything.
+Demonstrated, not inferred: an unauthenticated write from outside the project
+succeeded, and the probe document was removed afterwards. The project id is
+public in a public repo, which is normal — the rules were the only lock, and
+there was not one.
+
+It would also have failed closed on 31 December 2026, when that date passes and
+every request starts being denied. Both apps would have stopped working
+overnight with no obvious cause.
+
+**Replaced with** per-collection rules requiring `request.auth != null` for the
+seven collections the apps use, and `if false` for everything else, so a new
+collection cannot inherit access by accident. No expiry date.
+
+Verified both directions afterwards: unauthenticated read and write both return
+PERMISSION_DENIED; a signed-in read and write both still work, matching what the
+apps do. The check record was deleted.
+
+**Known limit, stated plainly:** both apps sign in anonymously and anyone can
+create an anonymous account, so this stops drive-by access rather than a
+determined person. A real lock means a real login, which has not been decided.
+
+**Rafael supplied a Firebase service-account key to do this.** He was told to
+regenerate it afterwards (Project settings → Service accounts → Generate new
+private key), which has not been confirmed. Treat the old key as live until he
+says otherwise.
+
 ## Agreed and queued, not built
 
 Rafael reviewed a list of suggested improvements and picked these. Nothing here
